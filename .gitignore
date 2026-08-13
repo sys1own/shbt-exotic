@@ -15,4 +15,6 @@ figures/
 *.tex
 !main.tex
 *.so
+mainNotes.bib
+*.synctex.gz
 

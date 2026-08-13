@@ -100,6 +100,16 @@ impl EntropicRefrigerator {
     pub fn macro_scale_audit_impl(&self, gamma_de: f64, t_c: f64) -> bool {
         self.cooling_power_impl(gamma_de, t_c) <= MACRO_COOLING_POWER_W
     }
+
+    /// Benchmark sub-Kelvin cooling power (W).
+    pub fn sub_kelvin_cooling_power_w_impl(&self) -> f64 {
+        SUB_KELVIN_COOLING_POWER_W
+    }
+
+    /// Benchmark macro-scale continuous cooling power (W).
+    pub fn macro_cooling_power_w_impl(&self) -> f64 {
+        MACRO_COOLING_POWER_W
+    }
 }
 
 #[pymethods]
@@ -134,5 +144,13 @@ impl EntropicRefrigerator {
 
     fn macro_scale_audit(&self, gamma_de: f64, t_c: f64) -> bool {
         self.macro_scale_audit_impl(gamma_de, t_c)
+    }
+
+    fn sub_kelvin_cooling_power_w(&self) -> f64 {
+        self.sub_kelvin_cooling_power_w_impl()
+    }
+
+    fn macro_cooling_power_w(&self) -> f64 {
+        self.macro_cooling_power_w_impl()
     }
 }

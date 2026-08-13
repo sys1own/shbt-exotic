@@ -51,6 +51,16 @@ impl HardwareSynthesisAuditor {
         "STATUS_NOMINAL_PASS".to_string()
     }
 
+    /// Maximum SHBT transistor clock rate (Hz).
+    pub fn f_max_hz_impl(&self) -> f64 {
+        self.f_max_hz
+    }
+
+    /// Boundary state routing bandwidth (bits/s).
+    pub fn routing_bandwidth_bps_impl(&self) -> f64 {
+        self.routing_bandwidth_bps
+    }
+
     /// Maximum theoretical number of state routing operations per clock edge
     /// if one bit is transferred per clock cycle.
     pub fn max_bits_per_clock_cycle_impl(&self) -> f64 {
@@ -81,6 +91,14 @@ impl HardwareSynthesisAuditor {
 
     fn audit(&self, clock_hz: f64, bandwidth_bps: f64) -> String {
         self.audit_impl(clock_hz, bandwidth_bps)
+    }
+
+    fn f_max_hz(&self) -> f64 {
+        self.f_max_hz_impl()
+    }
+
+    fn routing_bandwidth_bps(&self) -> f64 {
+        self.routing_bandwidth_bps_impl()
     }
 
     fn max_bits_per_clock_cycle(&self) -> f64 {

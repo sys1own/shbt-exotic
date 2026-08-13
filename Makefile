@@ -3,29 +3,33 @@ PYTHON := $(VENV)/bin/python
 MATURIN := $(VENV)/bin/maturin
 PYTEST := $(VENV)/bin/pytest
 
-.PHONY: all build test python-test rust-test clean audit
+.PHONY: all rust test cargo-test figures macros paper clean
 
-all: build test audit
-
-build: $(VENV)/bin/activate
-	$(MATURIN) develop
+all: rust test paper
 
 $(VENV)/bin/activate:
 	python3 -m venv $(VENV)
 	$(VENV)/bin/pip install --quiet maturin pytest numpy matplotlib
 
-test: build python-test rust-test
+rust: $(VENV)/bin/activate
+	$(MATURIN) develop
 
-python-test: build
+figures: rust
+	$(PYTHON) -m shbt_exotic.plots
+
+macros: rust
+	$(PYTHON) -m shbt_exotic.latex
+
+paper: figures macros
+	pdflatex -interaction=nonstopmode main.tex
+	pdflatex -interaction=nonstopmode main.tex
+
+test: rust
 	$(PYTEST) tests/ -q
 
-rust-test:
+cargo-test:
 	cargo test -q
 
-audit: build
-	$(PYTHON) -m shbt_exotic.cli --audit
-
 clean:
-	cargo clean
-	rm -rf $(VENV) build dist *.egg-info .pytest_cache
+	rm -rf $(VENV) target python/shbt_exotic/*.so python/shbt_exotic/__pycache__ tests/__pycache__ exotic_results.tex figures/*.pdf *.aux *.log *.out *.toc *.synctex.gz *.pdf
 	find . -type d -name __pycache__ -exec rm -rf {} +

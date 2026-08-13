@@ -51,3 +51,9 @@ pub const GHOST_SEED_TRANSIENT_W: f64 = 142.08e6;
 
 /// Macro-scale continuous cooling power (W).
 pub const MACRO_COOLING_POWER_W: f64 = 906.0e9;
+
+/// Dilution refrigerator baseline temperature for HIL operation (K).
+pub const BASELINE_TEMPERATURE_K: f64 = 15.4e-3;
+
+/// Maximum tolerable phase jitter for topological edge-state transport (rad).
+pub const PHASE_JITTER_THRESHOLD_RAD: f64 = 5.05e-5;

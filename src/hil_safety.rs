@@ -9,7 +9,7 @@
 
 use pyo3::prelude::*;
 
-use crate::constants::{C_GET_THERMODYNAMIC_BOUND_J, EIGENVECTOR_RIGIDITY_THRESHOLD, F_MAX_HZ};
+use crate::constants::{BASELINE_TEMPERATURE_K, C_GET_THERMODYNAMIC_BOUND_J, EIGENVECTOR_RIGIDITY_THRESHOLD, F_MAX_HZ, PHASE_JITTER_THRESHOLD_RAD};
 use crate::gmp_memory;
 
 /// Hardware-imposed maximum emergency shunt latency (s).
@@ -61,6 +61,16 @@ impl HilSafetyMonitor {
     /// Latency in nanoseconds.
     pub fn emergency_shunt_latency_ns_impl(&self) -> f64 {
         self.emergency_shunt_latency_s_impl() * 1e9
+    }
+
+    /// Baseline operating temperature for the dilution refrigerator (K).
+    pub fn baseline_temperature_k_impl(&self) -> f64 {
+        BASELINE_TEMPERATURE_K
+    }
+
+    /// Maximum tolerable phase jitter for topological edge-state transport (rad).
+    pub fn phase_jitter_threshold_rad_impl(&self) -> f64 {
+        PHASE_JITTER_THRESHOLD_RAD
     }
 
     /// Solovay-Kitaev correction sequence for a measured detuning.
@@ -212,6 +222,14 @@ impl HilSafetyMonitor {
 
     fn emergency_shunt_latency_ns(&self) -> f64 {
         self.emergency_shunt_latency_ns_impl()
+    }
+
+    fn baseline_temperature_k(&self) -> f64 {
+        self.baseline_temperature_k_impl()
+    }
+
+    fn phase_jitter_threshold_rad(&self) -> f64 {
+        self.phase_jitter_threshold_rad_impl()
     }
 
     fn solovay_kitaev_sequence(&self, detuning: f64) -> Vec<f64> {

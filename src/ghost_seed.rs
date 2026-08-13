@@ -6,7 +6,7 @@
 
 use pyo3::prelude::*;
 
-use crate::constants::{ALPHA_SEED_M_SUN_PER_BIT, MACRO_COOLING_POWER_W, M_SUN_KG};
+use crate::constants::{ALPHA_SEED_M_SUN_PER_BIT, GHOST_SEED_TRANSIENT_W, MACRO_COOLING_POWER_W, M_SUN_KG};
 use crate::error::ExoticError;
 use crate::gmp_memory;
 
@@ -66,6 +66,12 @@ impl GhostSeedSynthesizer {
         Ok(m_sun * MACRO_COOLING_POWER_W)
     }
 
+    /// High-energy transient power (W) required to stabilize a freshly synthesized
+    /// ghost seed (142.08 MW benchmark).
+    pub fn high_energy_transient_w_impl(&self) -> f64 {
+        GHOST_SEED_TRANSIENT_W
+    }
+
     /// Check that the anyon filling factor is in the allowed non-Abelian list.
     pub fn is_filling_factor_allowed_impl(&self, nu: (i64, i64)) -> bool {
         self.allowed_filling_factors.iter().any(|&f| f == nu)
@@ -93,6 +99,10 @@ impl GhostSeedSynthesizer {
 
     fn entropy_debt_power_w(&self, n_local: f64, n_limit: f64) -> PyResult<f64> {
         self.entropy_debt_power_w_impl(n_local, n_limit).map_err(PyErr::from)
+    }
+
+    fn high_energy_transient_w(&self) -> f64 {
+        self.high_energy_transient_w_impl()
     }
 
     fn is_filling_factor_allowed(&self, nu: (i64, i64)) -> bool {
