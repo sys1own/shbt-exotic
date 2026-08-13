@@ -6,6 +6,7 @@ from shbt_exotic import (
     MassCongestionEngine,
     FibonacciBraidCompiler,
     LindbladSolver,
+    HarmonicAuditor,
     CalibrationEngine,
     ReliabilityAuditor,
     GdsiiMaskExporter,
@@ -535,6 +536,55 @@ def test_lindblad_phonon_evolution_preserves_trace():
     rho = solver.evolve_two_qubit_phonon(1.0e-6, 10)
     tr = sum(rho[i][i][0] for i in range(4))
     assert math.isclose(tr, 1.0, rel_tol=1e-9)
+
+
+def test_harmonic_audit_passes_nominal_modes():
+    auditor = HarmonicAuditor()
+    modes = [
+        ("shear", auditor.nominal_frequency_hz("shear"), 1.15e-3, 6.0e-4, 1.0e-9),
+        ("longitudinal", auditor.nominal_frequency_hz("longitudinal"), 1.15e-3, 6.0e-4, 1.0e-9),
+        ("torsional", auditor.nominal_frequency_hz("torsional"), 1.15e-3, 6.0e-4, 1.0e-9),
+        ("flexural", auditor.nominal_frequency_hz("flexural"), 1.15e-3, 6.0e-4, 1.0e-9),
+    ]
+    assert auditor.audit_modes(modes) == "STRUCTURAL_RESONANCE_PASS"
+    assert auditor.audit_waveguide(modes, 1.0e-6) == "HARMONIC_AUDIT_PASS"
+
+
+def test_harmonic_audit_fails_low_damping():
+    auditor = HarmonicAuditor()
+    modes = [
+        ("shear", auditor.nominal_frequency_hz("shear"), 1.15e-3, 1.0e-5, 1.0e-9),
+        ("longitudinal", auditor.nominal_frequency_hz("longitudinal"), 1.15e-3, 6.0e-4, 1.0e-9),
+        ("torsional", auditor.nominal_frequency_hz("torsional"), 1.15e-3, 6.0e-4, 1.0e-9),
+        ("flexural", auditor.nominal_frequency_hz("flexural"), 1.15e-3, 6.0e-4, 1.0e-9),
+    ]
+    with pytest.raises(Exception):
+        auditor.audit_modes(modes)
+
+
+def test_harmonic_thermal_fails_excessive_energy():
+    auditor = HarmonicAuditor()
+    modes = [
+        ("flexural", auditor.nominal_frequency_hz("flexural"), 1.15e-3, 6.0e-4, 1.0e3),
+    ]
+    with pytest.raises(Exception):
+        auditor.audit_thermal(modes, 1.0e-6, 2.5e-9)
+
+
+def test_harmonic_dissipated_power_formula():
+    auditor = HarmonicAuditor()
+    p = auditor.dissipated_power_w(10.0e6, 1.0e-6, 1.0e-3)
+    expected = 2.0 * math.pi * 10.0e6 * 1.0e-6 * 1.0e-3
+    assert math.isclose(p, expected, rel_tol=1e-12)
+
+
+def test_harmonic_natural_frequency_estimates():
+    auditor = HarmonicAuditor()
+    freqs = auditor.estimate_natural_frequencies_hz(0.01, 1.0e-3, 0.5e-3)
+    assert len(freqs) == 4
+    for _, f in freqs:
+        assert math.isfinite(f)
+        assert f > 0.0
 
 
 if __name__ == "__main__":
