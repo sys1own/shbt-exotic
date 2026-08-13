@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 
 from shbt_exotic import (
+    CoordinatePerturbationSweep,
     EntropicRefrigerator,
     ExoticEngine,
     GhostSeedSynthesizer,
@@ -12,6 +13,7 @@ from shbt_exotic import (
     HeegaardFloerRelabeling,
     HilSafetyMonitor,
     NewtonLockStasis,
+    SafetyMonitor,
     UnifiedStinespringMap,
 )
 
@@ -74,13 +76,24 @@ def generate_results_tex(out_path: str | Path = "exotic_results.tex") -> Path:
     status = hil.audit(mu_local, n_local, n_limit, c_get)
     framing_defect = hil.framing_defect(mu_local, n_local, n_limit, c_get)
     canonical_framing_defect = hil.framing_defect(1.0, n_limit, n_limit, 5.34e-175)
-    shunt_latency_ns = hil.emergency_shunt_latency_ns()
     phase_jitter = hil.phase_jitter_threshold_rad()
     baseline_temp = hil.baseline_temperature_k()
 
     hw_status = hw.audit(72.0e9, 40.0e9)
     f_max = hw.f_max_hz()
     bandwidth = hw.routing_bandwidth_bps()
+
+    # Gate-cycle shunt safety and coordinate rigidity sweep
+    monitor = SafetyMonitor()
+    shunt_status, shunt_latency_ns, shunt_cycles, thermal_status = monitor.simulate_shutdown(
+        mu_local, n_local, n_limit, c_get
+    )
+    thermal = monitor.thermal_shunt_auditor()
+    temperature_rise_k = thermal.temperature_rise_k()
+
+    sweep = CoordinatePerturbationSweep(mu0=1.0, n_limit=n_limit, c_get_bound=c_get)
+    sweep_ok, worst_detuning = sweep.verify_rigidity_limit()
+    rigidity_status = "STATUS_NOMINAL_PASS" if sweep_ok else "STATUS_EMERGENCY_SHUTDOWN"
 
     lines = [
         "% Auto-generated macros from shbt-exotic unified audit.",
@@ -99,13 +112,19 @@ def generate_results_tex(out_path: str | Path = "exotic_results.tex") -> Path:
         f"\\newcommand{{\\ExoticMacroCoolingPower}}{{{format_scientific(macro_cooling_power)}}}",
         f"\\newcommand{{\\ExoticFramingDefect}}{{{format_scientific(framing_defect)}}}",
         f"\\newcommand{{\\ExoticCanonicalFramingDefect}}{{{format_scientific(canonical_framing_defect)}}}",
-        f"\\newcommand{{\\ExoticShuntLatencyNs}}{{{format_scientific(shunt_latency_ns)}}}",
         f"\\newcommand{{\\ExoticPhaseJitterRad}}{{{format_scientific(phase_jitter)}}}",
         f"\\newcommand{{\\ExoticBaselineTempK}}{{{format_scientific(baseline_temp)}}}",
         f"\\newcommand{{\\ExoticHilStatus}}{{\\texttt{{{escape_underscores(status)}}}}}",
         f"\\newcommand{{\\ExoticFmaxHz}}{{{format_scientific(f_max)}}}",
         f"\\newcommand{{\\ExoticRoutingBandwidthBps}}{{{format_scientific(bandwidth)}}}",
         f"\\newcommand{{\\ExoticHardwareStatus}}{{\\texttt{{{escape_underscores(hw_status)}}}}}",
+        f"\\newcommand{{\\ExoticShuntStatus}}{{\\texttt{{{escape_underscores(shunt_status)}}}}}",
+        f"\\newcommand{{\\ExoticShuntLatencyNs}}{{{format_scientific(shunt_latency_ns)}}}",
+        f"\\newcommand{{\\ExoticShuntCycles}}{{{shunt_cycles}}}",
+        f"\\newcommand{{\\ExoticThermalStatus}}{{\\texttt{{{escape_underscores(thermal_status)}}}}}",
+        f"\\newcommand{{\\ExoticTemperatureRiseK}}{{{format_scientific(temperature_rise_k)}}}",
+        f"\\newcommand{{\\ExoticRigiditySweepStatus}}{{\\texttt{{{escape_underscores(rigidity_status)}}}}}",
+        f"\\newcommand{{\\ExoticWorstDetuning}}{{{format_scientific(worst_detuning)}}}",
     ]
 
     out_path.write_text("\n".join(lines) + "\n")

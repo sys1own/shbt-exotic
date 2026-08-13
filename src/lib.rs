@@ -19,9 +19,11 @@ pub mod heegaard_floer;
 pub mod hil_safety;
 pub mod newton_lock;
 pub mod refrigeration;
+pub mod shbt;
 pub mod stinespring;
 
 pub use constants::*;
+pub use shbt::safety_monitor::*;
 pub use error::*;
 pub use ghost_seed::*;
 pub use hardware::*;
@@ -44,6 +46,9 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<hil_safety::HilSafetyMonitor>()?;
     m.add_class::<hardware::HardwareSynthesisAuditor>()?;
     m.add_class::<stinespring::ExoticEngine>()?;
+    m.add_class::<shbt::safety_monitor::GateCycleShunt>()?;
+    m.add_class::<shbt::safety_monitor::ThermalShuntAuditor>()?;
+    m.add_class::<shbt::safety_monitor::SafetyMonitor>()?;
     m.add("AnomalyClosureError", m.py().get_type::<error::AnomalyClosureError>())?;
     Ok(())
 }

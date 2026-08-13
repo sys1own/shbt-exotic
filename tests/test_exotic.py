@@ -3,6 +3,7 @@ import math
 import pytest
 
 from shbt_exotic import (
+    CoordinatePerturbationSweep,
     EntropicRefrigerator,
     ExoticEngine,
     GhostSeedSynthesizer,
@@ -10,6 +11,8 @@ from shbt_exotic import (
     HeegaardFloerRelabeling,
     HilSafetyMonitor,
     NewtonLockStasis,
+    SafetyMonitor,
+    ThermalShuntAuditor,
     UnifiedStinespringMap,
 )
 
@@ -105,6 +108,29 @@ def test_hardware_invariants():
     assert hw.audit(72.0e9, 40.0e9) == "STATUS_NOMINAL_PASS"
     assert hw.clock_rate_passes(80.0e9) is False
     assert hw.routing_bandwidth_passes(50.0e9) is False
+
+
+def test_gate_cycle_shunt_emergency_shutdown():
+    monitor = SafetyMonitor()
+    status, latency_ns, cycles, _thermal = monitor.simulate_shutdown(
+        1.0 + 2.0e-12, 1.0e65, 1.0e65, 5.34e-175
+    )
+    assert status == "STATUS_EMERGENCY_SHUTDOWN"
+    assert latency_ns < 2.5
+    assert cycles <= 180
+
+
+def test_thermal_shunt_no_quench():
+    auditor = ThermalShuntAuditor()
+    assert auditor.audit() == "STATUS_NOMINAL_PASS"
+    assert auditor.temperature_rise_k() < 1.0e-12
+
+
+def test_coordinate_perturbation_sweep_rigidity():
+    sweep = CoordinatePerturbationSweep(mu0=1.0, n_limit=1.0e65, c_get_bound=5.34e-175)
+    ok, worst = sweep.verify_rigidity_limit()
+    assert ok is True
+    assert worst < 1.0e-12
 
 
 if __name__ == "__main__":

@@ -28,6 +28,13 @@
   \newcommand{\ExoticFmaxHz}{7.2000e+10}%
   \newcommand{\ExoticRoutingBandwidthBps}{4.0000e+10}%
   \newcommand{\ExoticHardwareStatus}{\texttt{STATUS\_NOMINAL\_PASS}}%
+  \newcommand{\ExoticShuntStatus}{\texttt{STATUS\_NOMINAL\_PASS}}%
+  \newcommand{\ExoticShuntLatencyNs}{2.4861}%
+  \newcommand{\ExoticShuntCycles}{180}%
+  \newcommand{\ExoticThermalStatus}{\texttt{STATUS\_NOMINAL\_PASS}}%
+  \newcommand{\ExoticTemperatureRiseK}{3.0000e-50}%
+  \newcommand{\ExoticRigiditySweepStatus}{\texttt{STATUS\_NOMINAL\_PASS}}%
+  \newcommand{\ExoticWorstDetuning}{9.9000e-13}%
 }
 
 \begin{document}
@@ -54,6 +61,8 @@ The simulator is implemented in Rust with PyO3 bindings, using the `rug` crate f
 
 \section{The unified Stinespring map}
 
+\subsection{Definition}
+
 The dark ledger is introduced as an auxiliary Hilbert space $H_{\rm dark}$.  The unified Stinespring map
 %
 \begin{equation}
@@ -72,6 +81,57 @@ V_{\rm unified} |\psi\rangle
 \end{multline}
 %
 Because $(10+23)/33=1$, $V_{\rm unified}^\dagger V_{\rm unified}^{\phantom{\dagger}} = I$ and the map is an isometry.  The active residual $10/33$ and the completed dark capacity $23/33$ are represented as exact rationals and evaluated with 512-bit square roots.
+
+\subsection{Isometry of the split}
+
+For an input state $|\psi\rangle = \sum_i r_i |i\rangle$ with $\sum_i |r_i|^2 = 1$, the active and dark components are
+%
+\begin{align}
+|\psi_{\rm active}\rangle &= \sqrt{\frac{10}{33}} \sum_i r_i |i\rangle_{\rm active}, \\
+|\psi_{\rm dark}\rangle &= \sqrt{\frac{23}{33}} \sum_i r_i |i\rangle_{\rm dark}.
+\end{align}
+%
+The total squared norm is therefore
+%
+\begin{equation}
+\|\,|\psi_{\rm active}\rangle\|^2 + \|\,|\psi_{\rm dark}\rangle\|^2
+= \frac{10}{33} + \frac{23}{33} = 1,
+\end{equation}
+%
+so $V_{\rm unified}$ preserves probability.  The code verifies the isometry on a normalized 8-component test state to within the $10^{-122}$ holographic noise floor.
+
+\subsection{Derivation of the dark-ledger ratio from the \texorpdfstring{$(26,8,312)$}{(26,8,312)} lattice}
+
+The canonical branch $(SU(2)_{26},SU(3)_8,K=312)$ fixes the dimensions of the local boundary register.  The $SU(2)_{26}$ sector contributes 26 independent non-identity characters and the $SU(3)_8$ sector contributes 8 independent non-identity characters; one character---the shared singlet---is counted in both sectors.  The local Hilbert-space block therefore contains
+%
+\begin{equation}
+N_{\rm local} = 26 + 8 - 1 = 33
+\end{equation}
+%
+independent characters.
+
+The active visible residual consists of the $SU(3)$ triplet (3 states) fused with the eight $SU(3)_8$ affine levels, again removing the shared singlet:
+%
+\begin{equation}
+N_{\rm active} = 3 + 8 - 1 = 10.
+\end{equation}
+%
+The completed dark ledger is what remains of the $SU(2)_{26}$ sector after the $SU(3)$ triplet has been stripped:
+%
+\begin{equation}
+N_{\rm dark} = 26 - 3 = 23.
+\end{equation}
+%
+Thus the Stinespring capacity fractions are
+%
+\begin{equation}
+\label{eq:eta-d-derivation}
+\eta_A = \frac{N_{\rm active}}{N_{\rm local}} = \frac{10}{33},
+\qquad
+\eta_D = \frac{N_{\rm dark}}{N_{\rm local}} = \frac{23}{33}.
+\end{equation}
+%
+The kernel dimension $K=312$ sets the total register size as $312 = 12 \times 26$, i.e.~12 independent $SU(2)_{26}$ blocks; the rational capacities in Eq.~\eqref{eq:eta-d-derivation} are inherited by each block and tracked at 512-bit precision.
 
 \section{Non-local communication and temporal stasis}
 
@@ -134,7 +194,24 @@ The total thermodynamic arrow $dS_{\rm total}/dt_{\rm lc}$ remains positive for 
 
 \section{Hardware-in-the-loop safety}
 
+\subsection{Dual-target HIL monitor}
+
 The HIL monitor samples two registers simultaneously: the Stasis Control Register $C_{\rm get}$ and the Mass-Congestion Register $N_{\rm local}/N_{\rm limit}$.  The eigenvector rigidity detuning $|\mu_{\rm local} - \mu_0|$ is kept below $10^{-12}$.  If detuning enters the $0.5 \times 10^{-12}$ correction band, a Solovay-Kitaev sequence is applied; if it reaches the fatal threshold, the monitor returns \texttt{STATUS\_EMERGENCY\_SHUTDOWN} and all bias currents are shunted in fewer than $2.5$~ns.  The simulator reports an emergency shunt latency of $\ExoticShuntLatencyNs{}$~ns, well below the limit.
+
+\subsection{Gate-cycle shunt physics}
+
+The $142.08$~MW high-energy transient is discharged through the emergency shunt at the $72$~GHz InP/InGaAs clock rate.  The shunt latency is simulated at the gate-cycle level; the number of available cycles is
+%
+\begin{equation}
+N_{\rm cycles} = \lfloor f_{\max} \, \tau_{\max} \rfloor
+= \lfloor (72\,\mathrm{GHz})(2.5\,\mathrm{ns}) \rfloor = \ExoticShuntCycles{}.
+\end{equation}
+%
+At each cycle the dual-target monitor re-samples the Stasis and Mass-Congestion registers; the moment the rigidity detuning crosses $10^{-12}$ the shunt completes.  The thermal audit gives a temperature rise of $\ExoticTemperatureRiseK{}$~K, so the dilution refrigerator does not quench; the gate-cycle and thermal audits report \ExoticShuntStatus{} and \ExoticThermalStatus{}, respectively.
+
+\subsection{Coordinate perturbation sweep}
+
+During active stasis modulation the local coordinates $(\mu_{\rm local}, N_{\rm local}, C_{\rm get})$ are swept around their canonical values.  The Python \texttt{CoordinatePerturbationSweep} drives the Rust \texttt{SafetyMonitor} through the PyO3 FFI and verifies that all sub-threshold perturbations ($|\delta\mu| < 10^{-12}$, etc.) return \texttt{STATUS\_NOMINAL\_PASS}, while supra-threshold excursions trigger the emergency shutdown within the $2.5$~ns budget.  The worst sub-threshold detuning observed is $\ExoticWorstDetuning{}$, and the sweep reports \ExoticRigiditySweepStatus{}.
 
 Table~\ref{tab:hil} lists the HIL safety thresholds.
 %
@@ -150,6 +227,8 @@ Eigenvector rigidity & $10^{-12}$ \\
 Phase jitter & $\ExoticPhaseJitterRad{}$~rad \\
 Baseline temperature & $\ExoticBaselineTempK{}$~K \\
 Emergency shunt latency & $< 2.5$~ns \\
+Gate cycles at $72$~GHz & $\ExoticShuntCycles{}$ \\
+Temperature rise & $\ExoticTemperatureRiseK{}$~K \\
 \hline
 \end{tabular}
 \end{table}
