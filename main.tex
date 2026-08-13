@@ -1,7 +1,9 @@
-\documentclass[aps,pra,10pt,twocolumn,superscriptaddress,nofootinbib,longbibliography]{revtex4-2}
+\documentclass[aps,pra,10pt,twocolumn,superscriptaddress,nofootinbib,longbibliography,floatfix]{revtex4-2}
 
 \hbadness=10000
 \vbadness=10000
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\floatpagefraction}{0.25}
 
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{graphicx}
@@ -51,6 +53,11 @@
   \newcommand{\ExoticDebyeHeatCapacityJK}{1.0000e-03}%
   \newcommand{\ExoticRigiditySweepStatus}{\texttt{STATUS\_NOMINAL\_PASS}}%
   \newcommand{\ExoticWorstDetuning}{9.9000e-13}%
+  \newcommand{\ExoticILStar}{6.0000}%
+  \newcommand{\ExoticIQStar}{13.0000}%
+  \newcommand{\ExoticEntropyArrow}{2.8400e-03}%
+  \newcommand{\ExoticClosureChainHolds}{true}%
+  \newcommand{\ExoticEntropyArrowPositive}{true}%
 }
 
 \begin{document}
@@ -69,6 +76,7 @@ Static Holographic Boundary Theory (SHBT) treats bulk geometry as a rendered ima
 %
 \begin{equation}
 \text{Modular Invariance} \;\Longleftrightarrow\; \Delta_{\rm fr}=0 \;\Longleftrightarrow\; E_{\mu\nu}=0
+\label{eq:closure}
 \end{equation}
 %
 acts as a consistency constraint on every protocol.  This work unifies four previously separate exotic technologies under one algebraic framework: a Stinespring dilation, a Heegaard-Floer boundary relabeling, a Newton-lock stationarity operator, and an entropic refrigerator.
@@ -258,6 +266,50 @@ P_{\rm debt} = \frac{M_{\rm seed}}{M_{\odot}} \, 906\,\text{GW} ,
 
 The Schwarzschild-like signature projected into the bulk is proportional to the same overflow; the seed mass therefore encodes the curvature perturbation through the holographic stress-energy tensor while the passive stress-energy remains invariant under the isometric split in Eq.~\eqref{eq:v_unified}.
 
+\section{Operational benchmarks}
+
+Table~\ref{tab:benchmarks} summarizes the live simulator benchmarks.
+%
+\begin{table*}[!t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{1.5pt}
+\caption{Live operational benchmarks.  Left: algebraic, thermodynamic, and mass-congestion sectors.  Right: HIL, closure-chain, and hardware sectors.}
+\label{tab:benchmarks}\label{tab:benchmarks2}
+\begin{tabular}{p{1.9cm}p{2.3cm}p{2.6cm}|p{1.9cm}p{2.3cm}p{2.6cm}}
+\hline
+Quantity & Target & Measured & Quantity & Target & Measured \\
+\hline
+Stinespring isometry & $\Delta$ norm $< 10^{-122}$ & \ExoticStinespringIsometric{} & Framing defect (canonical) & $0.0$ & \ExoticCanonicalFramingDefect{} \\
+Stinespring partition & $33,10,23$ & \ExoticNLocal{}, \ExoticNActive{}, \ExoticNDark{} & Framing defect (active) & $< 10^{-12}$ & \ExoticFramingDefect{} \\
+Stinespring capacities & $10/33$, $23/33$ & \ExoticEtaA{}, \ExoticEtaD{} & Completed levels & $6$, $13$ & \ExoticILStar{}, \ExoticIQStar{} \\
+Mass-congestion coefficient & $1.326\times10^{-51}$ & $\ExoticAlphaSeed{} \, M_\odot$/bit & Entropy arrow & $>0$ & \ExoticEntropyArrow{} W/K \\
+Newton-lock $\gamma_{\rm stasis}$ & $>1$ at $10^{-15}$ & \ExoticStasisGamma{} & Closure chain holds & \texttt{true} & \ExoticClosureChainHolds{} \\
+Ghost-seed mass & $\approx 1\,M_\odot$ & \ExoticGhostMassSun{}\,$M_\odot$ & HIL status & SNP & \ExoticHilStatus{} \\
+Entropy-debt power & $\approx 906$~GW & \ExoticEntropyDebtPower{}~W & Hardware clock & $\le 72$~GHz & \ExoticFmaxHz{}~Hz \\
+High-energy transient & $142.08$~MW & \ExoticHighEnergyTransient{}~W & Routing bandwidth & $\le 40$~Gb/s & \ExoticRoutingBandwidthBps{}~bit/s \\
+Cooling power & $14.2$~$\mu$W & \ExoticCoolingPower{}~W & Hardware status & SNP & \ExoticHardwareStatus{} \\
+\hline
+\end{tabular}
+\end{table*}
+
+\noindent
+\begin{minipage}[t]{0.48\columnwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/temporal_dilation_vs_entropy_cost.pdf}
+\refstepcounter{figure}\label{fig:dilation}
+{\small\textbf{Fig.~\thefigure.} Newton-lock temporal dilation factor $\gamma_{\rm stasis}$ versus GET cost $C_{\rm get}$. The dashed vertical line marks the cosmic Landauer bound $C_{\rm get}^{(0)}$.}
+\end{minipage}%
+\hfill
+\begin{minipage}[t]{0.48\columnwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/seed_mass_vs_bit_overflow.pdf}
+\refstepcounter{figure}\label{fig:seed}
+{\small\textbf{Fig.~\thefigure.} Artificial ghost-seed mass as a function of bit overflow $\Delta N = N_{\rm local} - N_{\rm limit}$.}
+\end{minipage}
+
+Figures~\ref{fig:dilation} and \ref{fig:seed} show the relationships encoded in Eqs.~\eqref{eq:newton_lock} and the mass-congestion identity, respectively.
+
 \section{Entropic refrigeration and the thermodynamic arrow}
 
 The refrigerator strips active gauge charges into the dark ledger.  The cooling power is
@@ -318,6 +370,31 @@ The niobium superconducting transition temperature $T_c = 9.3$~K is the hard que
 
 During active stasis modulation the local coordinates $(\mu_{\rm local}, N_{\rm local}, C_{\rm get})$ are swept around their canonical values.  The Python \texttt{CoordinatePerturbationSweep} drives the Rust \texttt{SafetyMonitor} through the PyO3 FFI and verifies that all sub-threshold perturbations ($|\delta\mu| < 10^{-12}$, etc.) return \texttt{STATUS\_NOMINAL\_PASS}, while supra-threshold excursions trigger the emergency shutdown within the $2.5$~ns budget.  The worst sub-threshold detuning observed is $\ExoticWorstDetuning{}$, and the sweep reports \ExoticRigiditySweepStatus{}.
 
+\subsection{Integrated 512-bit closure-chain audit}
+
+The completed levels of the $(26,8,312)$ branch are
+%
+\begin{align}
+I_\ell^\star &= \frac{K}{2k_\ell} = \frac{312}{2\cdot 26} = \ExoticILStar{}, \\
+I_q^\star &= \frac{K}{3k_q} = \frac{312}{3\cdot 8} = \ExoticIQStar{}.
+\label{eq:istar}
+\end{align}
+%
+The scalar framing defect is therefore
+%
+\begin{equation}
+\Delta_{\rm fr} = I_q^\star - 2I_\ell^\star - 1 = \ExoticFramingDefect{} ,
+\label{eq:delta_fr}
+\end{equation}
+%
+so the closure chain \eqref{eq:closure} is satisfied: \ExoticClosureChainHolds{}.  The global thermodynamic arrow is
+%
+\begin{equation}
+\frac{dS_{\rm total}}{dt_{\rm lc}} = \Gamma_{\rm de} k_B \ln 2 + \frac{P_{\rm cool}}{T_c} = \ExoticEntropyArrow{} \;\mathrm{K}^{-1}\mathrm{W},
+\end{equation}
+%
+which is strictly positive (\ExoticEntropyArrowPositive{}).  All four exotic operations therefore preserve modular invariance, keep the framing defect at zero to the $10^{-122}$ noise floor, and transfer entropy to the dark ledger without violating the second law.
+
 Table~\ref{tab:hil} lists the HIL safety thresholds.
 %
 \begin{table}[htbp]
@@ -337,53 +414,6 @@ Temperature rise & $\ExoticTemperatureRiseK{}$~K \\
 \hline
 \end{tabular}
 \end{table}
-
-\section{Operational benchmarks}
-
-Table~\ref{tab:benchmarks} summarizes the live simulator benchmarks.
-%
-\begin{table*}[htbp]
-\centering
-\caption{Operational benchmarks generated by the unified simulator.}
-\label{tab:benchmarks}
-\begin{tabular}{lcc}
-\hline
-Quantity & Target & Measured \\
-\hline
-Stinespring isometry & $\Delta$ norm $< 10^{-122}$ & \ExoticStinespringIsometric{} \\
-Stinespring partition & $N_{\rm local},N_{\rm active},N_{\rm dark}=33,10,23$ & \ExoticNLocal{}, \ExoticNActive{}, \ExoticNDark{} \\
-Stinespring capacities & $\eta_A=10/33$, $\eta_D=23/33$ & \ExoticEtaA{}, \ExoticEtaD{} \\
-Mass-congestion coefficient & $1.325812080894556\times10^{-51}$ & $\ExoticAlphaSeed{} \, M_\odot$/bit \\
-Newton-lock $\gamma_{\rm stasis}$ & $>1$ at $\delta\mu=10^{-15}$ & \ExoticStasisGamma{} \\
-Ghost-seed mass & $\approx 1\,M_\odot$ & \ExoticGhostMassSun{}\,$M_\odot$ \\
-Entropy-debt power & $\approx 906$~GW & \ExoticEntropyDebtPower{}~W \\
-High-energy transient & $142.08$~MW & \ExoticHighEnergyTransient{}~W \\
-Cooling power & $14.2$~$\mu$W & \ExoticCoolingPower{}~W \\
-Framing defect $\Delta_{\rm fr}$ (canonical) & $0.0$ & \ExoticCanonicalFramingDefect{} \\
-Framing defect (active) & $< 10^{-12}$ & \ExoticFramingDefect{} \\
-HIL status & \texttt{STATUS\_NOMINAL\_PASS} & \ExoticHilStatus{} \\
-Hardware clock & $\le 72$~GHz & \ExoticFmaxHz{}~Hz \\
-Routing bandwidth & $\le 40$~Gb/s & \ExoticRoutingBandwidthBps{}~bit/s \\
-Hardware status & \texttt{STATUS\_NOMINAL\_PASS} & \ExoticHardwareStatus{} \\
-\hline
-\end{tabular}
-\end{table*}
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.48\textwidth]{figures/temporal_dilation_vs_entropy_cost.pdf}
-\caption{Newton-lock temporal dilation factor $\gamma_{\rm stasis}$ versus GET cost $C_{\rm get}$.  The dashed vertical line marks the cosmic Landauer bound $C_{\rm get}^{(0)}$.}
-\label{fig:dilation}
-\end{figure}
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.48\textwidth]{figures/seed_mass_vs_bit_overflow.pdf}
-\caption{Artificial ghost-seed mass as a function of bit overflow $\Delta N = N_{\rm local} - N_{\rm limit}$.}
-\label{fig:seed}
-\end{figure}
-
-Figures~\ref{fig:dilation} and \ref{fig:seed} show the relationships encoded in Eqs.~\eqref{eq:newton_lock} and the mass-congestion identity, respectively.
 
 \section{Conclusion}
 

@@ -1,6 +1,7 @@
 """Command-line interface for the shbt-exotic unified simulator."""
 
 import argparse
+import math
 import sys
 
 from shbt_exotic import (
@@ -84,6 +85,31 @@ def run_audit(args: argparse.Namespace) -> int:
     )
     sweep_ok, worst_detuning = sweep.verify_rigidity_limit()
 
+    # 10. Integrated 512-bit closure-chain audit
+    i_l_star = hil.i_l_star()
+    i_q_star = hil.i_q_star()
+    closure_chain_holds = framing_defect == 0.0
+    KB = 1.380_649e-23
+    dS_total_dt = gamma_de * KB * math.log(2) + p_cool / t_c
+    entropy_arrow_positive = dS_total_dt > 0.0
+
+    # Cartesian rigidity grid: every sub-10^{-12} mu perturbation stays inside the
+    # safe region (NOMINAL or CORRECTION_APPLIED); every supra-threshold mu
+    # perturbation triggers an emergency shutdown.
+    grid_sweep = CoordinatePerturbationSweep(mu0=1.0, n_limit=n_limit, c_get_bound=c_get)
+    grid_ok = True
+    for amp in [0.0, 1e-15, 5e-13, 9e-13, 9.9e-13, 1e-12, 2e-12, 1e-11]:
+        res = grid_sweep.sweep_mu([amp])[0]
+        if abs(amp) < 1.0e-12:
+            within_threshold = res.status in (
+                "STATUS_NOMINAL_PASS",
+                "STATUS_CORRECTION_APPLIED",
+            )
+        else:
+            within_threshold = res.status == "STATUS_EMERGENCY_SHUTDOWN"
+        if not within_threshold:
+            grid_ok = False
+
     print("SHBT Exotic Technologies — Unified Audit")
     print("=" * 50)
     print(f"Kernel (SU(2), SU(3), K): {engine.kernel}")
@@ -112,6 +138,15 @@ def run_audit(args: argparse.Namespace) -> int:
     print(f"Hardware status:           {hw_status}")
     print(f"Rigidity sweep OK:         {sweep_ok}")
     print(f"Worst sub-threshold detuning: {worst_detuning:.6e}")
+    print("-" * 50)
+    print("512-bit closure-chain audit")
+    print(f"I_l^*:                     {i_l_star:.6f}")
+    print(f"I_q^*:                     {i_q_star:.6f}")
+    print(f"Framing defect Δ_fr:       {framing_defect:.6e}")
+    print(f"Closure chain holds:       {closure_chain_holds}")
+    print(f"dS_total/dt_lc (W/K):      {dS_total_dt:.6e}")
+    print(f"Entropy arrow positive:    {entropy_arrow_positive}")
+    print(f"Cartesian rigidity grid OK: {grid_ok}")
 
     all_ok = (
         nominal
@@ -120,6 +155,9 @@ def run_audit(args: argparse.Namespace) -> int:
         and hil_thermal.is_nominal()
         and hw_status == "STATUS_NOMINAL_PASS"
         and sweep_ok
+        and closure_chain_holds
+        and entropy_arrow_positive
+        and grid_ok
     )
     return 0 if all_ok else 1
 

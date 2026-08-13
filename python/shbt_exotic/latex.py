@@ -107,6 +107,14 @@ def generate_results_tex(out_path: str | Path = "exotic_results.tex") -> Path:
     sweep_ok, worst_detuning = sweep.verify_rigidity_limit()
     rigidity_status = "STATUS_NOMINAL_PASS" if sweep_ok else "STATUS_EMERGENCY_SHUTDOWN"
 
+    # 512-bit closure-chain audit
+    i_l_star = hil.i_l_star()
+    i_q_star = hil.i_q_star()
+    kb = 1.380_649e-23
+    entropy_arrow = gamma_de * kb * math.log(2) + p_cool / t_c
+    closure_chain_holds = framing_defect == 0.0
+    entropy_arrow_positive = entropy_arrow > 0.0
+
     lines = [
         "% Auto-generated macros from shbt-exotic unified audit.",
         f"\\newcommand{{\\ExoticKernel}}{{{engine.kernel[0]}, {engine.kernel[1]}, {engine.kernel[2]}}}",
@@ -151,6 +159,11 @@ def generate_results_tex(out_path: str | Path = "exotic_results.tex") -> Path:
         f"\\newcommand{{\\ExoticDebyeHeatCapacityJK}}{{{format_scientific(debye_heat_capacity_j_per_k)}}}",
         f"\\newcommand{{\\ExoticRigiditySweepStatus}}{{\\texttt{{{escape_underscores(rigidity_status)}}}}}",
         f"\\newcommand{{\\ExoticWorstDetuning}}{{{format_scientific(worst_detuning)}}}",
+        f"\\newcommand{{\\ExoticILStar}}{{{format_scientific(i_l_star)}}}",
+        f"\\newcommand{{\\ExoticIQStar}}{{{format_scientific(i_q_star)}}}",
+        f"\\newcommand{{\\ExoticEntropyArrow}}{{{format_scientific(entropy_arrow)}}}",
+        f"\\newcommand{{\\ExoticClosureChainHolds}}{{{str(closure_chain_holds).lower()}}}",
+        f"\\newcommand{{\\ExoticEntropyArrowPositive}}{{{str(entropy_arrow_positive).lower()}}}",
     ]
 
     out_path.write_text("\n".join(lines) + "\n")
