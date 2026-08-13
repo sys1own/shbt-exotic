@@ -3,6 +3,13 @@ import math
 import pytest
 
 from shbt_exotic import (
+    MassCongestionEngine,
+    FibonacciBraidCompiler,
+    CalibrationEngine,
+    ReliabilityAuditor,
+    GdsiiMaskExporter,
+    StepSolidModel,
+    AnomalyClosureError,
     AcousticImpedanceEngine,
     CoordinatePerturbationSweep,
     EntropicRefrigerator,
@@ -276,6 +283,175 @@ def test_coordinate_perturbation_sweep_safety_zone():
     )
     assert zone["total"] == 6
     assert zone["nominal"] >= 1
+
+
+def test_mass_congestion_engine_interference_tensor():
+    engine = MassCongestionEngine()
+    i = engine.interference_tensor_f64()
+    assert len(i) == 4 and all(len(row) == 4 for row in i)
+    assert i[0][0] > 0.0
+    assert i[1][1] < 0.0
+    assert i[2][2] > 0.0
+    assert i[3][3] < 0.0
+
+
+def test_mass_congestion_engine_bit_congestion_radius():
+    engine = MassCongestionEngine()
+    assert engine.bit_congestion_radius_m() == pytest.approx(2.954e15, rel=1e-12)
+
+
+def test_mass_congestion_engine_linearized_metric():
+    engine = MassCongestionEngine()
+    g = engine.linearized_metric_with_interference([(1.0e65 + 4e52, 1.0e65)])
+    assert len(g) == 4
+    for mu in range(4):
+        assert g[mu][mu] != 0.0
+
+
+def test_multi_seed_overlap_triggers_anomaly_closure_error():
+    from shbt_exotic.sweep import CoordinatePerturbationSweep
+    sweep = CoordinatePerturbationSweep(mu0=1.0, n_limit=1.0e65, c_get_bound=5.34e-175)
+    # Two seeds, each contributing 6e-13, sum to 1.2e-12 > 1e-12.
+    status, _, triggered = sweep.sweep_multi_seed_overlap([6e52, 6e52])
+    assert triggered is True
+    assert "AnomalyClosureError" in status
+
+
+def test_multi_seed_overlap_passes_below_threshold():
+    from shbt_exotic.sweep import CoordinatePerturbationSweep
+    sweep = CoordinatePerturbationSweep(mu0=1.0, n_limit=1.0e65, c_get_bound=5.34e-175)
+    # Two seeds, each contributing 4e-13, sum to 8e-13 < 1e-12.
+    status, total_delta, triggered = sweep.sweep_multi_seed_overlap([4e52, 4e52])
+    assert triggered is False
+    assert status == "STATUS_NOMINAL_PASS"
+    assert total_delta == pytest.approx(8e-13, rel=1e-6)
+
+
+def test_fibonacci_braid_compiler_beta_sequence():
+    compiler = FibonacciBraidCompiler()
+    beta = compiler.beta_sequence()
+    # Primitive expansion: sigma2^{-2} becomes two sigma2^{-1} factors.
+    assert len(beta) == 7
+    assert beta[0] == "sigma1^2"
+    assert beta[1] == "sigma2^-1"
+    assert beta[2] == "sigma2^-1"
+
+
+def test_fibonacci_braid_sk_nine_gates():
+    compiler = FibonacciBraidCompiler()
+    assert compiler.gate_count(9) == 124
+
+
+def test_fibonacci_braid_sk_nine_error():
+    compiler = FibonacciBraidCompiler()
+    err = compiler.approximation_error(9)
+    assert err <= 1.5e-10
+
+
+def test_fibonacci_braid_openqasm():
+    compiler = FibonacciBraidCompiler()
+    qasm = compiler.compile_openqasm(9, 0)
+    assert qasm.startswith("OPENQASM 2.0")
+    assert "u3(" in qasm
+    assert qasm.count("u3(") == 124
+    assert "sigma1" in qasm
+    assert "sigma2" in qasm
+
+
+def test_fibonacci_braid_target_unitary_weights():
+    compiler = FibonacciBraidCompiler()
+    u = compiler.target_unitary()
+    c = (10.0 / 33.0) ** 0.5
+    s = (23.0 / 33.0) ** 0.5
+    assert u[0][0] == pytest.approx((c, 0.0), abs=1e-12)
+    assert u[0][1] == pytest.approx((-s, 0.0), abs=1e-12)
+    assert u[1][0] == pytest.approx((s, 0.0), abs=1e-12)
+    assert u[1][1] == pytest.approx((c, 0.0), abs=1e-12)
+
+
+def test_calibration_waveform_base_and_frequency():
+    engine = CalibrationEngine()
+    assert engine.calibration_waveform(0.0, 0.0) == pytest.approx(3.3, abs=1e-9)
+    period = 1.0 / 10.0e6
+    v0 = engine.calibration_waveform(0.0, 0.0)
+    v1 = engine.calibration_waveform(period, 0.0)
+    assert v0 == pytest.approx(v1, abs=1e-9)
+
+
+def test_calibration_pid_gains():
+    engine = CalibrationEngine()
+    assert engine.pid_gains() == (1.85, 9.12e3, 3.45e-7)
+
+
+def test_calibration_pid_nominal_for_small_jitter():
+    engine = CalibrationEngine()
+    bias, corrected, status = engine.step(1.0e-6, 4.0e-5)
+    assert status == "STATUS_NOMINAL_PASS"
+    assert corrected <= 5.05e-5
+    assert corrected >= -5.05e-5
+    assert bias == pytest.approx(3.3, abs=0.01)
+
+
+def test_calibration_pid_shutdown_for_excessive_jitter():
+    engine = CalibrationEngine()
+    _, corrected, status = engine.step(1.0e-6, 10.0)
+    assert status == "STATUS_EMERGENCY_SHUTDOWN"
+    assert abs(corrected) > 5.05e-5
+
+
+def test_reliability_lifetime_budget():
+    rel = ReliabilityAuditor()
+    eps, swing, n_f, lifetime = rel.coffin_manson_constants()
+    assert eps == pytest.approx(6.0e-6, abs=1e-12)
+    assert swing == pytest.approx(15.0, abs=1e-9)
+    assert n_f == pytest.approx(4.0e6, abs=1.0)
+    assert lifetime == pytest.approx(1.514e16, rel=1e-9)
+
+
+def test_reliability_nominal_within_lifetime():
+    rel = ReliabilityAuditor()
+    rel.accumulate_bits(1.514e16 / 2.0)
+    status, nominal, remaining, consumed, impedance = rel.audit()
+    assert status == "STATUS_NOMINAL_PASS"
+    assert nominal
+    assert remaining == pytest.approx(1.514e16 / 2.0, rel=1e-9)
+    assert consumed == pytest.approx(2.0e6, rel=1e-6)
+    assert impedance == pytest.approx(1.3250, abs=1e-9)
+
+
+def test_reliability_quench_warning_after_exceeding_lifetime():
+    rel = ReliabilityAuditor()
+    rel.accumulate_bits(1.514e16 * 1.01)
+    status, nominal, remaining, consumed, impedance = rel.audit()
+    assert status == "STATUS_QUENCH_WARNING"
+    assert not nominal
+    assert remaining == 0.0
+    assert impedance == pytest.approx(1.3250, abs=1e-9)
+
+
+def test_gdsii_mask_export(tmp_path):
+    exporter = GdsiiMaskExporter()
+    path = tmp_path / "shbt_array.gds"
+    exporter.export_array(str(path))
+    data = path.read_bytes()
+    assert data[:6] == bytes([0x00, 0x06, 0x00, 0x02, 0x02, 0x58])
+    assert len(data) > 1000
+
+
+def test_step_waveguide_export(tmp_path):
+    model = StepSolidModel()
+    path = tmp_path / "waveguide.step"
+    model.export_waveguide(str(path), 350e-6, 5e-6, 1.5e-6)
+    text = path.read_text()
+    assert text.startswith("ISO-10303-21;")
+    assert "MANIFOLD_SOLID_BREP" in text
+    assert "CLOSED_SHELL" in text
+    assert "ADVANCED_FACE" in text
+
+
+def test_step_nominal_impedance():
+    model = StepSolidModel()
+    assert model.nominal_impedance_mrayl() == pytest.approx(1.1512, abs=1e-9)
 
 
 if __name__ == "__main__":

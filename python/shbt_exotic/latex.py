@@ -9,11 +9,13 @@ from shbt_exotic import (
     EntropicRefrigerator,
     ExoticEngine,
     ExportPhaseModulationTable,
+    FibonacciBraidCompiler,
     GhostSeedSynthesizer,
     HardwareSynthesisAuditor,
     HeegaardFloerRelabeling,
     HeegaardMappingTorus,
     HilSafetyMonitor,
+    MassCongestionEngine,
     NewtonLockStasis,
     SafetyMonitor,
     ThermalFluxReport,
@@ -112,6 +114,15 @@ def generate_results_tex(out_path: str | Path = "exotic_results.tex") -> Path:
     safety_zone_total = zone["total"]
     safety_zone_nominal = zone["nominal"]
 
+    # Multi-seed interference and metric superposition
+    mass_engine = MassCongestionEngine()
+    congestion_radius_m = mass_engine.bit_congestion_radius_m()
+    i00, i11, i22, i33 = mass_engine.interference_coefficients()
+    g_metric = mass_engine.linearized_metric_with_interference([(n_local, n_limit)])
+    g00 = g_metric[0][0]
+    g11 = g_metric[1][1]
+    multi_seed_overlap_status, _, overlap_triggered = sweep.sweep_multi_seed_overlap([6e52, 6e52])
+
     # RF phase-modulation table (8x8 SHBT array)
     phase_exporter = ExportPhaseModulationTable()
     h_phase = [[(i + 1.0) / (j + 2.0) for j in range(8)] for i in range(8)]
@@ -128,6 +139,12 @@ def generate_results_tex(out_path: str | Path = "exotic_results.tex") -> Path:
     kapitza_unengineered = flux.kapitza_delta_t_unengineered_k
     kapitza_matched = flux.kapitza_delta_t_matched_k
     kapitza_justified = flux.acoustic_matching_justified
+
+    # Fibonacci anyon braid compiler
+    braid = FibonacciBraidCompiler()
+    braid_depth = 9
+    braid_gate_count = braid.gate_count(braid_depth)
+    braid_approx_error = braid.approximation_error(braid_depth)
 
     # 512-bit closure-chain audit
     i_l_star = hil.i_l_star()
@@ -199,6 +216,15 @@ def generate_results_tex(out_path: str | Path = "exotic_results.tex") -> Path:
         f"\\newcommand{{\\ExoticKapitzaJustified}}{{{str(kapitza_justified).lower()}}}",
         f"\\newcommand{{\\ExoticSafetyZoneTotal}}{{{safety_zone_total}}}",
         f"\\newcommand{{\\ExoticSafetyZoneNominal}}{{{safety_zone_nominal}}}",
+        f"\\newcommand{{\\ExoticBitCongestionRadius}}{{{format_scientific(congestion_radius_m)}}}",
+        f"\\newcommand{{\\ExoticInterferenceZeroZero}}{{{i00}}}",
+        f"\\newcommand{{\\ExoticInterferenceOneOne}}{{{i11}}}",
+        f"\\newcommand{{\\ExoticInterferenceTwoTwo}}{{{i22}}}",
+        f"\\newcommand{{\\ExoticInterferenceThreeThree}}{{{i33}}}",
+        f"\\newcommand{{\\ExoticMultiSeedOverlapTriggered}}{{{str(overlap_triggered).lower()}}}",
+        f"\\newcommand{{\\ExoticBraidDepth}}{{{braid_depth}}}",
+        f"\\newcommand{{\\ExoticBraidGateCount}}{{{braid_gate_count}}}",
+        f"\\newcommand{{\\ExoticBraidApproxError}}{{{format_scientific(braid_approx_error)}}}",
     ]
 
     out_path.write_text("\n".join(lines) + "\n")

@@ -25,6 +25,11 @@ pub mod refrigeration;
 pub mod shbt;
 pub mod stinespring;
 pub mod thermal_flux;
+pub mod mass_congestion_engine;
+pub mod anyon_braid;
+pub mod calibration;
+pub mod reliability;
+pub mod cad_export;
 
 pub use constants::*;
 pub use shbt::communication::*;
@@ -43,6 +48,11 @@ pub use phase_table::*;
 pub use refrigeration::*;
 pub use thermal_flux::*;
 pub use stinespring::*;
+pub use mass_congestion_engine::*;
+pub use anyon_braid::*;
+pub use calibration::*;
+pub use reliability::*;
+pub use cad_export::*;
 
 use pyo3::prelude::*;
 
@@ -67,6 +77,12 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<phase_table::PhaseCommand>()?;
     m.add_class::<thermal_flux::ThermalFluxReport>()?;
     m.add_class::<thermal_flux::ThermalFluxCell>()?;
+    m.add_class::<mass_congestion_engine::MassCongestionEngine>()?;
+    m.add_class::<anyon_braid::FibonacciBraidCompiler>()?;
+    m.add_class::<calibration::CalibrationEngine>()?;
+    m.add_class::<reliability::ReliabilityAuditor>()?;
+    m.add_class::<cad_export::GdsiiMaskExporter>()?;
+    m.add_class::<cad_export::StepSolidModel>()?;
     m.add("AnomalyClosureError", m.py().get_type::<error::AnomalyClosureError>())?;
     Ok(())
 }

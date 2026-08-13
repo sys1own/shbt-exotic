@@ -5,9 +5,14 @@ import math
 import sys
 
 from shbt_exotic import (
+    CalibrationEngine,
     CoordinatePerturbationSweep,
+    ReliabilityAuditor,
+    GdsiiMaskExporter,
+    StepSolidModel,
     EntropicRefrigerator,
     ExoticEngine,
+    FibonacciBraidCompiler,
     GhostSeedSynthesizer,
     HardwareSynthesisAuditor,
     HeegaardFloerRelabeling,
@@ -110,6 +115,25 @@ def run_audit(args: argparse.Namespace) -> int:
         if not within_threshold:
             grid_ok = False
 
+    # 11. Closed-loop InP/InGaAs calibration check
+    cal = CalibrationEngine()
+    _, _, cal_nominal_status = cal.step(1.0e-6, 4.0e-5)
+    cal.reset()
+    _, _, cal_shutdown_status = cal.step(1.0e-6, 10.0)
+    calibration_ok = (
+        cal_nominal_status == "STATUS_NOMINAL_PASS"
+        and cal_shutdown_status == "STATUS_EMERGENCY_SHUTDOWN"
+    )
+
+    # 12. Thermal-fatigue reliability audit
+    rel = ReliabilityAuditor()
+    rel.accumulate_bits(1.514e16 / 2.0)
+    rel_status, rel_nominal, rel_remaining, rel_consumed, rel_impedance = rel.audit()
+    rel_exhausted = ReliabilityAuditor()
+    rel_exhausted.accumulate_bits(1.514e16 * 1.01)
+    rel_warn_status, _, _, _, _ = rel_exhausted.audit()
+    reliability_ok = rel_nominal and rel_warn_status == "STATUS_QUENCH_WARNING"
+
     print("SHBT Exotic Technologies — Unified Audit")
     print("=" * 50)
     print(f"Kernel (SU(2), SU(3), K): {engine.kernel}")
@@ -138,6 +162,13 @@ def run_audit(args: argparse.Namespace) -> int:
     print(f"Hardware status:           {hw_status}")
     print(f"Rigidity sweep OK:         {sweep_ok}")
     print(f"Worst sub-threshold detuning: {worst_detuning:.6e}")
+    print(f"Calibration nominal:       {cal_nominal_status}")
+    print(f"Calibration over-range:    {cal_shutdown_status}")
+    print(f"Reliability status:        {rel_status}")
+    print(f"Reliability remaining:     {rel_remaining:.6e} bits")
+    print(f"Reliability consumed:      {rel_consumed:.6e} cycles")
+    print(f"Fatigue shifted Z:         {rel_impedance:.4f} MRayl")
+    print(f"Reliability warn status:   {rel_warn_status}")
     print("-" * 50)
     print("512-bit closure-chain audit")
     print(f"I_l^*:                     {i_l_star:.6f}")
@@ -158,8 +189,37 @@ def run_audit(args: argparse.Namespace) -> int:
         and closure_chain_holds
         and entropy_arrow_positive
         and grid_ok
+        and calibration_ok
+        and reliability_ok
     )
     return 0 if all_ok else 1
+
+
+def run_braid_compiler(args: argparse.Namespace) -> int:
+    compiler = FibonacciBraidCompiler()
+    n = args.braid_depth
+    if args.braid_info:
+        print(f"Braid gate count (n={n}): {compiler.gate_count(n)}")
+        print(f"Approximation error: {compiler.approximation_error(n):.6e}")
+        return 0
+    qasm = compiler.compile_openqasm(n, args.braid_qubit)
+    print(qasm, end="")
+    return 0
+
+
+def run_cad_export(args: argparse.Namespace) -> int:
+    if args.export_gds:
+        GdsiiMaskExporter().export_array(args.export_gds)
+        print(f"GDSII mask written to {args.export_gds}")
+    if args.export_step:
+        StepSolidModel().export_waveguide(
+            args.export_step,
+            args.step_length,
+            args.step_width,
+            args.step_height,
+        )
+        print(f"STEP B-Rep written to {args.export_step}")
+    return 0
 
 
 def main() -> int:
@@ -172,7 +232,61 @@ def main() -> int:
         action="store_true",
         help="Run the unified HIL audit of all four exotic protocols",
     )
+    parser.add_argument(
+        "--braid-openqasm",
+        action="store_true",
+        help="Emit the n=9 Solovay-Kitaev braid compilation as OpenQASM 2.0",
+    )
+    parser.add_argument(
+        "--braid-info",
+        action="store_true",
+        help="Report braid gate count and approximation error for --braid-depth",
+    )
+    parser.add_argument(
+        "--braid-depth",
+        type=int,
+        default=9,
+        help="Solovay-Kitaev recursion depth (default: 9)",
+    )
+    parser.add_argument(
+        "--braid-qubit",
+        type=int,
+        default=0,
+        help="Target qubit index for the OpenQASM output (default: 0)",
+    )
+    parser.add_argument(
+        "--export-gds",
+        metavar="PATH",
+        help="Export the 8x8 SHBT array GDSII mask to PATH",
+    )
+    parser.add_argument(
+        "--export-step",
+        metavar="PATH",
+        help="Export the sapphire waveguide STEP B-Rep to PATH",
+    )
+    parser.add_argument(
+        "--step-length",
+        type=float,
+        default=350e-6,
+        help="STEP waveguide length in metres (default: 350e-6)",
+    )
+    parser.add_argument(
+        "--step-width",
+        type=float,
+        default=5e-6,
+        help="STEP waveguide width in metres (default: 5e-6)",
+    )
+    parser.add_argument(
+        "--step-height",
+        type=float,
+        default=1.5e-6,
+        help="STEP waveguide height in metres (default: 1.5e-6)",
+    )
     args = parser.parse_args()
+    if args.export_gds or args.export_step:
+        return run_cad_export(args)
+    if args.braid_openqasm or args.braid_info:
+        return run_braid_compiler(args)
     if not args.audit:
         parser.print_help()
         return 0

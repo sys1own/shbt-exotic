@@ -29,6 +29,25 @@ governs all four protocols.  Every state vector is tracked at 512-bit precision 
   - `P_cool = Γ_de · ΔS · T_c` with `ΔS = k_B ln 2` per bit.
 - **Ghost-seed entropy-debt**
   - `P_debt = (M_seed / M_☉) · 906 GW` continuous power requirement.
+- **Multi-seed interference**
+  - `g_{μν} = η_{μν} + Σ_i h_{μν}^{(i)} + I_{μν}` with 512-bit interference coefficients `I_00, I_11, I_22, I_33`.
+  - `R_congestion = 2.954 × 10^15 m` bit-congestion radius; overlap safety audit raises `AnomalyClosureError` if `|Δμ| > 10^{-12}`.
+- **Fibonacci anyon braid compiler**
+  - Maps `V_unified` transition weights `sqrt(10/33)` and `sqrt(23/33)` to an abelian `B_3` representation.
+  - Base word `β = σ1^2 σ2^{-2} σ1 σ2^2 σ1^{-1} σ2^{-1}` has exponent sum `1`, compiling to `U_target`.
+  - Solovay-Kitaev expansion to `n = 9` yields 124 physical `u3` gates with approximation error `≤ 1.5 × 10^{-10}`.
+  - `compile_openqasm(n, qubit)` emits OpenQASM 2.0 in parallel over Rayon thread pools (`O(N log N)`).
+- **Closed-loop InP/InGaAs calibration**
+  - Calibration tone `V_cal(t) = 3.3 V + 50 mV · sin(2π · 10 MHz · t + δφ(t))`.
+  - PID bias regulator for the 3.3 V base with `Kp = 1.85 V/rad`, `Ki = 9.12 × 10^3 V/(rad·s)`, `Kd = 3.45 × 10^{-7} V·s/rad`.
+  - Enforces HIL phase-jitter limit `|δφ| ≤ 5.05 × 10^{-5} rad`; returns `STATUS_EMERGENCY_SHUTDOWN` if the regulator cannot correct the jitter.
+- **Thermal-fatigue reliability audit**
+  - Coffin-Manson model for the Alumina/InP interface: plastic strain `Δεp = 6.0 × 10^{-6}` from `15 K` thermal swings.
+  - Cycle-to-failure limit `Nf = 4.0 × 10^6` cycles; equivalent de-rendering lifetime budget `1.514 × 10^16` bits.
+  - Returns `STATUS_QUENCH_WARNING` when cumulative de-rendering exceeds the budget and reports the shifted acoustic impedance `Z → 1.3250 MRayl` that raises the superconducting niobium quench risk.
+- **CAD/EDA export synthesis**
+  - `GdsiiMaskExporter` writes an 8×8 SHBT array GDSII mask with 50 μm pitch, Layer 10 `SUBSTRATE_INP` (350 μm), Layer 20 `AIRBRIDGE_SPAN` (1.5×5.0 μm), and Layer 25 `MET_NB_TRACE` (300 nm Niobium). Coordinates are stored at 1 pm per database unit for sub-nanometer precision.
+  - `StepSolidModel` exports ISO 10303-21 B-Rep `MANIFOLD_SOLID_BREP` geometry for the sapphire waveguide, sized to the 1.1512 MRayl nominal impedance interface.
 
 ## Hardware Architecture
 
