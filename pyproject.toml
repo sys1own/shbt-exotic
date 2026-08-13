@@ -1,0 +1,26 @@
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "shbt-exotic"
+version = "0.1.0"
+description = "Unified SHBT exotic-technology simulator: non-local communication, temporal stasis, ghost seeds, and entropic refrigeration."
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.20.0",
+    "matplotlib>=3.5.0",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=7.0.0"]
+
+[project.scripts]
+shbt-exotic = "shbt_exotic.cli:main"
+
+[tool.maturin]
+python-source = "python"
+module-name = "shbt_exotic._core"
+features = ["extension-module"]

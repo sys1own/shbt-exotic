@@ -1,0 +1,16 @@
+[package]
+name = "shbt_exotic"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+extension-module = ["pyo3/extension-module"]
+default = []
+
+[dependencies]
+pyo3 = { version = "0.23" }
+rug = "1.24"
+gmp-mpfr-sys = "1.7"
