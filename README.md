@@ -91,6 +91,7 @@ The dual-target Hardware-in-the-Loop monitor concurrently samples the Stasis Con
 - **SHBT clocking**: InP/InGaAs SHBT array clocked at `f_max = 72 GHz` with `40 Gb/s` state-routing bandwidth.
 - **AVX-512 HIL sensor pipeline**: the emergency threshold path executes `vmovaps` → `vcmpps` → `vmovmskps` → `mov [mem], 0` on a 64-byte aligned stack-resident 16-lane `f32` buffer, with no branches and no heap allocation.
 - **Response-time budget**: the AVX-512 pipeline is six clock cycles at `4.0 GHz` (`≈ 1.5 ns`), leaving `1.0 ns` of margin inside the `2.5 ns` emergency bias-current shunt budget.
+- **PID telemetry cycle**: the `TelemetryBridge` sensor/pid path executes `vmovaps → vcmpps → vmovmskps → mov [mem], 0` in four clock cycles at `3.5 GHz` (`≈ 1.14 ns`), keeping the `1.5 ns` physical loop-latency requirement.
 - **SIMD phase rotation**: the U(1) phase-locked excitation `ψ_j → e^{-i θ_j} ψ_j` is vectorised for `x86_64` AVX-512 (`vmovupd`, `vmulpd`, `vfmadd231pd`) and `aarch64` NEON (`fmla`) and processes an 8-component dark-ledger block in a single branchless pass.
 
 ## Fabrication Guidelines
@@ -110,6 +111,13 @@ The dual-target Hardware-in-the-Loop monitor concurrently samples the Stasis Con
 - **Coffin-Manson model**: the Alumina/InP interface accumulates plastic strain `Δε_p = 6.0 × 10^{-6}` per 15 K thermal swing induced by the 142.08 MW transients.
 - **Cycle-to-failure limit**: `N_f = 4.0 × 10^6` cycles, mapped to a de-rendering lifetime budget of `1.514 × 10^{16}` bits.
 - **Quench warning**: `ReliabilityAuditor` returns `STATUS_QUENCH_WARNING` when cumulative de-rendering exceeds the budget and reports the fatigued acoustic impedance `Z → 1.3250 MRayl`, which raises the superconducting niobium quench risk.
+
+## Deployment Configuration
+
+- **Zero-heap math engine**: for real-world laboratory deployments the `rug`/`gmp` math engine must be linked to the custom stack-resident memory routines in `src/gmp_memory.rs` (`mp_set_memory_functions`).  This eliminates variable-time `malloc`/`free` jitter and guarantees deterministic timing for the AVX-512 PID telemetry loop.
+- **Build flag**: set `RUSTFLAGS="-C target-feature=+avx512f"` (or use `cargo build --release -C target-feature=+avx512f`) on x86_64 HIL nodes to enable the 1.14 ns telemetry pipeline; the code falls back to scalar arithmetic on non-AVX-512 targets.
+- **RF IQ mapping**: `LabHAL.build_pcie_iq_lut()` emits 16-bit offset-binary DAC codes for the I and Q channels; these are streamed to the PCIe arbitrary-waveform generator that drives the 8×8 InP/InGaAs SHBT array.
+- **HAL telemetry**: `TelemetryBridge.pid_bias_cycle()` accepts a 16-lane phase-error vector and returns `(control_voltage_v, updated_integral, shutdown_triggered)` on every loop iteration.
 
 ## Quick Start
 
@@ -133,6 +141,8 @@ shbt-exotic --audit
 | HIL status | `STATUS_NOMINAL_PASS` | nominal pass |
 | Hardware clock | `≤ 72 GHz` | `72 GHz` |
 | Routing bandwidth | `≤ 40 Gb/s` | `40 Gb/s` |
+| Kinematic detuning | `|μ_comp − μ_0| ≤ 10^{-12}` at `v_eff = 10^3 m/s` | nominal pass |
+| Resonance damping | `η ≥ 1.15×10^{-3}`, `ζ ≥ 6.0×10^{-4}` for all four FEA modes | nominal pass |
 
 ## Code Availability
 

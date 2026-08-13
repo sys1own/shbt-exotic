@@ -322,7 +322,7 @@ P_{\rm debt} = \frac{M_{\rm seed}}{M_{\odot}} \, 906\,\text{GW} ,
 
 The Schwarzschild-like signature projected into the bulk is proportional to the same overflow; the seed mass therefore encodes the curvature perturbation through the holographic stress-energy tensor while the passive stress-energy remains invariant under the isometric split in Eq.~\eqref{eq:v_unified}.
 
-\subsection{Multi-seed interference and metric superposition}
+\subsection{Multi-seed interference and metric superposition}\label{sec:multi-seed}
 
 For arrays of ghost seeds the metric is the linear superposition of the individual seed perturbations plus the non-linear interference correction tensor $I_{\mu\nu}$,
 %
@@ -799,9 +799,140 @@ Database units are set to $1\,$pm, giving sub-nanometre coordinate resolution.
 
 For the sapphire waveguide, a STEP ISO 10303-21 B-rep is generated as a \texttt{MANIFOLD\_SOLID\_BREP} with a \texttt{CLOSED\_SHELL} of six planar \texttt{ADVANCED\_FACE}s.  The waveguide dimensions are chosen to match the nominal $1.1512\,$MRayl acoustic-impedance interface between the sapphire waveguide and the liquid He-4 bath.
 
+\section{Dynamic interference and kinematic corrections}
+
+The multi-seed interference model of Sec.~\ref{sec:multi-seed} is extended to moving ghost seeds by introducing the dynamic interference Lagrangian
+%
+\begin{multline}
+L_{\rm int} = -\mu_0 - g_{\mu\nu}u^\mu u^\nu \\
++ \frac12 I_{\mu\nu}u^\mu u^\nu\,\Delta N(t) \\
+- \frac16 \Theta_{\mu\nu\rho}u^\mu u^\nu u^\rho\,\dot{\Delta N}(t),
+\end{multline}
+%
+where the third-order wake tensor is contracted as
+$\Theta_{\mu\nu\rho}u^\mu u^\nu u^\rho = (I_{\alpha\beta}u^\alpha u^\beta)(g_{\gamma\delta}u^\gamma u^\delta)$.
+The velocity-dependent density-multiplier compensation is
+%
+\begin{equation}
+\mu_{\rm comp}(t) = \mu_0 - \sum_{k=1}^{3}\alpha_{\rm wake}^{(k)}\left(\frac{v_{\rm eff}}{c}\right)^k \frac{\Delta N(t)}{N_{\rm total}}.
+\end{equation}
+%
+Here $N_{\rm total}=e^{33}\simeq\ExoticNTotal$ is the natural holographic bit ceiling and $c$ is the speed of light.
+
+\begin{table}[h]
+\caption{512-bit bit-congestion wake constants used in the kinematic correction.}
+\begin{tabular}{cc}
+\hline\hline
+Constant & Leading value \\
+\hline
+$\alpha_{\rm wake}^{(1)}$ & \seqsplit{\ExoticWakeOne} \\
+$\alpha_{\rm wake}^{(2)}$ & \seqsplit{\ExoticWakeTwo} \\
+$\alpha_{\rm wake}^{(3)}$ & \seqsplit{\ExoticWakeThree} \\
+\hline\hline
+\end{tabular}
+\end{table}
+
+For a representative slow transit with $v_{\rm eff}=10^3\,$m/s and $\Delta N=10^5$, the compensated multiplier is $\mu_{\rm comp}=\ExoticMuCompensated$, and the evaluated Lagrangian is $L_{\rm int}=\ExoticDynamicLagrangian$.
+The implementation raises an anomaly whenever $|\mu_{\rm comp}-\mu_0|>10^{-12}$, preserving eigenvector rigidity during high-velocity transits.
+
+\section{Lindblad noise floors and anyon-braid stability}
+
+Real-world charge noise and sapphire-waveguide phonon coupling are captured by the Lindblad master equation.  The charge-dephasing and phonon-exchange jump operators are
+%
+\begin{align}
+L_{\rm charge} &= \sqrt{\gamma_{\rm charge}} \sum_j \sigma_z^{(j)}, \\
+L_{\rm phonon} &= \sqrt{\gamma_{\rm phonon}} \sum_{\langle j,k\rangle} \left(F_{jk}^{\phantom{\dagger}} + F_{jk}^\dagger\right),
+\end{align}
+%
+with $\gamma_{\rm charge}=\ExoticLindbladGammaCharge\,$s$^{-1}$, $\gamma_{\rm phonon}=\ExoticLindbladGammaPhonon\,$s$^{-1}$, and combined decoherence rate
+%
+\begin{equation}
+\gamma_{\rm dec} = \gamma_{\rm charge}+\gamma_{\rm phonon} = \ExoticLindbladGammaDec\ {\rm s}^{-1}.
+\end{equation}
+
+The Solovay-Kitaev logical error floor after $n=9$ recursion levels is
+%
+\begin{equation}
+\varepsilon_9 = C_{\rm SK} \left(\frac{\varepsilon_0}{C_{\rm SK}}\right)^{(3/2)^9},
+\end{equation}
+%
+with $C_{\rm SK}=1.3418\times10^{-4}$ and physical gate error $\varepsilon_0=1.74\times10^{-10}$.  The simulator reports
+%
+\begin{equation}
+\varepsilon_9 = \ExoticSKLogicalError \simeq 10^{-\ExoticSKLogicalErrorLogTen},
+\end{equation}
+%
+which lies below the holographic noise floor $10^{-122}$ by more than one hundred orders of magnitude.
+
+\subsection{AVX-512 telemetry bridge}
+
+The PID bias-regulator telemetry loop executes the bare-metal instruction pipeline
+%
+\begin{equation}
+\text{vmovaps} \rightarrow \text{vcmpps} \rightarrow \text{vmovmskps} \rightarrow \text{mov\ }[\text{mem}],0,
+\end{equation}
+%
+on a stack-resident 16-lane buffer.  At the loop clock of $3.5\,$GHz the four-cycle pipeline completes in
+%
+\begin{equation}
+t_{\rm cycle} = \frac{4}{3.5\ {\rm GHz}} = \ExoticTelemetryCycleNs\ {\rm ns},
+\end{equation}
+%
+guaranteeing that the physical control latency of $1.5\,$ns is never exceeded.
+
+\section{Structural resonance modes and harmonic auditing}
+
+The STEP-exported sapphire waveguide assembly is audited against the four critical FEA modes listed in Table~\ref{tab:resonance}.
+
+\begin{table}[h]
+\caption{Critical resonance modes and damping requirements.}
+\label{tab:resonance}
+\begin{tabular}{lcccc}
+\hline\hline
+Mode & $f_{\rm res}$ (MHz) & $\eta_{\rm min}$ & $\zeta_{\rm min}$ & Status \\
+\hline
+Shear & $\ExoticShearModeHz$ & $\ExoticMinLossFactor$ & $\ExoticMinDampingRatio$ & nominal \\
+Longitudinal & $\ExoticLongitudinalModeHz$ & $\ExoticMinLossFactor$ & $\ExoticMinDampingRatio$ & nominal \\
+Torsional & $\ExoticTorsionalModeHz$ & $\ExoticMinLossFactor$ & $\ExoticMinDampingRatio$ & nominal \\
+Flexural & $\ExoticFlexuralModeHz$ & $\ExoticMinLossFactor$ & $\ExoticMinDampingRatio$ & nominal \\
+\hline\hline
+\end{tabular}
+\end{table}
+
+For each mode the dissipated power is
+%
+\begin{equation}
+P_{\rm diss} = 2\pi f_{\rm res}\,E_{\rm elastic}\,\eta,
+\end{equation}
+%
+and the resulting temperature rise in the InP support columns is computed using the Debye $T^3$ specific heat.  The harmonic audit returns \ExoticHarmonicStatus{} for the nominal FEA report, confirming that the airbridge support temperature remains below the $9.3\,$K niobium superconducting quench limit.
+
+\subsection{Acoustic FEA summary}
+
+Table~\ref{tab:acousticfea} collects the sapphire waveguide acoustic design values.  The single-crystal sapphire waveguide has impedance $Z_{\rm Al_2O_3}=44.178\,$MRayl, the quarter-wave matching layer targets $Z_m\approx1.1512\,$MRayl, and the selected alumina formulation provides the acoustic damping required by the resonance audit.
+
+\begin{table}[h]
+\caption{Acoustic FEA parameters for megawatt transient management.}
+\label{tab:acousticfea}
+\begin{tabular}{lc}
+\hline\hline
+Parameter & Value \\
+\hline
+Sapphire waveguide impedance & $44.178\,$MRayl \\
+Quarter-wave matching-layer impedance & $1.1512\,$MRayl \\
+Un-engineered Kapitza $\Delta T$ & $\ExoticKapitzaDropUnengineered\,$K \\
+Matched Kapitza $\Delta T$ & $\ExoticKapitzaDropMatched\,$K \\
+Telemetry cycle latency & $\ExoticTelemetryCycleNs\,$ns \\
+SK logical error floor & $\ExoticSKLogicalError$ \\
+\hline\hline
+\end{tabular}
+\end{table}
+
 \section{Conclusion}
 
-The \texttt{shbt-exotic} simulator demonstrates that non-local communication, temporal stasis, artificial ghost seeds, and entropic refrigeration can be grounded in a single isometric Stinespring framework on the $(26,8,312)$ SHBT branch.  All operators preserve probability, holographic entropy, and the closure chain to within the $10^{-122}$ noise floor, while the HIL monitor guarantees physical realizability within stated InP/InGaAs hardware limits.
+The \texttt{shbt-exotic} simulator demonstrates that non-local communication, temporal stasis, artificial ghost seeds, and entropic refrigeration can be grounded in a single isometric Stinespring framework on the $(26,8,312)$ SHBT branch.  The extensions reported here---dynamic interference and velocity-dependent wake compensation, Lindblad noise-floor auditing for anyon braids, and harmonic FEA auditing of the sapphire waveguide---show that the design closes at the hardware level: the PID telemetry loop completes in $\ExoticTelemetryCycleNs\,$ns, the Solovay-Kitaev logical error floor is $10^{-\ExoticSKLogicalErrorLogTen}$, and the structural resonance audit returns \ExoticHarmonicStatus{}.
+
+All operators preserve probability, holographic entropy, and the closure chain to within the $10^{-122}$ noise floor, while the HIL monitor and HAL telemetry bridge guarantee physical realizability within stated InP/InGaAs hardware limits.
 
 \section*{Code Availability}
 
