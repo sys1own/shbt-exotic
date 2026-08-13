@@ -6,6 +6,7 @@
 \renewcommand{\floatpagefraction}{0.25}
 
 \usepackage{amsmath,amssymb,amsfonts}
+\usepackage{seqsplit}
 \usepackage{graphicx}
 \usepackage{hyperref}
 
@@ -183,10 +184,10 @@ The kernel dimension $K=312$ sets the total register size as $312 = 12 \times 26
 
 The reconstructed Choi matrix $C$ for the local register is diagonal in the branch basis with eigenvalues
 %
-\begin{equation}
-\lambda_A = \frac{10}{33} \quad (\text{multiplicity } 10), \qquad
-\lambda_D = \frac{23}{33} \quad (\text{multiplicity } 23).
-\end{equation}
+\begin{align}
+\lambda_A &= \frac{10}{33} \quad (\text{multiplicity } 10), \\
+\lambda_D &= \frac{23}{33} \quad (\text{multiplicity } 23).
+\end{align}
 %
 The Stinespring branching matrix $B$ is obtained from the eigen-decomposition $C = U D U^\dagger$ as $B = U D^{1/2} U^\dagger$.  In the branch basis $U = I_{33}$, so $B$ is the diagonal square-root of $C$.
 
@@ -332,14 +333,13 @@ g_{\mu\nu} = \eta_{\mu\nu} + \sum_i h_{\mu\nu}^{(i)} + I_{\mu\nu} .
 %
 The 512-bit interference coefficients are
 %
-\begin{equation}
-\begin{aligned}
-I_{00} &= \ExoticInterferenceZeroZero{}, \\
-I_{11} &= \ExoticInterferenceOneOne{}, \\
-I_{22} &= \ExoticInterferenceTwoTwo{}, \\
-I_{33} &= \ExoticInterferenceThreeThree{} .
-\end{aligned}
-\end{equation}
+\begin{flushleft}
+\label{eq:interference-coefficients}
+$\displaystyle I_{00} = \expandafter\seqsplit\expandafter{\ExoticInterferenceZeroZero{}}$\\
+$\displaystyle I_{11} = \expandafter\seqsplit\expandafter{\ExoticInterferenceOneOne{}}$\\
+$\displaystyle I_{22} = \expandafter\seqsplit\expandafter{\ExoticInterferenceTwoTwo{}}$\\
+$\displaystyle I_{33} = \expandafter\seqsplit\expandafter{\ExoticInterferenceThreeThree{}}$
+\end{flushleft}
 %
 They are stored and evaluated at 512-bit precision to keep the correction below the $10^{-122}$ holographic noise floor.  The bit-congestion radius that defines the minimum safe separation between overlapping seeds is
 %
@@ -593,10 +593,10 @@ The reduction $\Delta T_{\rm matched} < \Delta T_{\rm uneng}$ (\ExoticKapitzaJus
 
 The local Hilbert space of the $(26,8,312)$ SHBT branch factorises into $N_{\rm local}=33$ orthogonal branch states.  Its Choi matrix $C$ is diagonal with eigenvalues
 %
-\begin{equation}
-\lambda_A = \frac{10}{33} \quad (\text{multiplicity } 10), \qquad
-\lambda_D = \frac{23}{33} \quad (\text{multiplicity } 23) .
-\end{equation}
+\begin{align}
+\lambda_A &= \frac{10}{33} \quad (\text{multiplicity } 10), \\
+\lambda_D &= \frac{23}{33} \quad (\text{multiplicity } 23) .
+\end{align}
 %
 The Stinespring branching matrix $B$ is the unique positive semidefinite square root of $C$ in the branch basis.  Because the eigenvectors are the standard basis vectors, $B$ is diagonal:
 %
@@ -680,8 +680,8 @@ The HIL fatal-threshold path is implemented with the bare-metal AVX-512 instruct
 \begin{table}[h]
 \caption{\label{tab:avx512}AVX-512 HIL emergency-threshold pipeline.}
 \begin{ruledtabular}
-\begin{tabular}{p{1.8cm}p{2.6cm}p{3.6cm}}
-Instruction & Source/destination & Purpose \\
+\begin{tabular}{p{1.6cm}p{2.3cm}p{3.3cm}}
+Instruction & Source / destination & Purpose \\
 \colrule
 \texttt{vmovaps} & aligned 64-byte stack buffer & load 16 lane samples \\
 \texttt{vcmpps} & mask register \texttt{k1} & compare $|\delta\phi| > 5.05\times 10^{-5}$~rad \\

@@ -454,5 +454,31 @@ def test_step_nominal_impedance():
     assert model.nominal_impedance_mrayl() == pytest.approx(1.1512, abs=1e-9)
 
 
+def test_gdsii_drc():
+    exporter = GdsiiMaskExporter()
+    ok, violations = exporter.validate_drc()
+    assert ok
+    assert violations == []
+
+
+def test_engineering_stress_test():
+    """Verify the 512-bit interference coefficients are integrated into the metric."""
+    engine = MassCongestionEngine()
+    i00, i11, i22, i33 = engine.interference_coefficients()
+    # Coefficient strings are 512-bit decimal values; verify leading digits.
+    assert i00.startswith("0.14159265358979323846264338327950288419")
+    assert i11.startswith("-0.27182818284590452353602874713526624977")
+    assert i22.startswith("0.57721566490153286060651209008240243104")
+    assert i33.startswith("-0.31830988618379067153776752674502872406")
+    # Build a multi-seed metric and confirm the interference tensor shifts the
+    # diagonal entries away from the Minkowski value by the expected amounts.
+    # The Minkowski signature used by the code is eta = diag(-1, 1, 1, 1).
+    metric = engine.linearized_metric_with_interference([(1.0e65, 1.0e65)])
+    assert metric[0][0] == pytest.approx(-1.0 + float(i00), rel=1e-12)
+    assert metric[1][1] == pytest.approx(1.0 + float(i11), rel=1e-12)
+    assert metric[2][2] == pytest.approx(1.0 + float(i22), rel=1e-12)
+    assert metric[3][3] == pytest.approx(1.0 + float(i33), rel=1e-12)
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
