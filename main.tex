@@ -620,6 +620,30 @@ gates at recursion depth $n = \ExoticBraidDepth{}$.  The compiled unitary agrees
 %
 well below the required $1.5 \times 10^{-10}$ tolerance.  Each braid generator is emitted as an OpenQASM 2.0 $\texttt{u3}$ rotation on a single logical qubit; the string generation is parallelised across the Rayon thread pool with an $\mathcal{O}(N \log N)$ divide-and-conquer collection.
 
+\section{Closed-loop InP/InGaAs hardware calibration}
+
+Manufacturing variances in the SHBT emitter array are compensated by an on-chip calibration tone
+%
+\begin{equation}
+V_{\rm cal}(t) = 3.3\;\mathrm{V} + 50\;\mathrm{mV} \cdot \sin\bigl(2\pi \cdot 10\;\mathrm{MHz} \cdot t + \delta\phi(t)\bigr) ,
+\end{equation}
+%
+driven by a discrete PID bias regulator on the 3.3~V base.  The controller gains are
+%
+\begin{align}
+K_p &= 1.85\;\mathrm{V/rad}, \\
+K_i &= 9.12 \times 10^{3}\;\mathrm{V/(rad\cdot s)}, \\
+K_d &= 3.45 \times 10^{-7}\;\mathrm{V\cdot s/rad} .
+\end{align}
+%
+The regulator updates the control voltage $u(t)$ every cycle and converts it back to a phase correction through the proportional gain.  The HIL phase-jitter limit
+%
+\begin{equation}
+|\delta\phi| \le 5.05 \times 10^{-5}\;\mathrm{rad}
+\end{equation}
+%
+is enforced at the output: if the corrected residual exceeds this threshold the monitor returns \texttt{STATUS\_EMERGENCY\_SHUTDOWN}, otherwise \texttt{STATUS\_NOMINAL\_PASS}.
+
 \section{Conclusion}
 
 The \texttt{shbt-exotic} simulator demonstrates that non-local communication, temporal stasis, artificial ghost seeds, and entropic refrigeration can be grounded in a single isometric Stinespring framework on the $(26,8,312)$ SHBT branch.  All operators preserve probability, holographic entropy, and the closure chain to within the $10^{-122}$ noise floor, while the HIL monitor guarantees physical realizability within stated InP/InGaAs hardware limits.

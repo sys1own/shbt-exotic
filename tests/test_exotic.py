@@ -5,6 +5,7 @@ import pytest
 from shbt_exotic import (
     MassCongestionEngine,
     FibonacciBraidCompiler,
+    CalibrationEngine,
     AnomalyClosureError,
     AcousticImpedanceEngine,
     CoordinatePerturbationSweep,
@@ -363,6 +364,36 @@ def test_fibonacci_braid_target_unitary_weights():
     assert u[0][1] == pytest.approx((-s, 0.0), abs=1e-12)
     assert u[1][0] == pytest.approx((s, 0.0), abs=1e-12)
     assert u[1][1] == pytest.approx((c, 0.0), abs=1e-12)
+
+
+def test_calibration_waveform_base_and_frequency():
+    engine = CalibrationEngine()
+    assert engine.calibration_waveform(0.0, 0.0) == pytest.approx(3.3, abs=1e-9)
+    period = 1.0 / 10.0e6
+    v0 = engine.calibration_waveform(0.0, 0.0)
+    v1 = engine.calibration_waveform(period, 0.0)
+    assert v0 == pytest.approx(v1, abs=1e-9)
+
+
+def test_calibration_pid_gains():
+    engine = CalibrationEngine()
+    assert engine.pid_gains() == (1.85, 9.12e3, 3.45e-7)
+
+
+def test_calibration_pid_nominal_for_small_jitter():
+    engine = CalibrationEngine()
+    bias, corrected, status = engine.step(1.0e-6, 4.0e-5)
+    assert status == "STATUS_NOMINAL_PASS"
+    assert corrected <= 5.05e-5
+    assert corrected >= -5.05e-5
+    assert bias == pytest.approx(3.3, abs=0.01)
+
+
+def test_calibration_pid_shutdown_for_excessive_jitter():
+    engine = CalibrationEngine()
+    _, corrected, status = engine.step(1.0e-6, 10.0)
+    assert status == "STATUS_EMERGENCY_SHUTDOWN"
+    assert abs(corrected) > 5.05e-5
 
 
 if __name__ == "__main__":

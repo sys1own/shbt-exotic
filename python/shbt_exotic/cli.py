@@ -5,6 +5,7 @@ import math
 import sys
 
 from shbt_exotic import (
+    CalibrationEngine,
     CoordinatePerturbationSweep,
     EntropicRefrigerator,
     ExoticEngine,
@@ -111,6 +112,16 @@ def run_audit(args: argparse.Namespace) -> int:
         if not within_threshold:
             grid_ok = False
 
+    # 11. Closed-loop InP/InGaAs calibration check
+    cal = CalibrationEngine()
+    _, _, cal_nominal_status = cal.step(1.0e-6, 4.0e-5)
+    cal.reset()
+    _, _, cal_shutdown_status = cal.step(1.0e-6, 10.0)
+    calibration_ok = (
+        cal_nominal_status == "STATUS_NOMINAL_PASS"
+        and cal_shutdown_status == "STATUS_EMERGENCY_SHUTDOWN"
+    )
+
     print("SHBT Exotic Technologies — Unified Audit")
     print("=" * 50)
     print(f"Kernel (SU(2), SU(3), K): {engine.kernel}")
@@ -139,6 +150,8 @@ def run_audit(args: argparse.Namespace) -> int:
     print(f"Hardware status:           {hw_status}")
     print(f"Rigidity sweep OK:         {sweep_ok}")
     print(f"Worst sub-threshold detuning: {worst_detuning:.6e}")
+    print(f"Calibration nominal:       {cal_nominal_status}")
+    print(f"Calibration over-range:    {cal_shutdown_status}")
     print("-" * 50)
     print("512-bit closure-chain audit")
     print(f"I_l^*:                     {i_l_star:.6f}")
@@ -159,6 +172,7 @@ def run_audit(args: argparse.Namespace) -> int:
         and closure_chain_holds
         and entropy_arrow_positive
         and grid_ok
+        and calibration_ok
     )
     return 0 if all_ok else 1
 

@@ -37,6 +37,10 @@ governs all four protocols.  Every state vector is tracked at 512-bit precision 
   - Base word `β = σ1^2 σ2^{-2} σ1 σ2^2 σ1^{-1} σ2^{-1}` has exponent sum `1`, compiling to `U_target`.
   - Solovay-Kitaev expansion to `n = 9` yields 124 physical `u3` gates with approximation error `≤ 1.5 × 10^{-10}`.
   - `compile_openqasm(n, qubit)` emits OpenQASM 2.0 in parallel over Rayon thread pools (`O(N log N)`).
+- **Closed-loop InP/InGaAs calibration**
+  - Calibration tone `V_cal(t) = 3.3 V + 50 mV · sin(2π · 10 MHz · t + δφ(t))`.
+  - PID bias regulator for the 3.3 V base with `Kp = 1.85 V/rad`, `Ki = 9.12 × 10^3 V/(rad·s)`, `Kd = 3.45 × 10^{-7} V·s/rad`.
+  - Enforces HIL phase-jitter limit `|δφ| ≤ 5.05 × 10^{-5} rad`; returns `STATUS_EMERGENCY_SHUTDOWN` if the regulator cannot correct the jitter.
 
 ## Hardware Architecture
 

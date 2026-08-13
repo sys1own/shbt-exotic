@@ -17,6 +17,7 @@ from shbt_exotic._core import (
     ThermalFluxReport,
     MassCongestionEngine,
     FibonacciBraidCompiler,
+    CalibrationEngine,
     AnomalyClosureError,
 )
 from shbt_exotic.stasis import StasisDilation
@@ -41,6 +42,7 @@ __all__ = [
     "ThermalFluxReport",
     "MassCongestionEngine",
     "FibonacciBraidCompiler",
+    "CalibrationEngine",
     "StasisDilation",
     "CoordinatePerturbationSweep",
     "AnomalyClosureError",
