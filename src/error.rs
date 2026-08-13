@@ -7,6 +7,7 @@ pub enum ExoticError {
     AnomalyClosureError(String),
     PrecisionLossError(String),
     RigidityViolationError(String),
+    DesignRuleViolation(String),
 }
 
 impl std::fmt::Display for ExoticError {
@@ -15,6 +16,7 @@ impl std::fmt::Display for ExoticError {
             ExoticError::AnomalyClosureError(msg) => write!(f, "AnomalyClosureError: {}", msg),
             ExoticError::PrecisionLossError(msg) => write!(f, "PrecisionLossError: {}", msg),
             ExoticError::RigidityViolationError(msg) => write!(f, "RigidityViolationError: {}", msg),
+            ExoticError::DesignRuleViolation(msg) => write!(f, "DesignRuleViolation: {}", msg),
         }
     }
 }
@@ -22,6 +24,7 @@ impl std::fmt::Display for ExoticError {
 impl std::error::Error for ExoticError {}
 
 pyo3::create_exception!(shbt_exotic, AnomalyClosureError, PyException);
+pyo3::create_exception!(shbt_exotic, DesignRuleViolation, PyException);
 
 impl From<ExoticError> for PyErr {
     fn from(err: ExoticError) -> PyErr {
@@ -29,6 +32,7 @@ impl From<ExoticError> for PyErr {
             ExoticError::AnomalyClosureError(msg)
             | ExoticError::PrecisionLossError(msg)
             | ExoticError::RigidityViolationError(msg) => PyErr::new::<AnomalyClosureError, _>(msg),
+            ExoticError::DesignRuleViolation(msg) => PyErr::new::<DesignRuleViolation, _>(msg),
         }
     }
 }

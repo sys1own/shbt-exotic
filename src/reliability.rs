@@ -50,6 +50,10 @@ impl ReliabilityAuditor {
         }
     }
 
+    pub fn cumulative_bits_impl(&self) -> f64 {
+        self.cumulative_bits
+    }
+
     pub fn audit_impl(&self) -> (String, bool, f64, f64, f64) {
         let remaining = self.remaining_lifetime_bits_impl();
         let consumed = self.consumed_cycles_impl();
@@ -83,7 +87,7 @@ impl ReliabilityAuditor {
 
     /// Cumulative de-rendered bits.
     fn cumulative_bits(&self) -> f64 {
-        self.cumulative_bits
+        self.cumulative_bits_impl()
     }
 
     /// Remaining de-rendering lifetime budget (bits).

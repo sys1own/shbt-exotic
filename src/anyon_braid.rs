@@ -33,13 +33,13 @@ impl BraidGenerator {
         }
     }
 
-    fn power(&self) -> i8 {
+    pub fn power(&self) -> i8 {
         match self {
             BraidGenerator::Sigma1Pow(p) | BraidGenerator::Sigma2Pow(p) => *p,
         }
     }
 
-    fn to_label(&self) -> String {
+    pub fn to_label(&self) -> String {
         let p = self.power();
         match p {
             1 => self.name().to_string(),
@@ -144,7 +144,7 @@ impl FibonacciBraidCompiler {
     }
 
     /// Solovay-Kitaev expansion of the base word to 7 + 13*n gates.
-    fn solovay_kitaev_decompose_impl(&self, n: usize) -> Vec<BraidGenerator> {
+    pub fn solovay_kitaev_decompose_impl(&self, n: usize) -> Vec<BraidGenerator> {
         let mut word = self.beta_sequence_impl();
         let block = self.sk_correction_block();
         for _ in 0..n {
@@ -155,7 +155,7 @@ impl FibonacciBraidCompiler {
 
     /// u3 gate angle for a braid generator (same for sigma1/sigma2 in the
     /// abelian representation, but labelled separately).
-    fn gate_angle(&self, g: &BraidGenerator) -> f64 {
+    pub fn gate_angle(&self, g: &BraidGenerator) -> f64 {
         self.theta * g.power() as f64
     }
 

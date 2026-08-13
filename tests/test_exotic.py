@@ -5,6 +5,12 @@ import pytest
 from shbt_exotic import (
     MassCongestionEngine,
     FibonacciBraidCompiler,
+    LindbladSolver,
+    HarmonicAuditor,
+    LabHAL,
+    TelemetryBridge,
+    EngineeringStressSuite,
+    CadPhysicsValidator,
     CalibrationEngine,
     ReliabilityAuditor,
     GdsiiMaskExporter,
@@ -478,6 +484,182 @@ def test_engineering_stress_test():
     assert metric[1][1] == pytest.approx(1.0 + float(i11), rel=1e-12)
     assert metric[2][2] == pytest.approx(1.0 + float(i22), rel=1e-12)
     assert metric[3][3] == pytest.approx(1.0 + float(i33), rel=1e-12)
+
+
+def test_dynamic_interference_lagrangian():
+    engine = MassCongestionEngine()
+    g = engine.linearized_metric_with_interference([(1.0e65, 1.0e65)])
+    u = [1.0, 0.0, 0.0, 0.0]
+    l = engine.dynamic_interference_lagrangian(g, u, delta_n=1.0, delta_n_dot=0.0, mu0=1.0)
+    assert math.isfinite(l)
+
+
+def test_velocity_wake_compensation():
+    engine = MassCongestionEngine()
+    n_total = engine.n_total()
+    # A small bit overflow at 1 km/s stays within the 1e-12 rigidity bound.
+    mu = engine.compensated_mu(mu0=1.0, delta_n=1.0e5, n_total=n_total, v_eff_m_s=1.0e3)
+    assert abs(mu - 1.0) < 1.0e-12
+    # A huge overflow at 99% c should exceed the threshold.
+    with pytest.raises(Exception):
+        engine.compensated_mu(mu0=1.0, delta_n=1.0e63, n_total=n_total, v_eff_m_s=0.99 * 299_792_458.0)
+
+
+def test_lindblad_decoherence_rate():
+    solver = LindbladSolver()
+    gamma = solver.combined_decoherence_rate_hz()
+    assert math.isclose(gamma, 1.2e-4, rel_tol=1e-6)
+
+
+def test_lindblad_sk_logical_error_floor():
+    solver = LindbladSolver()
+    eps = solver.sk_logical_error_default()
+    assert eps > 0.0
+    assert eps < 1.0e-122
+
+
+def test_lindblad_openqasm3_noise_program():
+    solver = LindbladSolver()
+    compiler = FibonacciBraidCompiler()
+    qasm = solver.compile_openqasm3_with_braid(compiler, 9, 0)
+    assert "OPENQASM 3.0" in qasm
+    assert "#pragma braket noise phase_flip" in qasm
+    assert "#pragma braket noise bit_flip" in qasm
+    assert "u3(" in qasm
+
+
+def test_lindblad_charge_evolution_preserves_trace():
+    solver = LindbladSolver()
+    rho = solver.evolve_one_qubit_charge(1.0e-6, 10)
+    tr = rho[0][0][0] + rho[1][1][0]
+    assert math.isclose(tr, 1.0, rel_tol=1e-9)
+
+
+def test_lindblad_phonon_evolution_preserves_trace():
+    solver = LindbladSolver()
+    rho = solver.evolve_two_qubit_phonon(1.0e-6, 10)
+    tr = sum(rho[i][i][0] for i in range(4))
+    assert math.isclose(tr, 1.0, rel_tol=1e-9)
+
+
+def test_harmonic_audit_passes_nominal_modes():
+    auditor = HarmonicAuditor()
+    modes = [
+        ("shear", auditor.nominal_frequency_hz("shear"), 1.15e-3, 6.0e-4, 1.0e-9),
+        ("longitudinal", auditor.nominal_frequency_hz("longitudinal"), 1.15e-3, 6.0e-4, 1.0e-9),
+        ("torsional", auditor.nominal_frequency_hz("torsional"), 1.15e-3, 6.0e-4, 1.0e-9),
+        ("flexural", auditor.nominal_frequency_hz("flexural"), 1.15e-3, 6.0e-4, 1.0e-9),
+    ]
+    assert auditor.audit_modes(modes) == "STRUCTURAL_RESONANCE_PASS"
+    assert auditor.audit_waveguide(modes, 1.0e-6) == "HARMONIC_AUDIT_PASS"
+
+
+def test_harmonic_audit_fails_low_damping():
+    auditor = HarmonicAuditor()
+    modes = [
+        ("shear", auditor.nominal_frequency_hz("shear"), 1.15e-3, 1.0e-5, 1.0e-9),
+        ("longitudinal", auditor.nominal_frequency_hz("longitudinal"), 1.15e-3, 6.0e-4, 1.0e-9),
+        ("torsional", auditor.nominal_frequency_hz("torsional"), 1.15e-3, 6.0e-4, 1.0e-9),
+        ("flexural", auditor.nominal_frequency_hz("flexural"), 1.15e-3, 6.0e-4, 1.0e-9),
+    ]
+    with pytest.raises(Exception):
+        auditor.audit_modes(modes)
+
+
+def test_harmonic_thermal_fails_excessive_energy():
+    auditor = HarmonicAuditor()
+    modes = [
+        ("flexural", auditor.nominal_frequency_hz("flexural"), 1.15e-3, 6.0e-4, 1.0e3),
+    ]
+    with pytest.raises(Exception):
+        auditor.audit_thermal(modes, 1.0e-6, 2.5e-9)
+
+
+def test_harmonic_dissipated_power_formula():
+    auditor = HarmonicAuditor()
+    p = auditor.dissipated_power_w(10.0e6, 1.0e-6, 1.0e-3)
+    expected = 2.0 * math.pi * 10.0e6 * 1.0e-6 * 1.0e-3
+    assert math.isclose(p, expected, rel_tol=1e-12)
+
+
+def test_harmonic_natural_frequency_estimates():
+    auditor = HarmonicAuditor()
+    freqs = auditor.estimate_natural_frequencies_hz(0.01, 1.0e-3, 0.5e-3)
+    assert len(freqs) == 4
+    for _, f in freqs:
+        assert math.isfinite(f)
+        assert f > 0.0
+
+
+def test_lab_hal_iq_voltage_mapping():
+    hal = LabHAL()
+    i, q = hal.iq_voltage_v(0.0, 1.0, 7.4)
+    assert math.isclose(i, 7.4, rel_tol=1e-12)
+    assert math.isclose(q, 0.0, abs_tol=1e-12)
+    i, q = hal.iq_voltage_v(math.pi / 2.0, 0.5, 7.4)
+    assert math.isclose(i, 0.0, abs_tol=1e-12)
+    assert math.isclose(q, 3.7, rel_tol=1e-12)
+
+
+def test_lab_hal_dac_codes():
+    hal = LabHAL()
+    assert hal.voltage_to_dac_code(-7.4, 7.4, 16) == 0
+    # 0.0 maps to the midpoint offset-binary code.
+    assert hal.voltage_to_dac_code(0.0, 7.4, 16) == 32768
+    assert hal.voltage_to_dac_code(7.4, 7.4, 16) == 65535
+
+
+def test_telemetry_bridge_latency():
+    bridge = TelemetryBridge()
+    assert bridge.telemetry_cycle_ns() < 1.5
+
+
+def test_telemetry_pid_cycle():
+    bridge = TelemetryBridge()
+    errors = [0.0] * 16
+    errors[0] = 1.0e-6
+    control, integral, shutdown = bridge.pid_bias_cycle(
+        errors, bridge.phase_jitter_threshold_rad(), 1.85, 9.12e3, 0.0, 1.0e-9
+    )
+    assert not shutdown
+    assert control > 0.0
+    assert integral > 0.0
+
+
+def test_telemetry_shutdown_on_large_error():
+    bridge = TelemetryBridge()
+    errors = [0.0] * 16
+    errors[0] = 1.0e-3
+    _, _, shutdown = bridge.pid_bias_cycle(
+        errors, bridge.phase_jitter_threshold_rad(), 1.85, 9.12e3, 0.0, 1.0e-9
+    )
+    assert shutdown
+
+
+def test_cad_physics_validator_default_airbridge_safe():
+    validator = CadPhysicsValidator()
+    flex_hz = validator.validate_airbridge_um(5.0, 1.5, 0.3)
+    assert flex_hz > 0.0
+
+
+def test_cad_physics_validator_rejects_resonant_airbridge():
+    validator = CadPhysicsValidator()
+    with pytest.raises(Exception):
+        validator.validate_airbridge_um(12.0, 1.5, 0.3)
+
+
+def test_engineering_stress_suite_all_pass():
+    suite = EngineeringStressSuite()
+    report = suite.run_all()
+    assert report.all_pass
+    assert report.kinematic_stable
+    assert report.decoherence_floor_ok
+    assert report.thermal_ballistics_ok
+    assert report.heat_sink_lifetime_ok
+    assert report.cad_physics_ok
+    assert report.telemetry_cycle_ns < 1.5
+    assert report.final_substrate_temp_k < 9.3
+    assert report.sk_logical_error < 1.0e-122
 
 
 if __name__ == "__main__":

@@ -12,15 +12,21 @@ from shbt_exotic import (
     FibonacciBraidCompiler,
     GhostSeedSynthesizer,
     HardwareSynthesisAuditor,
+    HarmonicAuditor,
     HeegaardFloerRelabeling,
     HeegaardMappingTorus,
     HilSafetyMonitor,
+    LabHAL,
+    LindbladSolver,
     MassCongestionEngine,
     NewtonLockStasis,
     SafetyMonitor,
+    TelemetryBridge,
     ThermalFluxReport,
     ThermalHILMonitor,
     UnifiedStinespringMap,
+    EngineeringStressSuite,
+    CadPhysicsValidator,
 )
 
 
@@ -146,6 +152,52 @@ def generate_results_tex(out_path: str | Path = "exotic_results.tex") -> Path:
     braid_gate_count = braid.gate_count(braid_depth)
     braid_approx_error = braid.approximation_error(braid_depth)
 
+    # Dynamic interference and wake compensation
+    n_total = mass_engine.n_total()
+    wake1, wake2, wake3 = mass_engine.wake_constants_f64()
+    v_eff = 1.0e3  # representative slow transit
+    delta_n = 1.0e5
+    mu0 = 1.0
+    mu_compensated = mass_engine.compensated_mu(mu0, delta_n, n_total, v_eff)
+    g_metric = mass_engine.linearized_metric_with_interference([(n_local, n_limit)])
+    u_4 = [1.0, 0.0, 0.0, 0.0]
+    l_int = mass_engine.dynamic_interference_lagrangian(g_metric, u_4, delta_n, 0.0, mu0)
+
+    # Lindblad master-equation solver / SK noise floor
+    lindblad = LindbladSolver()
+    gamma_charge = 8.42e-5
+    gamma_phonon = 3.58e-5
+    gamma_dec = lindblad.combined_decoherence_rate_hz()
+    sk_logical_error = lindblad.sk_logical_error_default()
+    sk_logical_error_log10 = math.log10(sk_logical_error) if sk_logical_error > 0 else -999.0
+
+    # Structural resonance and harmonic audit
+    harmonic = HarmonicAuditor()
+    f_shear = harmonic.nominal_frequency_hz("shear")
+    f_long = harmonic.nominal_frequency_hz("longitudinal")
+    f_tors = harmonic.nominal_frequency_hz("torsional")
+    f_flex = harmonic.nominal_frequency_hz("flexural")
+    min_loss_factor = 1.15e-3
+    min_damping_ratio = 6.0e-4
+    support_volume_m3 = 1.0e-6
+    modes_nominal = [
+        ("shear", f_shear, min_loss_factor, min_damping_ratio, 1.0e-9),
+        ("longitudinal", f_long, min_loss_factor, min_damping_ratio, 1.0e-9),
+        ("torsional", f_tors, min_loss_factor, min_damping_ratio, 1.0e-9),
+        ("flexural", f_flex, min_loss_factor, min_damping_ratio, 1.0e-9),
+    ]
+    harmonic_status = harmonic.audit_waveguide(modes_nominal, support_volume_m3)
+
+    # Laboratory HAL telemetry latency
+    telemetry = TelemetryBridge()
+    telemetry_cycle_ns = telemetry.telemetry_cycle_ns()
+
+    # Integrated engineering stress suite
+    suite = EngineeringStressSuite()
+    stress = suite.run_all()
+    cad_validator = CadPhysicsValidator()
+    cad_flex_hz = cad_validator.validate_airbridge_um(5.0, 1.5, 0.3)
+
     # 512-bit closure-chain audit
     i_l_star = hil.i_l_star()
     i_q_star = hil.i_q_star()
@@ -225,6 +277,40 @@ def generate_results_tex(out_path: str | Path = "exotic_results.tex") -> Path:
         f"\\newcommand{{\\ExoticBraidDepth}}{{{braid_depth}}}",
         f"\\newcommand{{\\ExoticBraidGateCount}}{{{braid_gate_count}}}",
         f"\\newcommand{{\\ExoticBraidApproxError}}{{{format_scientific(braid_approx_error)}}}",
+        # Dynamic interference
+        f"\\newcommand{{\\ExoticWakeOne}}{{{format_scientific(wake1)}}}",
+        f"\\newcommand{{\\ExoticWakeTwo}}{{{format_scientific(wake2)}}}",
+        f"\\newcommand{{\\ExoticWakeThree}}{{{format_scientific(wake3)}}}",
+        f"\\newcommand{{\\ExoticNTotal}}{{{format_scientific(n_total)}}}",
+        f"\\newcommand{{\\ExoticMuCompensated}}{{{format_scientific(mu_compensated)}}}",
+        f"\\newcommand{{\\ExoticDynamicLagrangian}}{{{format_scientific(l_int)}}}",
+        # Lindblad / SK
+        f"\\newcommand{{\\ExoticLindbladGammaCharge}}{{{format_scientific(gamma_charge)}}}",
+        f"\\newcommand{{\\ExoticLindbladGammaPhonon}}{{{format_scientific(gamma_phonon)}}}",
+        f"\\newcommand{{\\ExoticLindbladGammaDec}}{{{format_scientific(gamma_dec)}}}",
+        f"\\newcommand{{\\ExoticSKLogicalError}}{{{format_scientific(sk_logical_error)}}}",
+        f"\\newcommand{{\\ExoticSKLogicalErrorLogTen}}{{{format_scientific(-sk_logical_error_log10)}}}",
+        # Harmonic audit
+        f"\\newcommand{{\\ExoticShearModeHz}}{{{format_scientific(f_shear)}}}",
+        f"\\newcommand{{\\ExoticLongitudinalModeHz}}{{{format_scientific(f_long)}}}",
+        f"\\newcommand{{\\ExoticTorsionalModeHz}}{{{format_scientific(f_tors)}}}",
+        f"\\newcommand{{\\ExoticFlexuralModeHz}}{{{format_scientific(f_flex)}}}",
+        f"\\newcommand{{\\ExoticMinLossFactor}}{{{format_scientific(min_loss_factor)}}}",
+        f"\\newcommand{{\\ExoticMinDampingRatio}}{{{format_scientific(min_damping_ratio)}}}",
+        f"\\newcommand{{\\ExoticHarmonicStatus}}{{\\texttt{{{escape_underscores(harmonic_status)}}}}}",
+        # HAL telemetry
+        f"\\newcommand{{\\ExoticTelemetryCycleNs}}{{{format_scientific(telemetry_cycle_ns)}}}",
+        # Engineering stress suite
+        f"\\newcommand{{\\ExoticScenarioAStatus}}{{\\texttt{{{escape_underscores(stress.scenario_a_status)}}}}}",
+        f"\\newcommand{{\\ExoticScenarioBStatus}}{{\\texttt{{{escape_underscores(stress.scenario_b_status)}}}}}",
+        f"\\newcommand{{\\ExoticScenarioCStatus}}{{\\texttt{{{escape_underscores(stress.scenario_c_status)}}}}}",
+        f"\\newcommand{{\\ExoticScenarioDStatus}}{{\\texttt{{{escape_underscores(stress.scenario_d_status)}}}}}",
+        f"\\newcommand{{\\ExoticStressAllPass}}{{{str(stress.all_pass).lower()}}}",
+        f"\\newcommand{{\\ExoticStressFinalTempK}}{{{format_scientific(stress.final_substrate_temp_k)}}}",
+        f"\\newcommand{{\\ExoticStressSKError}}{{{format_scientific(stress.sk_logical_error)}}}",
+        f"\\newcommand{{\\ExoticStressConsumedBits}}{{{format_scientific(stress.consumed_lifetime_bits)}}}",
+        f"\\newcommand{{\\ExoticStressShiftedImpedance}}{{{format_scientific(stress.shifted_impedance_mrayl)}}}",
+        f"\\newcommand{{\\ExoticCadAirbridgeFlexHz}}{{{format_scientific(cad_flex_hz)}}}",
     ]
 
     out_path.write_text("\n".join(lines) + "\n")
