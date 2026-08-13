@@ -15,6 +15,8 @@ from shbt_exotic._core import (
     AcousticImpedanceEngine,
     ExportPhaseModulationTable,
     ThermalFluxReport,
+    MassCongestionEngine,
+    AnomalyClosureError,
 )
 from shbt_exotic.stasis import StasisDilation
 from shbt_exotic.sweep import CoordinatePerturbationSweep
@@ -36,6 +38,8 @@ __all__ = [
     "AcousticImpedanceEngine",
     "ExportPhaseModulationTable",
     "ThermalFluxReport",
+    "MassCongestionEngine",
     "StasisDilation",
     "CoordinatePerturbationSweep",
+    "AnomalyClosureError",
 ]

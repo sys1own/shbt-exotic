@@ -3,6 +3,8 @@ import math
 import pytest
 
 from shbt_exotic import (
+    MassCongestionEngine,
+    AnomalyClosureError,
     AcousticImpedanceEngine,
     CoordinatePerturbationSweep,
     EntropicRefrigerator,
@@ -276,6 +278,48 @@ def test_coordinate_perturbation_sweep_safety_zone():
     )
     assert zone["total"] == 6
     assert zone["nominal"] >= 1
+
+
+def test_mass_congestion_engine_interference_tensor():
+    engine = MassCongestionEngine()
+    i = engine.interference_tensor_f64()
+    assert len(i) == 4 and all(len(row) == 4 for row in i)
+    assert i[0][0] > 0.0
+    assert i[1][1] < 0.0
+    assert i[2][2] > 0.0
+    assert i[3][3] < 0.0
+
+
+def test_mass_congestion_engine_bit_congestion_radius():
+    engine = MassCongestionEngine()
+    assert engine.bit_congestion_radius_m() == pytest.approx(2.954e15, rel=1e-12)
+
+
+def test_mass_congestion_engine_linearized_metric():
+    engine = MassCongestionEngine()
+    g = engine.linearized_metric_with_interference([(1.0e65 + 4e52, 1.0e65)])
+    assert len(g) == 4
+    for mu in range(4):
+        assert g[mu][mu] != 0.0
+
+
+def test_multi_seed_overlap_triggers_anomaly_closure_error():
+    from shbt_exotic.sweep import CoordinatePerturbationSweep
+    sweep = CoordinatePerturbationSweep(mu0=1.0, n_limit=1.0e65, c_get_bound=5.34e-175)
+    # Two seeds, each contributing 6e-13, sum to 1.2e-12 > 1e-12.
+    status, _, triggered = sweep.sweep_multi_seed_overlap([6e52, 6e52])
+    assert triggered is True
+    assert "AnomalyClosureError" in status
+
+
+def test_multi_seed_overlap_passes_below_threshold():
+    from shbt_exotic.sweep import CoordinatePerturbationSweep
+    sweep = CoordinatePerturbationSweep(mu0=1.0, n_limit=1.0e65, c_get_bound=5.34e-175)
+    # Two seeds, each contributing 4e-13, sum to 8e-13 < 1e-12.
+    status, total_delta, triggered = sweep.sweep_multi_seed_overlap([4e52, 4e52])
+    assert triggered is False
+    assert status == "STATUS_NOMINAL_PASS"
+    assert total_delta == pytest.approx(8e-13, rel=1e-6)
 
 
 if __name__ == "__main__":

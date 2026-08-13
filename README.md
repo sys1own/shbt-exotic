@@ -29,6 +29,9 @@ governs all four protocols.  Every state vector is tracked at 512-bit precision 
   - `P_cool = Γ_de · ΔS · T_c` with `ΔS = k_B ln 2` per bit.
 - **Ghost-seed entropy-debt**
   - `P_debt = (M_seed / M_☉) · 906 GW` continuous power requirement.
+- **Multi-seed interference**
+  - `g_{μν} = η_{μν} + Σ_i h_{μν}^{(i)} + I_{μν}` with 512-bit interference coefficients `I_00, I_11, I_22, I_33`.
+  - `R_congestion = 2.954 × 10^15 m` bit-congestion radius; overlap safety audit raises `AnomalyClosureError` if `|Δμ| > 10^{-12}`.
 
 ## Hardware Architecture
 

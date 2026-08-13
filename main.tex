@@ -71,6 +71,12 @@
   \newcommand{\ExoticKapitzaJustified}{true}%
   \newcommand{\ExoticSafetyZoneTotal}{30}%
   \newcommand{\ExoticSafetyZoneNominal}{25}%
+  \newcommand{\ExoticBitCongestionRadius}{2.9540e+15}%
+  \newcommand{\ExoticInterferenceZeroZero}{0.1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679821480865132823066470938446}%
+  \newcommand{\ExoticInterferenceOneOne}{-0.2718281828459045235360287471352662497757247093699959574966967627724076630353547594571382178525166427427466391932003059921817413}%
+  \newcommand{\ExoticInterferenceTwoTwo}{0.5772156649015328606065120900824024310421593359399235988057672348848677267776620160803038285701620311288931215134811111102909722}%
+  \newcommand{\ExoticInterferenceThreeThree}{-0.3183098861837906715377675267450287240689184754980934520815024494944017305351480336210082987141528627814859173234568124230101825}%
+  \newcommand{\ExoticMultiSeedOverlapTriggered}{true}%
 }
 
 \begin{document}
@@ -311,6 +317,34 @@ P_{\rm debt} = \frac{M_{\rm seed}}{M_{\odot}} \, 906\,\text{GW} ,
  giving $P_{\rm debt} = \ExoticEntropyDebtPower{}$~W for the benchmark seed.  A high-energy stabilization transient of $\ExoticHighEnergyTransient{}$~W is required at the moment of synthesis.
 
 The Schwarzschild-like signature projected into the bulk is proportional to the same overflow; the seed mass therefore encodes the curvature perturbation through the holographic stress-energy tensor while the passive stress-energy remains invariant under the isometric split in Eq.~\eqref{eq:v_unified}.
+
+\subsection{Multi-seed interference and metric superposition}
+
+For arrays of ghost seeds the metric is the linear superposition of the individual seed perturbations plus the non-linear interference correction tensor $I_{\mu\nu}$,
+%
+\begin{equation}
+\label{eq:multi-seed-metric}
+g_{\mu\nu} = \eta_{\mu\nu} + \sum_i h_{\mu\nu}^{(i)} + I_{\mu\nu} .
+\end{equation}
+%
+The 512-bit interference coefficients are
+%
+\begin{equation}
+\begin{aligned}
+I_{00} &= \ExoticInterferenceZeroZero{}, \\
+I_{11} &= \ExoticInterferenceOneOne{}, \\
+I_{22} &= \ExoticInterferenceTwoTwo{}, \\
+I_{33} &= \ExoticInterferenceThreeThree{} .
+\end{aligned}
+\end{equation}
+%
+They are stored and evaluated at 512-bit precision to keep the correction below the $10^{-122}$ holographic noise floor.  The bit-congestion radius that defines the minimum safe separation between overlapping seeds is
+%
+\begin{equation}
+R_{\rm congestion} = \ExoticBitCongestionRadius{}\;\text{m} .
+\end{equation}
+%
+The `MassCongestionEngine` computes the effective density multiplier from the sum of per-seed perturbations.  If the multi-seed overlap detunes $\mu$ beyond the $10^{-12}$ eigenvector rigidity threshold, the simulator raises a fatal `AnomalyClosureError` and aborts the address shift.  The live audit confirms that the overlap trigger fires when individual per-seed contributions add past the limit ($\ExoticMultiSeedOverlapTriggered{}$).
 
 \section{Operational benchmarks}
 

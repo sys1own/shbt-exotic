@@ -14,6 +14,7 @@ from shbt_exotic import (
     HeegaardFloerRelabeling,
     HeegaardMappingTorus,
     HilSafetyMonitor,
+    MassCongestionEngine,
     NewtonLockStasis,
     SafetyMonitor,
     ThermalFluxReport,
@@ -112,6 +113,15 @@ def generate_results_tex(out_path: str | Path = "exotic_results.tex") -> Path:
     safety_zone_total = zone["total"]
     safety_zone_nominal = zone["nominal"]
 
+    # Multi-seed interference and metric superposition
+    mass_engine = MassCongestionEngine()
+    congestion_radius_m = mass_engine.bit_congestion_radius_m()
+    i00, i11, i22, i33 = mass_engine.interference_coefficients()
+    g_metric = mass_engine.linearized_metric_with_interference([(n_local, n_limit)])
+    g00 = g_metric[0][0]
+    g11 = g_metric[1][1]
+    multi_seed_overlap_status, _, overlap_triggered = sweep.sweep_multi_seed_overlap([6e52, 6e52])
+
     # RF phase-modulation table (8x8 SHBT array)
     phase_exporter = ExportPhaseModulationTable()
     h_phase = [[(i + 1.0) / (j + 2.0) for j in range(8)] for i in range(8)]
@@ -199,6 +209,12 @@ def generate_results_tex(out_path: str | Path = "exotic_results.tex") -> Path:
         f"\\newcommand{{\\ExoticKapitzaJustified}}{{{str(kapitza_justified).lower()}}}",
         f"\\newcommand{{\\ExoticSafetyZoneTotal}}{{{safety_zone_total}}}",
         f"\\newcommand{{\\ExoticSafetyZoneNominal}}{{{safety_zone_nominal}}}",
+        f"\\newcommand{{\\ExoticBitCongestionRadius}}{{{format_scientific(congestion_radius_m)}}}",
+        f"\\newcommand{{\\ExoticInterferenceZeroZero}}{{{i00}}}",
+        f"\\newcommand{{\\ExoticInterferenceOneOne}}{{{i11}}}",
+        f"\\newcommand{{\\ExoticInterferenceTwoTwo}}{{{i22}}}",
+        f"\\newcommand{{\\ExoticInterferenceThreeThree}}{{{i33}}}",
+        f"\\newcommand{{\\ExoticMultiSeedOverlapTriggered}}{{{str(overlap_triggered).lower()}}}",
     ]
 
     out_path.write_text("\n".join(lines) + "\n")

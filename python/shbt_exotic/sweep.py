@@ -8,7 +8,7 @@ eigenvector rigidity detuning below the 10^{-12} HIL threshold.
 from dataclasses import dataclass
 from typing import List, Tuple
 
-from shbt_exotic._core import SafetyMonitor
+from shbt_exotic._core import SafetyMonitor, MassCongestionEngine, AnomalyClosureError
 
 
 @dataclass
@@ -34,6 +34,7 @@ class CoordinatePerturbationSweep:
         self.n_limit = n_limit
         self.c_get_bound = c_get_bound
         self.monitor = SafetyMonitor()
+        self.mass_engine = MassCongestionEngine()
 
     def sweep_mu(self, amplitudes: List[float]) -> List[SweepResult]:
         """Sweep density-multiplier perturbations around unity."""
@@ -192,3 +193,22 @@ class CoordinatePerturbationSweep:
             return False, 0.0
         worst = max(abs(r.perturbation) for r in nominal)
         return True, worst
+
+    def sweep_multi_seed_overlap(
+        self,
+        per_seed_deltas: List[float],
+    ) -> Tuple[str, float, bool]:
+        """Audit multi-seed overlap by summing per-seed bit-congestion perturbations.
+
+        Each seed is `(n_limit + per_seed_delta, n_limit)`.  The engine computes
+        the effective `μ` from the sum of the per-seed perturbations and raises
+        `AnomalyClosureError` if the total detuning exceeds `10^{-12}`.
+
+        Returns (status, total_delta, triggered_error).
+        """
+        seeds = [(self.n_limit + d, self.n_limit) for d in per_seed_deltas]
+        try:
+            mu = self.mass_engine.multi_seed_mu_perturbation(seeds, self.mu0)
+            return "STATUS_NOMINAL_PASS", mu - self.mu0, False
+        except AnomalyClosureError as exc:
+            return f"AnomalyClosureError: {exc}", 0.0, True
