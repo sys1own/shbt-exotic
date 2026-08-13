@@ -58,6 +58,17 @@
   \newcommand{\ExoticEntropyArrow}{2.8400e-03}%
   \newcommand{\ExoticClosureChainHolds}{true}%
   \newcommand{\ExoticEntropyArrowPositive}{true}%
+  \newcommand{\ExoticPhaseTableVOn}{3.8}%
+  \newcommand{\ExoticPhaseTableVcc}{7.4}%
+  \newcommand{\ExoticPhaseTableEntries}{64}%
+  \newcommand{\ExoticPhaseTableMinVPhase}{3.8000}%
+  \newcommand{\ExoticPhaseTableMaxVPhase}{7.4000}%
+  \newcommand{\ExoticFluxGammaDe}{9.6352e+19}%
+  \newcommand{\ExoticFluxCoolingPower}{1.4200e-05}%
+  \newcommand{\ExoticFluxHeatFlux}{1.4200e+07}%
+  \newcommand{\ExoticKapitzaDropUnengineered}{3.8900e+14}%
+  \newcommand{\ExoticKapitzaDropMatched}{1.0600e+13}%
+  \newcommand{\ExoticKapitzaJustified}{true}%
 }
 
 \begin{document}
@@ -464,6 +475,44 @@ with $Z_{\rm InP} \approx 23.1$~MRayl.  This is below the conservative InP struc
 \begin{sloppypar}
 The simulator selects an alumina formulation based on frequency and thickness: AAO-Epoxy ($Z=9.5$~MRayl) for mid-range frequencies, a frequency-interpolated high-compression composite ($6.5$--$9.47$~MRayl) for low frequencies, and colloidal nanocomposites for layers thinner than $10\,\mu$m.
 \end{sloppypar}
+
+\section{Engineering synthesis: RF phase control and thermal flux maps}
+
+\subsection{RF emitter-array phase-modulation table}
+
+\begin{sloppypar}
+The simulator exports a discrete phase-modulation table for an $8 \times 8$ InP/InGaAs SHBT emitter array.  Each emitter is driven by a microwave command $e^{i \theta_{ij}}$ derived from the conformal dimension $h_{ij}$ and the effective target velocity $v_{\rm eff}$:
+\end{sloppypar}
+%
+\begin{equation}
+\theta_{ij} = 2\pi \, h_{ij} \, v_{\rm eff} \pmod{2\pi} .
+\end{equation}
+%
+The corresponding phase-shifter control voltage is linearly mapped between the gate/base turn-on voltage $\ExoticPhaseTableVOn{}$~V and the collector-drain supply $\ExoticPhaseTableVcc{}$~V.  The exporter produces JSON/CSV tables with $\ExoticPhaseTableEntries{}$ entries per array; the live run reports phase-shifter voltages between $\ExoticPhaseTableMinVPhase{}$~V and $\ExoticPhaseTableMaxVPhase{}$~V.
+
+\subsection{Thermal flux and cooling-power budget}
+
+The 14.2~$\mu$W refrigeration core is characterized by a de-rendering rate
+%
+\begin{equation}
+\Gamma_{\rm de} = \frac{P_{\rm cool}}{k_B T_c \ln 2} = \ExoticFluxGammaDe{} \;\mathrm{bit/s},
+\end{equation}
+%
+giving a cooling power $P_{\rm cool} = \ExoticFluxCoolingPower{}$~W.  The average heat flux across the solid/He-4 interface is $q = \ExoticFluxHeatFlux{}$~W/m$^2$.
+
+For an un-engineered sapphire/He-4 boundary the acoustic-mismatch Kapitza resistance produces a temperature drop
+%
+\begin{equation}
+\Delta T_{\rm uneng} = q R_K \approx \ExoticKapitzaDropUnengineered{} \;\mathrm{K},
+\end{equation}
+%
+while a quarter-wave Al$_2$O$_3$ matching layer reduces the effective mismatch factor and gives
+%
+\begin{equation}
+\Delta T_{\rm matched} \approx \ExoticKapitzaDropMatched{} \;\mathrm{K}.
+\end{equation}
+%
+The reduction $\Delta T_{\rm matched} < \Delta T_{\rm uneng}$ (\ExoticKapitzaJustified{}) justifies the Al$_2$O$_3$ acoustic-impedance engineering used in the HIL thermal model.
 
 \section{Conclusion}
 

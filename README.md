@@ -58,6 +58,11 @@ The dual-target Hardware-in-the-Loop monitor concurrently samples the Stasis Con
 - **Alumina formulation selector**: chooses AAO-Epoxy (`Z = 9.5 MRayl`), High-Compression Composite (`6.5–9.47 MRayl`), or Colloidal Nanocomposite (sub-10 μm layers) based on operating frequency and thickness.
 - **InP substrate verification**: the transmitted acoustic pressure into InP is computed from the boundary transmission coefficient and verified to stay below the InP structural yield/phase-transition limit (~10 GPa); the waveguide peak pressure of 12.6427 GPa is consistent with the 142.08 MW transient and the chosen waveguide area.
 
+## Engineering Synthesis
+
+- **RF phase-modulation table**: `ExportPhaseModulationTable` maps an 8x8 conformal-dimension matrix `h_ij` and effective velocity `v_eff` to a JSON/CSV table of 64 microwave phase commands `e^{i θ}`.  Phase-shifter voltages are constrained between the gate/base turn-on `3.8 V` and collector-drain `7.4 V` bias levels.
+- **Thermal flux report**: `ThermalFluxReport` computes `Γ_de = P_cool / (k_B T_c ln 2)` for the `14.2 μW` core and an 8x8 thermal-flux map.  The un-engineered sapphire/He-4 Kapitza drop is `≈ 3.89 × 10^{14} K`; a quarter-wave Al2O3 matching layer reduces this drop, justifying the acoustic-impedance engineering.
+
 ## Quick Start
 
 ```bash

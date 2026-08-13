@@ -12,6 +12,9 @@ from shbt_exotic._core import (
     GateCycleShunt,
     ThermalShuntAuditor,
     ThermalHILMonitor,
+    AcousticImpedanceEngine,
+    ExportPhaseModulationTable,
+    ThermalFluxReport,
 )
 from shbt_exotic.stasis import StasisDilation
 from shbt_exotic.sweep import CoordinatePerturbationSweep
@@ -30,6 +33,9 @@ __all__ = [
     "GateCycleShunt",
     "ThermalShuntAuditor",
     "ThermalHILMonitor",
+    "AcousticImpedanceEngine",
+    "ExportPhaseModulationTable",
+    "ThermalFluxReport",
     "StasisDilation",
     "CoordinatePerturbationSweep",
 ]

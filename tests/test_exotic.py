@@ -3,9 +3,11 @@ import math
 import pytest
 
 from shbt_exotic import (
+    AcousticImpedanceEngine,
     CoordinatePerturbationSweep,
     EntropicRefrigerator,
     ExoticEngine,
+    ExportPhaseModulationTable,
     GhostSeedSynthesizer,
     HardwareSynthesisAuditor,
     HeegaardFloerRelabeling,
@@ -13,6 +15,7 @@ from shbt_exotic import (
     HilSafetyMonitor,
     NewtonLockStasis,
     SafetyMonitor,
+    ThermalFluxReport,
     ThermalHILMonitor,
     ThermalShuntAuditor,
     UnifiedStinespringMap,
@@ -200,6 +203,36 @@ def test_safety_monitor_thermal_hil_shuts_down_on_quench():
     # The default design volume is 50 cm^3, so nominal mu should pass.
     _, _, _, thermal = monitor.simulate_shutdown(1.0, 1.0e65, 1.0e65, 5.34e-175)
     assert thermal == "STATUS_NOMINAL_PASS"
+
+
+def test_export_phase_modulation_table():
+    exporter = ExportPhaseModulationTable()
+    h = [[(i + 1.0) / (j + 2.0) for j in range(8)] for i in range(8)]
+    json_table = exporter.export_json(h, 0.5)
+    csv_table = exporter.export_csv(h, 0.5)
+    assert '"i"' in json_table
+    assert "theta_rad" in csv_table
+    entries = exporter.table_entries(h, 0.5)
+    assert len(entries) == 64
+    assert all(3.8 <= cmd.v_phase <= 7.4 for cmd in entries)
+
+
+def test_thermal_flux_report():
+    flux = ThermalFluxReport()
+    gamma = flux.gamma_de
+    assert gamma > 0.0
+    assert flux.cooling_power_w == pytest.approx(14.2e-6, rel=1e-12)
+    assert flux.kapitza_delta_t_unengineered_k == pytest.approx(3.89e14, rel=1e-6)
+    assert flux.kapitza_delta_t_matched_k < flux.kapitza_delta_t_unengineered_k
+    assert flux.acoustic_matching_justified is True
+    assert len(flux.flux_map()) == 64
+
+
+def test_acoustic_impedance_inp_within_yield():
+    acoustic = AcousticImpedanceEngine()
+    assert acoustic.peak_waveguide_pressure_gpa() == pytest.approx(12.6427, rel=1e-4)
+    assert acoustic.inp_substrate_pressure_gpa() < 10.0
+    assert acoustic.is_inp_within_yield() is True
 
 
 if __name__ == "__main__":
