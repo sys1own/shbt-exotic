@@ -39,10 +39,10 @@ impl Allocator {
                 self.free_lists[class] = read_usize(self.arena.0.as_mut_ptr().add(node));
                 return self.arena.0.as_mut_ptr().add(node);
             }
-            let aligned = (size + 15) & !15;
-            if self.bump + aligned + 8 <= ARENA_SIZE {
+            let class_size = SIZE_CLASSES[class];
+            if self.bump + class_size + 8 <= ARENA_SIZE {
                 let ptr = self.arena.0.as_mut_ptr().add(self.bump + 8);
-                self.bump += aligned + 8;
+                self.bump += class_size + 8;
                 return ptr;
             }
         }

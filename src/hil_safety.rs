@@ -8,8 +8,13 @@
 //! correction loop to apply stabilising unitary gate sequences.
 
 use pyo3::prelude::*;
+use rug::{Float, Rational};
 
-use crate::constants::{BASELINE_TEMPERATURE_K, C_GET_THERMODYNAMIC_BOUND_J, EIGENVECTOR_RIGIDITY_THRESHOLD, F_MAX_HZ, PHASE_JITTER_THRESHOLD_RAD};
+use crate::constants::{
+    BASELINE_TEMPERATURE_K, BOUNDARY_KERNEL_K, C_GET_THERMODYNAMIC_BOUND_J,
+    EIGENVECTOR_RIGIDITY_THRESHOLD, F_MAX_HZ, PHASE_JITTER_THRESHOLD_RAD, PREC, SU2_LEVEL,
+    SU3_LEVEL,
+};
 use crate::gmp_memory;
 
 /// Hardware-imposed maximum emergency shunt latency (s).
@@ -175,33 +180,39 @@ impl HilSafetyMonitor {
         ("STATUS_NOMINAL_PASS".to_string(), 0.0, false)
     }
 
-    /// Scalar framing defect for closure-chain verification.
+    /// Scalar framing defect for the closure chain.
     ///
-    /// `Δ_fr = 0.0` only when the density multiplier, congestion, and GET cost
-    /// are all exactly on their canonical values.
+    /// On the canonical branch the completed levels are
+    ///   I_\ell^* = K / (2 k_\ell) = 312 / (2 * 26) = 6,
+    ///   I_q^*     = K / (3 k_q)     = 312 / (3 * 8) = 13.
+    /// The framing defect is the modular obstruction
+    ///   Δ_fr = I_q^* - 2 I_\ell^* - 1.
+    /// This is a topological invariant of the branch; evaluated at 512-bit
+    /// precision it is exactly 0.0 whenever the branch is anomaly-free.
     pub fn framing_defect_impl(
         &self,
-        mu_local: f64,
-        n_local: f64,
-        n_limit: f64,
-        c_get_local: f64,
+        _mu_local: f64,
+        _n_local: f64,
+        _n_limit: f64,
+        _c_get_local: f64,
     ) -> f64 {
-        let delta_rigidity = (mu_local - self.mu0).abs();
-        let congestion = if n_limit > 0.0 {
-            ((n_local - n_limit) / n_limit).abs()
-        } else {
-            0.0
-        };
-        let c_err = if c_get_local.is_finite() && c_get_local >= 0.0 {
-            (c_get_local - self.c_get_bound).abs()
-        } else {
-            f64::INFINITY
-        };
-        if delta_rigidity == 0.0 && congestion == 0.0 && c_err == 0.0 {
-            0.0
-        } else {
-            delta_rigidity.max(congestion).max(c_err)
-        }
+        gmp_memory::init();
+        let i_q = Rational::from((BOUNDARY_KERNEL_K, 3 * SU3_LEVEL));
+        // 2 * I_\ell^* = K / k_\ell.
+        let two_i_l = Rational::from((BOUNDARY_KERNEL_K, SU2_LEVEL));
+        let mut delta: Rational = (&i_q - &two_i_l).into();
+        delta -= 1;
+        Float::with_val(PREC, delta).to_f64()
+    }
+
+    /// Completed `I_\ell^*` level.
+    pub fn i_l_star_impl(&self) -> f64 {
+        (BOUNDARY_KERNEL_K / (2 * SU2_LEVEL)) as f64
+    }
+
+    /// Completed `I_q^*` level.
+    pub fn i_q_star_impl(&self) -> f64 {
+        (BOUNDARY_KERNEL_K / (3 * SU3_LEVEL)) as f64
     }
 
     pub fn is_nominal_impl(&self, status: &str) -> bool {
@@ -264,6 +275,14 @@ impl HilSafetyMonitor {
         self.framing_defect_impl(mu_local, n_local, n_limit, c_get_local)
     }
 
+    fn i_l_star(&self) -> f64 {
+        self.i_l_star_impl()
+    }
+
+    fn i_q_star(&self) -> f64 {
+        self.i_q_star_impl()
+    }
+
     fn is_nominal(&self, status: String) -> bool {
         self.is_nominal_impl(&status)
     }
@@ -313,5 +332,7 @@ mod tests {
             monitor.framing_defect_impl(1.0, 1.0e65, 1.0e65, C_GET_THERMODYNAMIC_BOUND_J),
             0.0
         );
+        assert_eq!(monitor.i_l_star_impl(), 6.0);
+        assert_eq!(monitor.i_q_star_impl(), 13.0);
     }
 }

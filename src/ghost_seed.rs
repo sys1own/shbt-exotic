@@ -6,7 +6,8 @@
 
 use pyo3::prelude::*;
 
-use crate::constants::{ALPHA_SEED_M_SUN_PER_BIT, GHOST_SEED_TRANSIENT_W, MACRO_COOLING_POWER_W, M_SUN_KG};
+use crate::constants::{GHOST_SEED_TRANSIENT_W, MACRO_COOLING_POWER_W, M_SUN_KG};
+use crate::shbt::mass_congestion::alpha_seed_m_sun_per_bit_f64;
 use crate::error::ExoticError;
 use crate::gmp_memory;
 
@@ -37,7 +38,7 @@ impl GhostSeedSynthesizer {
             ));
         }
         let delta = n_local - n_limit;
-        Ok(ALPHA_SEED_M_SUN_PER_BIT * delta)
+        Ok(alpha_seed_m_sun_per_bit_f64() * delta)
     }
 
     pub fn seed_mass_kg_impl(&self, n_local: f64, n_limit: f64) -> Result<f64, ExoticError> {
@@ -108,6 +109,11 @@ impl GhostSeedSynthesizer {
     fn is_filling_factor_allowed(&self, nu: (i64, i64)) -> bool {
         self.is_filling_factor_allowed_impl(nu)
     }
+
+    /// Topological residue coupling coefficient `α_seed` in solar masses per bit.
+    fn alpha_seed(&self) -> f64 {
+        alpha_seed_m_sun_per_bit_f64()
+    }
 }
 
 #[cfg(test)]
@@ -118,7 +124,8 @@ mod tests {
     fn one_solar_mass_ghost_seed() {
         let synth = GhostSeedSynthesizer::new();
         // alpha_seed * delta = 1 M_sun  =>  delta = 1 / alpha_seed
-        let delta = 1.0 / ALPHA_SEED_M_SUN_PER_BIT;
+        let alpha = alpha_seed_m_sun_per_bit_f64();
+        let delta = 1.0 / alpha;
         let m_sun = synth.seed_mass_solar_impl(delta, 0.0).unwrap();
         assert!((m_sun - 1.0).abs() < 1e-6);
     }

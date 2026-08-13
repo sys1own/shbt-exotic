@@ -11,9 +11,11 @@ from shbt_exotic import (
     GhostSeedSynthesizer,
     HardwareSynthesisAuditor,
     HeegaardFloerRelabeling,
+    HeegaardMappingTorus,
     HilSafetyMonitor,
     NewtonLockStasis,
     SafetyMonitor,
+    ThermalHILMonitor,
     UnifiedStinespringMap,
 )
 
@@ -53,12 +55,18 @@ def generate_results_tex(out_path: str | Path = "exotic_results.tex") -> Path:
     # Core operators
     _, _, stinespring_isometric, _, _ = stinespring.audit(state)
     relabel.audit(state, 0, 1)
+    n_local_partition, n_active_partition, n_dark_partition, eta_a, eta_d = stinespring.partition()
+
+    # Heegaard mapping torus / Kojima inequality
+    torus = HeegaardMappingTorus()
+    relabeled = relabel.relabel(state, 0, 1)
+    ell_he, delta_s, kojima_ok = torus.evaluate(state, relabeled)
 
     bias = 1.0e-15
     gamma_stasis = stasis.gamma_stasis(bias)
     c_get = stasis.local_c_get(bias)
 
-    alpha = 1.67e-51
+    alpha = ghost.alpha_seed()
     n_limit = 1.0e65
     n_local = n_limit + 1.0 / alpha
     m_sun = ghost.seed_mass_solar(n_local, n_limit)
@@ -83,24 +91,46 @@ def generate_results_tex(out_path: str | Path = "exotic_results.tex") -> Path:
     f_max = hw.f_max_hz()
     bandwidth = hw.routing_bandwidth_bps()
 
-    # Gate-cycle shunt safety and coordinate rigidity sweep
+    # Gate-cycle shunt safety and Debye T^3 thermal HIL audit
     monitor = SafetyMonitor()
     shunt_status, shunt_latency_ns, shunt_cycles, thermal_status = monitor.simulate_shutdown(
         mu_local, n_local, n_limit, c_get
     )
+    hil_thermal = monitor.hil_thermal_monitor()
     thermal = monitor.thermal_shunt_auditor()
     temperature_rise_k = thermal.temperature_rise_k()
+    debye_final_temp_k = hil_thermal.final_temperature_k()
+    dissipation_volume_cm3 = hil_thermal.volume_cm3()
+    debye_heat_capacity_j_per_k = hil_thermal.heat_capacity_j_per_k()
 
     sweep = CoordinatePerturbationSweep(mu0=1.0, n_limit=n_limit, c_get_bound=c_get)
     sweep_ok, worst_detuning = sweep.verify_rigidity_limit()
     rigidity_status = "STATUS_NOMINAL_PASS" if sweep_ok else "STATUS_EMERGENCY_SHUTDOWN"
 
+    # 512-bit closure-chain audit
+    i_l_star = hil.i_l_star()
+    i_q_star = hil.i_q_star()
+    kb = 1.380_649e-23
+    entropy_arrow = gamma_de * kb * math.log(2) + p_cool / t_c
+    closure_chain_holds = framing_defect == 0.0
+    entropy_arrow_positive = entropy_arrow > 0.0
+
     lines = [
         "% Auto-generated macros from shbt-exotic unified audit.",
         f"\\newcommand{{\\ExoticKernel}}{{{engine.kernel[0]}, {engine.kernel[1]}, {engine.kernel[2]}}}",
         f"\\newcommand{{\\ExoticStinespringIsometric}}{{{str(stinespring_isometric).lower()}}}",
+        f"\\newcommand{{\\ExoticNLocal}}{{{n_local_partition}}}",
+        f"\\newcommand{{\\ExoticNActive}}{{{n_active_partition}}}",
+        f"\\newcommand{{\\ExoticNDark}}{{{n_dark_partition}}}",
+        f"\\newcommand{{\\ExoticEtaA}}{{{eta_a[0]}/{eta_a[1]}}}",
+        f"\\newcommand{{\\ExoticEtaD}}{{{eta_d[0]}/{eta_d[1]}}}",
+        f"\\newcommand{{\\ExoticHeegaardPresLength}}{{{format_scientific(ell_he)}}}",
+        f"\\newcommand{{\\ExoticHeegaardEntropyChange}}{{{format_scientific(delta_s)}}}",
+        f"\\newcommand{{\\ExoticKojimaSatisfied}}{{{str(kojima_ok).lower()}}}",
+        f"\\newcommand{{\\ExoticStasisScale}}{{{format_scientific(1.0e-12)}}}",
         f"\\newcommand{{\\ExoticStasisGamma}}{{{format_scientific(gamma_stasis)}}}",
         f"\\newcommand{{\\ExoticCget}}{{{format_scientific(c_get)}}}",
+        f"\\newcommand{{\\ExoticAlphaSeed}}{{{format_scientific(alpha)}}}",
         f"\\newcommand{{\\ExoticGhostMassSun}}{{{format_scientific(m_sun)}}}",
         f"\\newcommand{{\\ExoticGhostMassKg}}{{{format_scientific(m_kg)}}}",
         f"\\newcommand{{\\ExoticEntropyDebtPower}}{{{format_scientific(entropy_debt)}}}",
@@ -123,8 +153,17 @@ def generate_results_tex(out_path: str | Path = "exotic_results.tex") -> Path:
         f"\\newcommand{{\\ExoticShuntCycles}}{{{shunt_cycles}}}",
         f"\\newcommand{{\\ExoticThermalStatus}}{{\\texttt{{{escape_underscores(thermal_status)}}}}}",
         f"\\newcommand{{\\ExoticTemperatureRiseK}}{{{format_scientific(temperature_rise_k)}}}",
+        f"\\newcommand{{\\ExoticDebyeFinalTempK}}{{{format_scientific(debye_final_temp_k)}}}",
+        f"\\newcommand{{\\ExoticDissipationVolume}}{{{format_scientific(dissipation_volume_cm3)}}}",
+        f"\\newcommand{{\\ExoticMinDissipationVolume}}{{{format_scientific(48.98)}}}",
+        f"\\newcommand{{\\ExoticDebyeHeatCapacityJK}}{{{format_scientific(debye_heat_capacity_j_per_k)}}}",
         f"\\newcommand{{\\ExoticRigiditySweepStatus}}{{\\texttt{{{escape_underscores(rigidity_status)}}}}}",
         f"\\newcommand{{\\ExoticWorstDetuning}}{{{format_scientific(worst_detuning)}}}",
+        f"\\newcommand{{\\ExoticILStar}}{{{format_scientific(i_l_star)}}}",
+        f"\\newcommand{{\\ExoticIQStar}}{{{format_scientific(i_q_star)}}}",
+        f"\\newcommand{{\\ExoticEntropyArrow}}{{{format_scientific(entropy_arrow)}}}",
+        f"\\newcommand{{\\ExoticClosureChainHolds}}{{{str(closure_chain_holds).lower()}}}",
+        f"\\newcommand{{\\ExoticEntropyArrowPositive}}{{{str(entropy_arrow_positive).lower()}}}",
     ]
 
     out_path.write_text("\n".join(lines) + "\n")

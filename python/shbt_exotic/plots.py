@@ -40,7 +40,7 @@ def temporal_dilation_vs_entropy_cost() -> Path:
 def seed_mass_vs_bit_overflow() -> Path:
     """Plot ghost-seed mass as a function of bit overflow."""
     ghost = GhostSeedSynthesizer()
-    alpha = 1.67e-51  # M_sun per bit
+    alpha = ghost.alpha_seed()  # M_sun per bit
     n_limit = 1.0e65
     # Bit overflow from 0 up to 5 / alpha, i.e. 5 solar masses.
     overflows = np.linspace(0.0, 5.0 / alpha, 200)

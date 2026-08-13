@@ -11,6 +11,7 @@ use crate::constants::{
     F_MAX_HZ, GHOST_SEED_TRANSIENT_W, KB_J_PER_K, LN2, N_LOCAL_BITS, TEMPERATURE_K,
 };
 use crate::hil_safety::HilSafetyMonitor;
+use super::hil::ThermalHILMonitor;
 
 /// Hard-coded emergency shutdown latency budget (s).
 const SHUNT_LATENCY_S: f64 = 2.5e-9;
@@ -252,13 +253,16 @@ impl Default for ThermalShuntAuditor {
     }
 }
 
-/// Unified safety monitor: gate-cycle shutdown + thermal shunt audit.
+/// Unified safety monitor: gate-cycle shutdown + Debye T^3 thermal HIL audit.
 #[pyclass(name = "SafetyMonitor")]
 #[derive(Debug, Clone)]
 pub struct SafetyMonitor {
     pub hil: HilSafetyMonitor,
     pub gate_shunt: GateCycleShunt,
+    /// Legacy holographic thermal shunt auditor (retained for API stability).
     pub thermal: ThermalShuntAuditor,
+    /// Debye T^3 InP thermal HIL monitor.
+    pub hil_thermal: ThermalHILMonitor,
 }
 
 impl SafetyMonitor {
@@ -267,10 +271,11 @@ impl SafetyMonitor {
             hil: HilSafetyMonitor::new(),
             gate_shunt: GateCycleShunt::new(),
             thermal: ThermalShuntAuditor::new(),
+            hil_thermal: ThermalHILMonitor::new(),
         }
     }
 
-    /// Simulate the full gate-cycle shutdown path and thermal audit.
+    /// Simulate the full gate-cycle shutdown path and Debye T^3 thermal audit.
     pub fn simulate_shutdown(
         &self,
         mu_local: f64,
@@ -278,21 +283,17 @@ impl SafetyMonitor {
         n_limit: f64,
         c_get_local: f64,
     ) -> (String, f64, usize, &'static str) {
-        let (status, latency_ns, cycles) =
+        let (mut status, latency_ns, cycles) =
             self.gate_shunt
                 .simulate_shutdown(&self.hil, mu_local, n_local, n_limit, c_get_local);
-        let thermal_status = self.thermal.audit();
-        let combined = if status == "STATUS_NOMINAL_PASS" && thermal_status == "STATUS_NOMINAL_PASS"
-        {
-            "STATUS_NOMINAL_PASS"
-        } else if status == "STATUS_EMERGENCY_SHUTDOWN" {
-            "STATUS_EMERGENCY_SHUTDOWN"
-        } else if thermal_status == "EMERGENCY_THERMAL_QUENCH" {
-            "EMERGENCY_THERMAL_QUENCH"
-        } else {
-            status.as_str()
-        };
-        (combined.to_string(), latency_ns, cycles, thermal_status)
+        let thermal_status = self.hil_thermal.audit_impl();
+        // Thermal quench forces an immediate emergency shunt of all bias currents.
+        if thermal_status == "STATUS_EMERGENCY_SHUTDOWN" {
+            status = "STATUS_EMERGENCY_SHUTDOWN".to_string();
+        } else if status == "STATUS_NOMINAL_PASS" && thermal_status != "STATUS_NOMINAL_PASS" {
+            status = thermal_status.to_string();
+        }
+        (status, latency_ns, cycles, thermal_status)
     }
 }
 
@@ -322,9 +323,14 @@ impl SafetyMonitor {
         self.gate_shunt.clone()
     }
 
-    /// Return the embedded thermal shunt auditor.
+    /// Return the legacy thermal shunt auditor.
     fn thermal_shunt_auditor(&self) -> ThermalShuntAuditor {
         self.thermal.clone()
+    }
+
+    /// Return the Debye T^3 InP thermal HIL monitor.
+    fn hil_thermal_monitor(&self) -> ThermalHILMonitor {
+        self.hil_thermal.clone()
     }
 }
 

@@ -9,9 +9,11 @@ from shbt_exotic import (
     GhostSeedSynthesizer,
     HardwareSynthesisAuditor,
     HeegaardFloerRelabeling,
+    HeegaardMappingTorus,
     HilSafetyMonitor,
     NewtonLockStasis,
     SafetyMonitor,
+    ThermalHILMonitor,
     ThermalShuntAuditor,
     UnifiedStinespringMap,
 )
@@ -35,6 +37,22 @@ def test_stinespring_isometric():
     assert iso is True
 
 
+def test_stinespring_partition_from_branch():
+    st = UnifiedStinespringMap()
+    n_local, n_active, n_dark, eta_a, eta_d = st.partition()
+    assert n_local == 33
+    assert n_active == 10
+    assert n_dark == 23
+    assert eta_a == (10, 33)
+    assert eta_d == (23, 33)
+
+
+def test_alpha_seed_is_topological_residue():
+    ghost = GhostSeedSynthesizer()
+    alpha = ghost.alpha_seed()
+    assert 1.3e-51 < alpha < 1.4e-51
+
+
 def test_heegaard_floer_relabel():
     relabel = HeegaardFloerRelabeling()
     state = _state()
@@ -43,16 +61,40 @@ def test_heegaard_floer_relabel():
     assert relabel.audit(state, 0, 1) is True
 
 
+def test_heegaard_mapping_torus_kojima():
+    torus = HeegaardMappingTorus()
+    state = _state()
+    target = state.copy()
+    ell, delta_s, ok = torus.evaluate(state, target)
+    assert ell == pytest.approx(1.0, rel=1e-15)
+    assert abs(delta_s) < 1e-15
+    assert ok is True
+
+    perturbed = [(v[0] + 1e-3, v[1]) for v in state]
+    _, delta_s_bad, ok_bad = torus.evaluate(state, perturbed)
+    assert ok_bad is False
+
+
 def test_newton_lock_stasis():
     stasis = NewtonLockStasis()
     gamma0 = stasis.gamma_stasis(0.0)
     gamma1 = stasis.gamma_stasis(1.0e-15)
     assert gamma1 > gamma0
+    # exp(1e-15 / 1e-12) ≈ 1.001
+    assert gamma1 == pytest.approx(1.0010005, abs=1e-6)
+
+
+def test_newton_lock_anomaly_at_modular_detuning_limit():
+    stasis = NewtonLockStasis()
+    with pytest.raises(Exception):
+        stasis.local_c_get(1.0e-12)
+    with pytest.raises(Exception):
+        stasis.gamma_stasis(1.0e-12)
 
 
 def test_ghost_seed_one_solar_mass_and_entropy_debt():
     ghost = GhostSeedSynthesizer()
-    alpha = 1.67e-51
+    alpha = ghost.alpha_seed()
     n_limit = 1.0e65
     n_local = n_limit + 1.0 / alpha
     m_sun = ghost.seed_mass_solar(n_local, n_limit)
@@ -131,6 +173,33 @@ def test_coordinate_perturbation_sweep_rigidity():
     ok, worst = sweep.verify_rigidity_limit()
     assert ok is True
     assert worst < 1.0e-12
+
+
+def test_thermal_hil_debye_t3_model():
+    monitor = ThermalHILMonitor()
+    assert monitor.audit() == "STATUS_NOMINAL_PASS"
+    assert monitor.final_temperature_k() < 9.3
+    assert monitor.volume_cm3() >= 48.98
+
+
+def test_thermal_hil_quench_for_small_volume():
+    monitor = ThermalHILMonitor(
+        a_inp=3.87759483,
+        t_i=15.4e-3,
+        t_c=9.3,
+        power_w=142.08e6,
+        tau_s=2.5e-9,
+        volume_cm3=1.0,
+    )
+    assert monitor.audit() == "STATUS_EMERGENCY_SHUTDOWN"
+    assert monitor.final_temperature_k() > 9.3
+
+
+def test_safety_monitor_thermal_hil_shuts_down_on_quench():
+    monitor = SafetyMonitor()
+    # The default design volume is 50 cm^3, so nominal mu should pass.
+    _, _, _, thermal = monitor.simulate_shutdown(1.0, 1.0e65, 1.0e65, 5.34e-175)
+    assert thermal == "STATUS_NOMINAL_PASS"
 
 
 if __name__ == "__main__":

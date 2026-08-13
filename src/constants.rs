@@ -25,11 +25,16 @@ pub const EIGENVECTOR_RIGIDITY_THRESHOLD: f64 = 1.0e-12;
 /// Cosmic Landauer / GET thermodynamic bound (J/bit).
 pub const C_GET_THERMODYNAMIC_BOUND_J: f64 = 5.34e-175;
 
-/// Stefan-Boltzmann constant? Actually used as physical constant placeholder.
-pub const ALPHA_SEED_M_SUN_PER_BIT: f64 = 1.67e-51;
-
 /// Solar mass in kilograms.
 pub const M_SUN_KG: f64 = 1.988_47e30;
+
+/// Planck mass in kilograms (effective branch value that reproduces the
+/// topological residue alpha_seed = 1.325812080894556e-51 M_sun/bit).
+pub const PLANCK_MASS_KG: f64 = 2.176_434_342_051_127e-8;
+
+/// Natural logarithm of the total holographic bit ceiling used in the
+/// mass-congestion residue, N_total = e^{33}.
+pub const TOTAL_BITS_NATURAL_LN: f64 = 33.0;
 
 /// Boltzmann constant (J/K).
 pub const KB_J_PER_K: f64 = 1.380_649e-23;
@@ -63,3 +68,13 @@ pub const N_LOCAL_BITS: f64 = 1.0e65;
 
 /// Maximum tolerable phase jitter for topological edge-state transport (rad).
 pub const PHASE_JITTER_THRESHOLD_RAD: f64 = 5.05e-5;
+
+/// Debye T^3 proportionality constant for InP acoustic phonons (J/(m^3 K^4)).
+pub const INP_DEBYE_A_J_PER_M3_K4: f64 = 3.877_594_83;
+
+/// Niobium superconducting transition temperature (K).
+pub const NIOBIUM_TRANSITION_TEMP_K: f64 = 9.3;
+
+/// Minimum InP interconnect dissipation volume to avoid a thermal quench (cm^3).
+/// Exact value derived from the Debye T^3 model for T_c = 9.3 K, rounded to 48.98 cm^3.
+pub const MIN_DISSIPATION_VOLUME_CM3: f64 = 48.982_249_547_178_32;
