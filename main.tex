@@ -644,6 +644,34 @@ The regulator updates the control voltage $u(t)$ every cycle and converts it bac
 %
 is enforced at the output: if the corrected residual exceeds this threshold the monitor returns \texttt{STATUS\_EMERGENCY\_SHUTDOWN}, otherwise \texttt{STATUS\_NOMINAL\_PASS}.
 
+\section{Reliability, aging, and thermal fatigue}
+
+The Alumina/InP interface is thermally cycled by the 142.08~MW transient train, producing a cyclic plastic strain
+%
+\begin{equation}
+\Delta\epsilon_p = 6.0 \times 10^{-6}
+\end{equation}
+%
+for a 15~K temperature swing.  The Coffin-Manson fatigue limit for this joint is
+%
+\begin{equation}
+N_f = 4.0 \times 10^{6}\;\mathrm{cycles} ,
+\end{equation}
+%
+which the simulator converts to an equivalent de-rendering lifetime budget of
+%
+\begin{equation}
+N_{\rm bits}^{\max} = 1.514 \times 10^{16}\;\mathrm{bits} .
+\end{equation}
+%
+As the cumulative de-rendered bit count approaches this budget the interface acoustic impedance drifts toward
+%
+\begin{equation}
+Z_{\rm fatigue} = 1.3250\;\mathrm{MRayl} ,
+\end{equation}
+%
+raising the thermal boundary resistance and the risk of a superconducting niobium quench.  The \texttt{ReliabilityAuditor} therefore returns \texttt{STATUS\_QUENCH\_WARNING} once the lifetime budget is exceeded.
+
 \section{Conclusion}
 
 The \texttt{shbt-exotic} simulator demonstrates that non-local communication, temporal stasis, artificial ghost seeds, and entropic refrigeration can be grounded in a single isometric Stinespring framework on the $(26,8,312)$ SHBT branch.  All operators preserve probability, holographic entropy, and the closure chain to within the $10^{-122}$ noise floor, while the HIL monitor guarantees physical realizability within stated InP/InGaAs hardware limits.

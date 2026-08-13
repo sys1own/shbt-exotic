@@ -7,6 +7,7 @@ import sys
 from shbt_exotic import (
     CalibrationEngine,
     CoordinatePerturbationSweep,
+    ReliabilityAuditor,
     EntropicRefrigerator,
     ExoticEngine,
     FibonacciBraidCompiler,
@@ -122,6 +123,15 @@ def run_audit(args: argparse.Namespace) -> int:
         and cal_shutdown_status == "STATUS_EMERGENCY_SHUTDOWN"
     )
 
+    # 12. Thermal-fatigue reliability audit
+    rel = ReliabilityAuditor()
+    rel.accumulate_bits(1.514e16 / 2.0)
+    rel_status, rel_nominal, rel_remaining, rel_consumed, rel_impedance = rel.audit()
+    rel_exhausted = ReliabilityAuditor()
+    rel_exhausted.accumulate_bits(1.514e16 * 1.01)
+    rel_warn_status, _, _, _, _ = rel_exhausted.audit()
+    reliability_ok = rel_nominal and rel_warn_status == "STATUS_QUENCH_WARNING"
+
     print("SHBT Exotic Technologies — Unified Audit")
     print("=" * 50)
     print(f"Kernel (SU(2), SU(3), K): {engine.kernel}")
@@ -152,6 +162,11 @@ def run_audit(args: argparse.Namespace) -> int:
     print(f"Worst sub-threshold detuning: {worst_detuning:.6e}")
     print(f"Calibration nominal:       {cal_nominal_status}")
     print(f"Calibration over-range:    {cal_shutdown_status}")
+    print(f"Reliability status:        {rel_status}")
+    print(f"Reliability remaining:     {rel_remaining:.6e} bits")
+    print(f"Reliability consumed:      {rel_consumed:.6e} cycles")
+    print(f"Fatigue shifted Z:         {rel_impedance:.4f} MRayl")
+    print(f"Reliability warn status:   {rel_warn_status}")
     print("-" * 50)
     print("512-bit closure-chain audit")
     print(f"I_l^*:                     {i_l_star:.6f}")
@@ -173,6 +188,7 @@ def run_audit(args: argparse.Namespace) -> int:
         and entropy_arrow_positive
         and grid_ok
         and calibration_ok
+        and reliability_ok
     )
     return 0 if all_ok else 1
 

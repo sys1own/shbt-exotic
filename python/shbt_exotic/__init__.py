@@ -18,6 +18,7 @@ from shbt_exotic._core import (
     MassCongestionEngine,
     FibonacciBraidCompiler,
     CalibrationEngine,
+    ReliabilityAuditor,
     AnomalyClosureError,
 )
 from shbt_exotic.stasis import StasisDilation
@@ -43,6 +44,7 @@ __all__ = [
     "MassCongestionEngine",
     "FibonacciBraidCompiler",
     "CalibrationEngine",
+    "ReliabilityAuditor",
     "StasisDilation",
     "CoordinatePerturbationSweep",
     "AnomalyClosureError",

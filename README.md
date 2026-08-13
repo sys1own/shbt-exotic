@@ -41,6 +41,10 @@ governs all four protocols.  Every state vector is tracked at 512-bit precision 
   - Calibration tone `V_cal(t) = 3.3 V + 50 mV · sin(2π · 10 MHz · t + δφ(t))`.
   - PID bias regulator for the 3.3 V base with `Kp = 1.85 V/rad`, `Ki = 9.12 × 10^3 V/(rad·s)`, `Kd = 3.45 × 10^{-7} V·s/rad`.
   - Enforces HIL phase-jitter limit `|δφ| ≤ 5.05 × 10^{-5} rad`; returns `STATUS_EMERGENCY_SHUTDOWN` if the regulator cannot correct the jitter.
+- **Thermal-fatigue reliability audit**
+  - Coffin-Manson model for the Alumina/InP interface: plastic strain `Δεp = 6.0 × 10^{-6}` from `15 K` thermal swings.
+  - Cycle-to-failure limit `Nf = 4.0 × 10^6` cycles; equivalent de-rendering lifetime budget `1.514 × 10^16` bits.
+  - Returns `STATUS_QUENCH_WARNING` when cumulative de-rendering exceeds the budget and reports the shifted acoustic impedance `Z → 1.3250 MRayl` that raises the superconducting niobium quench risk.
 
 ## Hardware Architecture
 

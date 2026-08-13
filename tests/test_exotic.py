@@ -6,6 +6,7 @@ from shbt_exotic import (
     MassCongestionEngine,
     FibonacciBraidCompiler,
     CalibrationEngine,
+    ReliabilityAuditor,
     AnomalyClosureError,
     AcousticImpedanceEngine,
     CoordinatePerturbationSweep,
@@ -394,6 +395,36 @@ def test_calibration_pid_shutdown_for_excessive_jitter():
     _, corrected, status = engine.step(1.0e-6, 10.0)
     assert status == "STATUS_EMERGENCY_SHUTDOWN"
     assert abs(corrected) > 5.05e-5
+
+
+def test_reliability_lifetime_budget():
+    rel = ReliabilityAuditor()
+    eps, swing, n_f, lifetime = rel.coffin_manson_constants()
+    assert eps == pytest.approx(6.0e-6, abs=1e-12)
+    assert swing == pytest.approx(15.0, abs=1e-9)
+    assert n_f == pytest.approx(4.0e6, abs=1.0)
+    assert lifetime == pytest.approx(1.514e16, rel=1e-9)
+
+
+def test_reliability_nominal_within_lifetime():
+    rel = ReliabilityAuditor()
+    rel.accumulate_bits(1.514e16 / 2.0)
+    status, nominal, remaining, consumed, impedance = rel.audit()
+    assert status == "STATUS_NOMINAL_PASS"
+    assert nominal
+    assert remaining == pytest.approx(1.514e16 / 2.0, rel=1e-9)
+    assert consumed == pytest.approx(2.0e6, rel=1e-6)
+    assert impedance == pytest.approx(1.3250, abs=1e-9)
+
+
+def test_reliability_quench_warning_after_exceeding_lifetime():
+    rel = ReliabilityAuditor()
+    rel.accumulate_bits(1.514e16 * 1.01)
+    status, nominal, remaining, consumed, impedance = rel.audit()
+    assert status == "STATUS_QUENCH_WARNING"
+    assert not nominal
+    assert remaining == 0.0
+    assert impedance == pytest.approx(1.3250, abs=1e-9)
 
 
 if __name__ == "__main__":
