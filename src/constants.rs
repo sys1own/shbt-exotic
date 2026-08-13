@@ -88,3 +88,21 @@ pub const MIN_DISSIPATION_VOLUME_CM3: f64 = 48.982_249_547_178_32;
 
 /// Speed of light in vacuum (m/s).
 pub const SPEED_OF_LIGHT_M_S: f64 = 299_792_458.0;
+
+/// Lindblad charge-dephasing rate for 72 GHz microwave emission (s^-1).
+pub const GAMMA_CHARGE_HZ: f64 = 8.42e-5;
+
+/// Lindblad phonon-coupling rate for sapphire waveguide vibrations (s^-1).
+pub const GAMMA_PHONON_HZ: f64 = 3.58e-5;
+
+/// Combined environmental decoherence rate (s^-1).
+pub const GAMMA_DEC_HZ: f64 = 1.2e-4;
+
+/// Solovay-Kitaev constant used for gate-error scaling.
+pub const C_SK: f64 = 1.3418e-4;
+
+/// Physical gate error used in the SK logical-error calculation.
+pub const EPSILON_0: f64 = 1.74e-10;
+
+/// Solovay-Kitaev recursion depth for the braid compiler.
+pub const SK_DEPTH: usize = 9;

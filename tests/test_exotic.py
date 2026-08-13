@@ -5,6 +5,7 @@ import pytest
 from shbt_exotic import (
     MassCongestionEngine,
     FibonacciBraidCompiler,
+    LindbladSolver,
     CalibrationEngine,
     ReliabilityAuditor,
     GdsiiMaskExporter,
@@ -497,6 +498,43 @@ def test_velocity_wake_compensation():
     # A huge overflow at 99% c should exceed the threshold.
     with pytest.raises(Exception):
         engine.compensated_mu(mu0=1.0, delta_n=1.0e63, n_total=n_total, v_eff_m_s=0.99 * 299_792_458.0)
+
+
+def test_lindblad_decoherence_rate():
+    solver = LindbladSolver()
+    gamma = solver.combined_decoherence_rate_hz()
+    assert math.isclose(gamma, 1.2e-4, rel_tol=1e-6)
+
+
+def test_lindblad_sk_logical_error_floor():
+    solver = LindbladSolver()
+    eps = solver.sk_logical_error_default()
+    assert eps > 0.0
+    assert eps < 1.0e-122
+
+
+def test_lindblad_openqasm3_noise_program():
+    solver = LindbladSolver()
+    compiler = FibonacciBraidCompiler()
+    qasm = solver.compile_openqasm3_with_braid(compiler, 9, 0)
+    assert "OPENQASM 3.0" in qasm
+    assert "#pragma braket noise phase_flip" in qasm
+    assert "#pragma braket noise bit_flip" in qasm
+    assert "u3(" in qasm
+
+
+def test_lindblad_charge_evolution_preserves_trace():
+    solver = LindbladSolver()
+    rho = solver.evolve_one_qubit_charge(1.0e-6, 10)
+    tr = rho[0][0][0] + rho[1][1][0]
+    assert math.isclose(tr, 1.0, rel_tol=1e-9)
+
+
+def test_lindblad_phonon_evolution_preserves_trace():
+    solver = LindbladSolver()
+    rho = solver.evolve_two_qubit_phonon(1.0e-6, 10)
+    tr = sum(rho[i][i][0] for i in range(4))
+    assert math.isclose(tr, 1.0, rel_tol=1e-9)
 
 
 if __name__ == "__main__":

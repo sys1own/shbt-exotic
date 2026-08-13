@@ -27,6 +27,7 @@ pub mod stinespring;
 pub mod thermal_flux;
 pub mod mass_congestion_engine;
 pub mod anyon_braid;
+pub mod lindblad;
 pub mod calibration;
 pub mod reliability;
 pub mod cad_export;
@@ -79,6 +80,7 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<thermal_flux::ThermalFluxCell>()?;
     m.add_class::<mass_congestion_engine::MassCongestionEngine>()?;
     m.add_class::<anyon_braid::FibonacciBraidCompiler>()?;
+    m.add_class::<lindblad::LindbladSolver>()?;
     m.add_class::<calibration::CalibrationEngine>()?;
     m.add_class::<reliability::ReliabilityAuditor>()?;
     m.add_class::<cad_export::GdsiiMaskExporter>()?;
