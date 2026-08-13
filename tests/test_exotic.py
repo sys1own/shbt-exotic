@@ -480,5 +480,24 @@ def test_engineering_stress_test():
     assert metric[3][3] == pytest.approx(1.0 + float(i33), rel=1e-12)
 
 
+def test_dynamic_interference_lagrangian():
+    engine = MassCongestionEngine()
+    g = engine.linearized_metric_with_interference([(1.0e65, 1.0e65)])
+    u = [1.0, 0.0, 0.0, 0.0]
+    l = engine.dynamic_interference_lagrangian(g, u, delta_n=1.0, delta_n_dot=0.0, mu0=1.0)
+    assert math.isfinite(l)
+
+
+def test_velocity_wake_compensation():
+    engine = MassCongestionEngine()
+    n_total = engine.n_total()
+    # A small bit overflow at 1 km/s stays within the 1e-12 rigidity bound.
+    mu = engine.compensated_mu(mu0=1.0, delta_n=1.0e5, n_total=n_total, v_eff_m_s=1.0e3)
+    assert abs(mu - 1.0) < 1.0e-12
+    # A huge overflow at 99% c should exceed the threshold.
+    with pytest.raises(Exception):
+        engine.compensated_mu(mu0=1.0, delta_n=1.0e63, n_total=n_total, v_eff_m_s=0.99 * 299_792_458.0)
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

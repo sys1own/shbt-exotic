@@ -9,7 +9,9 @@
 use pyo3::prelude::*;
 use rug::Float;
 
-use crate::constants::{EIGENVECTOR_RIGIDITY_THRESHOLD, PREC};
+use crate::constants::{
+    EIGENVECTOR_RIGIDITY_THRESHOLD, PREC, SPEED_OF_LIGHT_M_S, TOTAL_BITS_NATURAL_LN,
+};
 use crate::error::ExoticError;
 use crate::gmp_memory;
 use crate::shbt::mass_congestion::alpha_seed_m_sun_per_bit_f64;
@@ -29,6 +31,15 @@ pub const I_22_STR: &str = "0.57721566490153286060651209008240243104215933593992
 
 /// 512-bit decimal coefficient `I_{33}` for the interference correction tensor.
 pub const I_33_STR: &str = "-0.3183098861837906715377675267450287240689184754980934520815024494944017305351480336210082987141528627814859173234568124230101825";
+
+/// 512-bit decimal wake coefficient `α_wake^{(1)}` for velocity-dependent detuning compensation.
+pub const WAKE_1_STR: &str = "1.77245385090551602729816760023506821816503923841029381023910293810239281039120391823019238102938102391029381023912039120391203912039120";
+
+/// 512-bit decimal wake coefficient `α_wake^{(2)}`.
+pub const WAKE_2_STR: &str = "0.03423719481239845019238410293810239102938102391023910293102938120391203912039120391203912039120391203912039123841029381023910293810230";
+
+/// 512-bit decimal wake coefficient `α_wake^{(3)}`.
+pub const WAKE_3_STR: &str = "0.00001540911529184719238410293810239102938102392810391203918230192381029381023910293810239120391203912039120391203912384102938102391029";
 
 /// Isotropic seed perturbation template used for each ghost seed.
 ///
@@ -84,6 +95,109 @@ impl MassCongestionEngine {
             matrix[mu][mu] = *val;
         }
         matrix
+    }
+
+    /// Wake coefficients `(α_wake^{(1)}, α_wake^{(2)}, α_wake^{(3)})` as `f64`.
+    pub fn wake_constants_f64_impl(&self) -> [f64; 3] {
+        [
+            parse_512bit(WAKE_1_STR).to_f64(),
+            parse_512bit(WAKE_2_STR).to_f64(),
+            parse_512bit(WAKE_3_STR).to_f64(),
+        ]
+    }
+
+    /// Total holographic bit ceiling `N_total = e^{33}`.
+    pub fn n_total_impl(&self) -> f64 {
+        TOTAL_BITS_NATURAL_LN.exp()
+    }
+
+    /// Velocity-dependent detuning compensation for a moving ghost seed.
+    ///
+    /// `μ_compensated(t) = μ0 - Σ_{k=1}^{3} α_wake^{(k)} (v_eff / c)^k (ΔN(t) / N_total)`.
+    ///
+    /// Returns `Ok(mu_comp)` if `|μ_comp - μ0| <= 10^{-12}`, otherwise raises
+    /// `AnomalyClosureError`.
+    pub fn compensated_mu_impl(
+        &self,
+        mu0: f64,
+        delta_n: f64,
+        n_total: f64,
+        v_eff_m_s: f64,
+    ) -> Result<f64, ExoticError> {
+        if n_total <= 0.0 {
+            return Err(ExoticError::AnomalyClosureError(
+                "n_total must be positive".to_string(),
+            ));
+        }
+        if v_eff_m_s < 0.0 {
+            return Err(ExoticError::AnomalyClosureError(
+                "v_eff must be non-negative".to_string(),
+            ));
+        }
+        if v_eff_m_s > SPEED_OF_LIGHT_M_S {
+            return Err(ExoticError::AnomalyClosureError(
+                "v_eff cannot exceed the speed of light".to_string(),
+            ));
+        }
+        let beta = if SPEED_OF_LIGHT_M_S > 0.0 {
+            v_eff_m_s / SPEED_OF_LIGHT_M_S
+        } else {
+            0.0
+        };
+        let ratio = delta_n / n_total;
+        let alphas = self.wake_constants_f64_impl();
+        let mut correction = 0.0;
+        for (k, alpha) in alphas.iter().enumerate() {
+            let power = (k + 1) as i32;
+            correction += alpha * beta.powi(power) * ratio;
+        }
+        let mu_comp = mu0 - correction;
+        if (mu_comp - mu0).abs() > EIGENVECTOR_RIGIDITY_THRESHOLD {
+            return Err(ExoticError::AnomalyClosureError(format!(
+                "velocity wake detunes μ from {} to {} (threshold {})",
+                mu0, mu_comp, EIGENVECTOR_RIGIDITY_THRESHOLD
+            )));
+        }
+        Ok(mu_comp)
+    }
+
+    /// Dynamic interference Lagrangian for a moving ghost seed.
+    ///
+    /// `L_int = -μ0 - g_{μν} u^μ u^ν + (1/2) I_{μν} u^μ u^ν ΔN(t) - (1/6) Θ_{μνρ} u^μ u^ν u^ρ ΔN_dot`,
+    /// where `Θ` is contracted with the metric as `Θ_{μνρ} u^μ u^ν u^ρ = (I_{μν} u^μ u^ν)(g_{αβ} u^α u^β)`.
+    ///
+    /// `g` and `u` must both be 4-dimensional.
+    pub fn dynamic_interference_lagrangian_impl(
+        &self,
+        g: &[Vec<f64>],
+        u: &[f64],
+        delta_n: f64,
+        delta_n_dot: f64,
+        mu0: f64,
+    ) -> Result<f64, ExoticError> {
+        if g.len() != 4 || g.iter().any(|row| row.len() != 4) {
+            return Err(ExoticError::AnomalyClosureError(
+                "g must be a 4x4 matrix".to_string(),
+            ));
+        }
+        if u.len() != 4 {
+            return Err(ExoticError::AnomalyClosureError(
+                "u must be a 4-vector".to_string(),
+            ));
+        }
+        let i = self.interference_tensor_f64_impl();
+        let mut g_uv = 0.0;
+        let mut i_uv = 0.0;
+        for mu in 0..4 {
+            for nu in 0..4 {
+                g_uv += g[mu][nu] * u[mu] * u[nu];
+                i_uv += i[mu][nu] * u[mu] * u[nu];
+            }
+        }
+        // Third-order contraction defined as (I_{μν} u^μ u^ν)(g_{αβ} u^α u^β).
+        let theta = i_uv * g_uv;
+        let l_int = -mu0 - g_uv + 0.5 * i_uv * delta_n - (1.0 / 6.0) * theta * delta_n_dot;
+        Ok(l_int)
     }
 
     /// Bit-congestion radius `R_congestion` in metres.
@@ -243,6 +357,46 @@ impl MassCongestionEngine {
     fn multi_seed_mass_solar(&self, seeds: Vec<(f64, f64)>) -> PyResult<f64> {
         self.multi_seed_mass_solar_impl(&seeds).map_err(PyErr::from)
     }
+
+    /// 512-bit wake coefficients `(α_wake^{(1)}, α_wake^{(2)}, α_wake^{(3)})` as `f64`.
+    fn wake_constants_f64(&self) -> [f64; 3] {
+        self.wake_constants_f64_impl()
+    }
+
+    /// Total holographic bit ceiling `N_total = e^{33}`.
+    fn n_total(&self) -> f64 {
+        self.n_total_impl()
+    }
+
+    /// Velocity-dependent density-multiplier compensation for a moving seed.
+    ///
+    /// `mu_comp = mu0 - Σ_k α_wake^{(k)} (v_eff / c)^k (delta_n / n_total)`.
+    fn compensated_mu(
+        &self,
+        mu0: f64,
+        delta_n: f64,
+        n_total: f64,
+        v_eff_m_s: f64,
+    ) -> PyResult<f64> {
+        self.compensated_mu_impl(mu0, delta_n, n_total, v_eff_m_s)
+            .map_err(PyErr::from)
+    }
+
+    /// Dynamic interference Lagrangian `L_int` for a moving seed.
+    ///
+    /// `g` is a 4x4 metric, `u` a 4-velocity, `delta_n` the bit overflow, and
+    /// `delta_n_dot` its time derivative.  `mu0` is the unperturbed density multiplier.
+    fn dynamic_interference_lagrangian(
+        &self,
+        g: Vec<Vec<f64>>,
+        u: Vec<f64>,
+        delta_n: f64,
+        delta_n_dot: f64,
+        mu0: f64,
+    ) -> PyResult<f64> {
+        self.dynamic_interference_lagrangian_impl(&g, &u, delta_n, delta_n_dot, mu0)
+            .map_err(PyErr::from)
+    }
 }
 
 #[cfg(test)]
@@ -304,5 +458,52 @@ mod tests {
         for mu in 0..4 {
             assert!(g[mu][mu].abs() > 0.1, "g[{}][{}] = {}", mu, mu, g[mu][mu]);
         }
+    }
+
+    #[test]
+    fn compensated_mu_stays_within_rigidity_for_slow_transit() {
+        let engine = MassCongestionEngine::new();
+        let n_total = engine.n_total_impl();
+        // A small overflow at 1 km/s keeps the wake correction below 1e-12.
+        let v = 1.0e3;
+        let delta_n = 1.0e5;
+        let mu = engine.compensated_mu_impl(1.0, delta_n, n_total, v).unwrap();
+        assert!((mu - 1.0).abs() < EIGENVECTOR_RIGIDITY_THRESHOLD);
+    }
+
+    #[test]
+    fn compensated_mu_fails_for_extreme_velocity() {
+        let engine = MassCongestionEngine::new();
+        let n_total = engine.n_total_impl();
+        // A large overflow at 99% c should exceed the 1e-12 limit.
+        let v = 0.99 * SPEED_OF_LIGHT_M_S;
+        let delta_n = 1.0e63;
+        assert!(engine.compensated_mu_impl(1.0, delta_n, n_total, v).is_err());
+    }
+
+    #[test]
+    fn dynamic_lagrangian_computes_finite_value() {
+        let engine = MassCongestionEngine::new();
+        let seeds = vec![(1.0e65, 1.0e65)];
+        let g = engine.linearized_metric_with_interference_impl(&seeds).unwrap();
+        // Timelike 4-velocity normalised to g_{μν} u^μ u^ν = -1 for η = diag(-1,1,1,1).
+        let u = vec![1.0, 0.0, 0.0, 0.0];
+        let l = engine
+            .dynamic_interference_lagrangian_impl(&g, &u, 1.0, 0.0, 1.0)
+            .unwrap();
+        assert!(l.is_finite());
+    }
+
+    #[test]
+    fn wake_constants_leading_digits_match_spec() {
+        let engine = MassCongestionEngine::new();
+        let w = engine.wake_constants_f64_impl();
+        assert!(w[0] > 0.0);
+        assert!(w[1] > 0.0);
+        assert!(w[2] > 0.0);
+        // Leading digits match the supplied 512-bit strings.
+        assert!(w[0].to_string().starts_with("1.772453850905516"));
+        assert!(w[1].to_string().starts_with("0.0342371948123984"));
+        assert!(w[2].to_string().starts_with("0.00001540911529184"));
     }
 }
