@@ -7,6 +7,7 @@ from shbt_exotic import (
     EntropicRefrigerator,
     ExoticEngine,
     GhostSeedSynthesizer,
+    HardwareSynthesisAuditor,
     HeegaardFloerRelabeling,
     HilSafetyMonitor,
     NewtonLockStasis,
@@ -26,6 +27,7 @@ def run_audit(args: argparse.Namespace) -> int:
     ghost = GhostSeedSynthesizer()
     fridge = EntropicRefrigerator()
     hil = HilSafetyMonitor()
+    hw = HardwareSynthesisAuditor()
 
     state = _normalized_state()
 
@@ -46,6 +48,8 @@ def run_audit(args: argparse.Namespace) -> int:
     n_limit = 1.0e65
     n_local = n_limit + 1.0 / alpha
     m_seed = ghost.seed_mass_kg(n_local, n_limit)
+    m_sun = ghost.seed_mass_solar(n_local, n_limit)
+    entropy_debt = ghost.entropy_debt_power_w(n_local, n_limit)
     mu_local = ghost.local_mu_perturbation(n_local, n_limit, 1.0)
 
     # 5. Entropic refrigeration
@@ -56,6 +60,10 @@ def run_audit(args: argparse.Namespace) -> int:
     # 6. HIL dual-target audit
     status = hil.audit(mu_local, n_local, n_limit, c_get)
     nominal = hil.is_nominal(status)
+    framing_defect = hil.framing_defect(mu_local, n_local, n_limit, c_get)
+
+    # 7. Hardware invariants
+    hw_status = hw.audit(72.0e9, 40.0e9)
 
     print("SHBT Exotic Technologies — Unified Audit")
     print("=" * 50)
@@ -64,14 +72,17 @@ def run_audit(args: argparse.Namespace) -> int:
     print(f"Heegaard-Floer relabel:    {len(relabeled)} components")
     print(f"Newton-lock gamma:         {gamma:.6e}")
     print(f"Local C_get (J/bit):       {c_get:.6e}")
-    print(f"Ghost-seed mass (kg):      {m_seed:.6e}")
+    print(f"Ghost-seed mass (kg):      {m_seed:.6e}  ({m_sun:.3f} M_sun)")
+    print(f"Ghost-seed entropy-debt:   {entropy_debt:.6e} W")
     print(f"Mu local perturbation:     {mu_local:.6e}")
     print(f"Refrigeration P_cool (W):  {p_cool:.6e}")
     print(f"De-rendering rate (b/s):   {gamma_de:.6e}")
+    print(f"Framing defect:            {framing_defect:.6e}")
     print(f"HIL status:                {status}")
     print(f"HIL nominal:               {nominal}")
+    print(f"Hardware status:           {hw_status}")
 
-    return 0 if nominal else 1
+    return 0 if nominal and hw_status == "STATUS_NOMINAL_PASS" else 1
 
 
 def main() -> int:

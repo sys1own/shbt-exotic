@@ -14,6 +14,7 @@ pub mod constants;
 pub mod error;
 pub mod gmp_memory;
 pub mod ghost_seed;
+pub mod hardware;
 pub mod heegaard_floer;
 pub mod hil_safety;
 pub mod newton_lock;
@@ -23,6 +24,7 @@ pub mod stinespring;
 pub use constants::*;
 pub use error::*;
 pub use ghost_seed::*;
+pub use hardware::*;
 pub use heegaard_floer::*;
 pub use hil_safety::*;
 pub use newton_lock::*;
@@ -40,6 +42,7 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<ghost_seed::GhostSeedSynthesizer>()?;
     m.add_class::<refrigeration::EntropicRefrigerator>()?;
     m.add_class::<hil_safety::HilSafetyMonitor>()?;
+    m.add_class::<hardware::HardwareSynthesisAuditor>()?;
     m.add_class::<stinespring::ExoticEngine>()?;
     m.add("AnomalyClosureError", m.py().get_type::<error::AnomalyClosureError>())?;
     Ok(())

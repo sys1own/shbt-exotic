@@ -151,6 +151,7 @@ pub struct ExoticEngine {
     pub ghost: crate::ghost_seed::GhostSeedSynthesizer,
     pub refrigeration: crate::refrigeration::EntropicRefrigerator,
     pub hil: crate::hil_safety::HilSafetyMonitor,
+    pub hardware: crate::hardware::HardwareSynthesisAuditor,
 }
 
 impl ExoticEngine {
@@ -163,6 +164,7 @@ impl ExoticEngine {
             ghost: crate::ghost_seed::GhostSeedSynthesizer::new(),
             refrigeration: crate::refrigeration::EntropicRefrigerator::new(),
             hil: crate::hil_safety::HilSafetyMonitor::new(),
+            hardware: crate::hardware::HardwareSynthesisAuditor::new(),
         }
     }
 

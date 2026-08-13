@@ -6,7 +6,7 @@
 
 use pyo3::prelude::*;
 
-use crate::constants::{ALPHA_SEED_M_SUN_PER_BIT, M_SUN_KG};
+use crate::constants::{ALPHA_SEED_M_SUN_PER_BIT, MACRO_COOLING_POWER_W, M_SUN_KG};
 use crate::error::ExoticError;
 use crate::gmp_memory;
 
@@ -57,6 +57,15 @@ impl GhostSeedSynthesizer {
         Ok(mu0 + delta / n_limit)
     }
 
+    /// Entropy-debt power (W) associated with the synthesized ghost seed.
+    ///
+    /// Scales linearly with seed mass; a 1-solar-mass seed corresponds to the
+    /// 906 GW benchmark.
+    pub fn entropy_debt_power_w_impl(&self, n_local: f64, n_limit: f64) -> Result<f64, ExoticError> {
+        let m_sun = self.seed_mass_solar_impl(n_local, n_limit)?;
+        Ok(m_sun * MACRO_COOLING_POWER_W)
+    }
+
     /// Check that the anyon filling factor is in the allowed non-Abelian list.
     pub fn is_filling_factor_allowed_impl(&self, nu: (i64, i64)) -> bool {
         self.allowed_filling_factors.iter().any(|&f| f == nu)
@@ -80,6 +89,10 @@ impl GhostSeedSynthesizer {
 
     fn local_mu_perturbation(&self, n_local: f64, n_limit: f64, mu0: f64) -> PyResult<f64> {
         self.local_mu_perturbation_impl(n_local, n_limit, mu0).map_err(PyErr::from)
+    }
+
+    fn entropy_debt_power_w(&self, n_local: f64, n_limit: f64) -> PyResult<f64> {
+        self.entropy_debt_power_w_impl(n_local, n_limit).map_err(PyErr::from)
     }
 
     fn is_filling_factor_allowed(&self, nu: (i64, i64)) -> bool {

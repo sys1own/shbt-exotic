@@ -6,6 +6,7 @@ from shbt_exotic._core import (
     GhostSeedSynthesizer,
     EntropicRefrigerator,
     HilSafetyMonitor,
+    HardwareSynthesisAuditor,
 )
 
 __all__ = [
@@ -16,4 +17,5 @@ __all__ = [
     "GhostSeedSynthesizer",
     "EntropicRefrigerator",
     "HilSafetyMonitor",
+    "HardwareSynthesisAuditor",
 ]

@@ -25,16 +25,24 @@ governs all four protocols.  Every state vector is tracked at 512-bit precision 
   - `M_seed = α_seed (N_local - N_limit)` with `α_seed = 1.67 × 10^{-51}` `M_☉` per bit.
 - **Entropic refrigeration**
   - `P_cool = Γ_de · ΔS · T_c` with `ΔS = k_B ln 2` per bit.
+- **Ghost-seed entropy-debt**
+  - `P_debt = (M_seed / M_☉) · 906 GW` continuous power requirement.
 
 ## Hardware Architecture
 
 - InP/InGaAs SHBT transistors: `f_max = 72 GHz`.
 - 2D topological-insulator edge-state waveguides for backscattering-free anyon transport.
 - 2D topological surface-code lattice for micro-scale heat-sink operation.
+- State routing bandwidth: `B = 40 Gb/s`, clocked by the 72 GHz SHBT array.
 
 ## HIL Safety
 
-The dual-target Hardware-in-the-Loop monitor audits the Newton-lock density register and the ghost-seed congestion register.  If the eigenvector rigidity deviation `|μ_local - μ_0|` reaches or exceeds `10^{-12}`, the monitor returns `EMERGENCY_RIGIDITY_VIOLATION` (or `EMERGENCY_MASS_CONGESTION` / `EMERGENCY_C_GET_EXCEEDED`).  A nominal run reports `STATUS_NOMINAL_PASS`.
+The dual-target Hardware-in-the-Loop monitor concurrently samples the Stasis Control Register (`C_get`) and the Mass-Congestion Register (`N_local / N_limit`).
+
+- **Rigidity check**: eigenvector detuning `|μ_local - μ_0|` is held below `10^{-12}`.
+- **Correction loop**: a Solovay-Kitaev sequence is applied if detuning enters the `0.5 × 10^{-12}` correction band.
+- **Emergency shutdown**: if detuning reaches `10^{-12}` the monitor returns `STATUS_EMERGENCY_SHUTDOWN` and the bias-current shunt completes in fewer than 2.5 ns.
+- **Closure chain**: the scalar framing defect `Δ_fr` is exactly `0.0` for canonical unperturbed values and remains below `10^{-12}` during active modulation.
 
 ## Quick Start
 
@@ -53,7 +61,11 @@ shbt-exotic --audit
 | Stinespring isometry | `Δ` norm < `10^{-120}` | verified |
 | Heegaard-Floer `ΔS_A` | `0` | verified |
 | Newton-lock `γ_stasis` | `> 1` at `δμ = 10^{-15}` | `> 1` |
+| Ghost-seed entropy-debt | `≈ 906 GW` for `1 M_☉` | `≈ 906 GW` |
+| Framing defect `Δ_fr` | `0.0` canonical, `< 10^{-12}` active | `0.0` / `< 10^{-12}` |
 | HIL status | `STATUS_NOMINAL_PASS` | nominal pass |
+| Hardware clock | `≤ 72 GHz` | `72 GHz` |
+| Routing bandwidth | `≤ 40 Gb/s` | `40 Gb/s` |
 
 ## Code Availability
 
