@@ -108,6 +108,9 @@ def generate_results_tex(out_path: str | Path = "exotic_results.tex") -> Path:
     sweep = CoordinatePerturbationSweep(mu0=1.0, n_limit=n_limit, c_get_bound=c_get)
     sweep_ok, worst_detuning = sweep.verify_rigidity_limit()
     rigidity_status = "STATUS_NOMINAL_PASS" if sweep_ok else "STATUS_EMERGENCY_SHUTDOWN"
+    zone = sweep.safety_zone_grid()
+    safety_zone_total = zone["total"]
+    safety_zone_nominal = zone["nominal"]
 
     # RF phase-modulation table (8x8 SHBT array)
     phase_exporter = ExportPhaseModulationTable()
@@ -194,6 +197,8 @@ def generate_results_tex(out_path: str | Path = "exotic_results.tex") -> Path:
         f"\\newcommand{{\\ExoticKapitzaDropUnengineered}}{{{format_scientific(kapitza_unengineered)}}}",
         f"\\newcommand{{\\ExoticKapitzaDropMatched}}{{{format_scientific(kapitza_matched)}}}",
         f"\\newcommand{{\\ExoticKapitzaJustified}}{{{str(kapitza_justified).lower()}}}",
+        f"\\newcommand{{\\ExoticSafetyZoneTotal}}{{{safety_zone_total}}}",
+        f"\\newcommand{{\\ExoticSafetyZoneNominal}}{{{safety_zone_nominal}}}",
     ]
 
     out_path.write_text("\n".join(lines) + "\n")

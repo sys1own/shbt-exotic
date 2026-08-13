@@ -135,6 +135,50 @@ class CoordinatePerturbationSweep:
             ),
         }
 
+    def safety_zone_grid(
+        self,
+        mu_values: List[float] = None,
+        n_offsets: List[float] = None,
+    ) -> dict:
+        """Map the 2D (mu, n_local) safety zone where the rigidity limit holds.
+
+        Returns a dict with the grid dimensions and a flat list of cells,
+        each containing the perturbation pair and the resulting HIL status.
+        """
+        if mu_values is None:
+            mu_values = [0.0, 1e-15, 5e-13, 9e-13, 9.9e-13, 1.1e-12]
+        if n_offsets is None:
+            n_offsets = [0.0, 1e50, 1e55, 1e60, 1e65]
+
+        cells = []
+        for mu_pert in mu_values:
+            for n_off in n_offsets:
+                status, latency_ns, cycles, thermal = self.monitor.simulate_shutdown(
+                    self.mu0 + mu_pert,
+                    self.n_limit + n_off,
+                    self.n_limit,
+                    self.c_get_bound,
+                )
+                nominal = status == "STATUS_NOMINAL_PASS" and thermal == "STATUS_NOMINAL_PASS"
+                cells.append(
+                    {
+                        "mu_perturbation": mu_pert,
+                        "n_offset": n_off,
+                        "status": status,
+                        "thermal_status": thermal,
+                        "in_safety_zone": nominal,
+                    }
+                )
+
+        nominal_count = sum(1 for c in cells if c["in_safety_zone"])
+        return {
+            "mu_values": mu_values,
+            "n_offsets": n_offsets,
+            "total": len(cells),
+            "nominal": nominal_count,
+            "cells": cells,
+        }
+
     def verify_rigidity_limit(self) -> Tuple[bool, float]:
         """Verify the 10^{-12} rigidity limit is respected for sub-threshold inputs.
 

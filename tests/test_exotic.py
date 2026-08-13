@@ -205,6 +205,27 @@ def test_safety_monitor_thermal_hil_shuts_down_on_quench():
     assert thermal == "STATUS_NOMINAL_PASS"
 
 
+def test_stinespring_branching_matrix_has_33x33_block_structure():
+    st = UnifiedStinespringMap()
+    b = st.branching_matrix_b()
+    assert len(b) == 33
+    assert all(len(row) == 33 for row in b)
+    # Active diagonal entries: sqrt(10/33)
+    active_val = (10 / 33) ** 0.5
+    for i in range(10):
+        assert b[i][i] == pytest.approx(active_val, rel=1e-12)
+    # Dark diagonal entries: sqrt(23/33)
+    dark_val = (23 / 33) ** 0.5
+    assert b[10][10] == pytest.approx(dark_val, rel=1e-12)
+    for i in range(11, 33):
+        assert b[i][i] == pytest.approx(dark_val, rel=1e-12)
+    # Three 11x11 diagonal blocks are exposed separately.
+    block0 = st.branching_block(0)
+    assert len(block0) == 11
+    block1 = st.branching_block(1)
+    assert len(block1) == 11
+
+
 def test_export_phase_modulation_table():
     exporter = ExportPhaseModulationTable()
     h = [[(i + 1.0) / (j + 2.0) for j in range(8)] for i in range(8)]
@@ -233,6 +254,28 @@ def test_acoustic_impedance_inp_within_yield():
     assert acoustic.peak_waveguide_pressure_gpa() == pytest.approx(12.6427, rel=1e-4)
     assert acoustic.inp_substrate_pressure_gpa() < 10.0
     assert acoustic.is_inp_within_yield() is True
+
+
+def test_heegaard_mapping_torus_kojima_bounds():
+    torus = HeegaardMappingTorus()
+    assert torus.kojima_geometric_constant() == pytest.approx(1.0e20, rel=1e-12)
+    assert torus.entropy_bound_arithmetic(1.0) == pytest.approx(0.0, abs=1e-12)
+    # For a larger presentation length the arithmetic bound grows linearly.
+    bound_2 = torus.entropy_bound_arithmetic(3.0)
+    assert bound_2 > 0.0
+    torus.set_volume(2.0)
+    assert torus.kojima_bound() == pytest.approx(2.0e20, rel=1e-12)
+
+
+def test_coordinate_perturbation_sweep_safety_zone():
+    from shbt_exotic.sweep import CoordinatePerturbationSweep
+    sweep = CoordinatePerturbationSweep(mu0=1.0, n_limit=1.0e65, c_get_bound=5.34e-175)
+    zone = sweep.safety_zone_grid(
+        mu_values=[0.0, 1e-15, 1.1e-12],
+        n_offsets=[0.0, 1e50],
+    )
+    assert zone["total"] == 6
+    assert zone["nominal"] >= 1
 
 
 if __name__ == "__main__":

@@ -17,12 +17,14 @@ governs all four protocols.  Every state vector is tracked at 512-bit precision 
 - **Unified Stinespring map** `V_unified : H_active -> H_active ⊗ H_ledger`
   - `|ψ> -> (sqrt(10/33) |ψ>_active, sqrt(23/33) |ψ>_ledger)`
   - Exact rational weights, isometric norm preservation verified at 512-bit precision.
+  - `UnifiedStinespringMap.branching_matrix_b()` exposes the explicit 33x33 branching matrix `B` with three 11x11 blocks derived from the eigendecomposition of the reconstructed Choi matrix `C`.
 - **Heegaard-Floer relabeling isometry** `T^∂`
   - Re-indexes boundary degrees of freedom while enforcing the adiabatic condition `ΔS_A = 0`.
+  - `HeegaardMappingTorus` checks Kojima's inequality `Ent(φ) ≤ C · Vol(M)` with `C = 10^20` and the arithmetic bound `Ent(φ_1) ≤ [M_1 : M] · (ℓ_He - 1) · log 3`.
 - **Newton-lock stationarity**
   - `T_dot ∝ 1 / C_get`; the GET cost `C_get` is modulated against the cosmic Landauer bound `5.34 × 10^{-175}` J/bit.
 - **Mass-Congestion Coupling Identity**
-  - `M_seed = α_seed (N_local - N_limit)` with `α_seed = 1.67 × 10^{-51}` `M_☉` per bit.
+  - `M_seed = α_seed (N_local - N_limit)` with `α_seed = 1.3258 × 10^{-51}` `M_☉` per bit, derived from the Planck mass and the lattice divisor `d_1 = gcd(26, 312) = 26`.
 - **Entropic refrigeration**
   - `P_cool = Γ_de · ΔS · T_c` with `ΔS = k_B ln 2` per bit.
 - **Ghost-seed entropy-debt**
@@ -43,6 +45,7 @@ The dual-target Hardware-in-the-Loop monitor concurrently samples the Stasis Con
 - **Correction loop**: a Solovay-Kitaev sequence is applied if detuning enters the `0.5 × 10^{-12}` correction band.
 - **Emergency shutdown**: if detuning reaches `10^{-12}` the monitor returns `STATUS_EMERGENCY_SHUTDOWN` and the bias-current shunt completes in fewer than 2.5 ns.
 - **Closure chain**: the scalar framing defect `Δ_fr` is exactly `0.0` for canonical unperturbed values and remains below `10^{-12}` during active modulation.
+- **Engineering stress test**: `CoordinatePerturbationSweep.safety_zone_grid()` maps the 2-D `(δμ, δN_local)` parameter space and counts the cells where the `10^{-12}` rigidity limit and thermal limits stay nominal.
 
 ## Zero-Heap Runtime and SIMD Determinism
 

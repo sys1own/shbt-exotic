@@ -8,7 +8,8 @@ use pyo3::prelude::*;
 use rug::{Float, Rational};
 
 use crate::constants::{
-    BOUNDARY_KERNEL_K, DARK_LEDGER_DIM, HOLOGRAPHIC_NOISE_FLOOR, PREC, SU2_LEVEL, SU3_LEVEL,
+    BOUNDARY_KERNEL_K, DARK_LEDGER_DIM, HOLOGRAPHIC_NOISE_FLOOR, PREC, STINESPRING_BLOCK_DIM,
+    STINESPRING_BRANCH_DIM, SU2_LEVEL, SU3_LEVEL,
 };
 use crate::error::ExoticError;
 use crate::gmp_memory;
@@ -117,6 +118,71 @@ impl UnifiedStinespringMap {
         (n_local, n_active, n_dark, (10, 33), (23, 33))
     }
 
+    /// Reconstructed Choi matrix `C` for the 33-dimensional local register.
+    ///
+    /// `C` is diagonal in the branch basis with eigenvalues `10/33` on the
+    /// 10 active dimensions and `23/33` on the 23 dark dimensions.  The
+    /// dimension is arranged as three 11x11 blocks so that the first block
+    /// contains the 10 active states plus the shared singlet, and the
+    /// remaining two blocks are pure dark ledger.
+    pub fn choi_matrix_c_impl(&self) -> Vec<Vec<f64>> {
+        let mut matrix = vec![vec![0.0; STINESPRING_BRANCH_DIM]; STINESPRING_BRANCH_DIM];
+        let active_eigen = Rational::from((10, 33));
+        let dark_eigen = Rational::from((23, 33));
+        let active_val = Float::with_val(PREC, active_eigen).to_f64();
+        let dark_val = Float::with_val(PREC, dark_eigen).to_f64();
+
+        // Block 0: active 10 + shared singlet (dark slot 11 within block 0).
+        for i in 0..10 {
+            matrix[i][i] = active_val;
+        }
+        matrix[10][10] = dark_val;
+        // Blocks 1 and 2: pure dark ledger.
+        for i in (STINESPRING_BLOCK_DIM)..STINESPRING_BRANCH_DIM {
+            matrix[i][i] = dark_val;
+        }
+        matrix
+    }
+
+    /// Explicit 33x33 Stinespring branching matrix `B` with 11x11 block structure.
+    ///
+    /// `B` is obtained from the eigen-decomposition of the Choi matrix `C`:
+    /// `B = U sqrt(D) U^T`.  Since `C` is diagonal in the branch basis, `U = I`
+    /// and `B_{ii} = sqrt(C_{ii})`.  The active block carries `sqrt(10/33)`,
+    /// the dark blocks carry `sqrt(23/33)`, and the total register dimension
+    /// remains 33 = 10 + 1 + 11 + 11, with the `1` the shared singlet.
+    pub fn branching_matrix_b_impl(&self) -> Vec<Vec<f64>> {
+        let mut matrix = vec![vec![0.0; STINESPRING_BRANCH_DIM]; STINESPRING_BRANCH_DIM];
+        let active_weight = Float::with_val(PREC, Rational::from((10, 33))).sqrt().to_f64();
+        let dark_weight = Float::with_val(PREC, Rational::from((23, 33))).sqrt().to_f64();
+
+        for i in 0..10 {
+            matrix[i][i] = active_weight;
+        }
+        matrix[10][10] = dark_weight;
+        for i in STINESPRING_BLOCK_DIM..STINESPRING_BRANCH_DIM {
+            matrix[i][i] = dark_weight;
+        }
+        matrix
+    }
+
+    /// Return the `k`-th 11x11 diagonal block of the branching matrix `B`.
+    pub fn branching_block_impl(&self, k: usize) -> Result<Vec<Vec<f64>>, ExoticError> {
+        if k >= 3 {
+            return Err(ExoticError::AnomalyClosureError(format!(
+                "block index {} out of range (0..3)",
+                k
+            )));
+        }
+        let b = self.branching_matrix_b_impl();
+        let start = k * STINESPRING_BLOCK_DIM;
+        let end = start + STINESPRING_BLOCK_DIM;
+        Ok(b[start..end]
+            .iter()
+            .map(|row| row[start..end].to_vec())
+            .collect())
+    }
+
     /// Audit returning the exact rational weights and a norm-residual check.
     pub fn audit_impl(&self, state: &[(f64, f64)]) -> Result<StinespringAudit, ExoticError> {
         let (active, dark) = self.apply(state)?;
@@ -156,6 +222,21 @@ impl UnifiedStinespringMap {
     /// Return `(N_local, N_active, N_dark, eta_A, eta_D)` from branch dimensions.
     fn partition(&self) -> (usize, usize, usize, (i64, i64), (i64, i64)) {
         self.partition_from_branch()
+    }
+
+    /// Reconstructed Choi matrix `C` as a list of 33 lists.
+    fn choi_matrix_c(&self) -> Vec<Vec<f64>> {
+        self.choi_matrix_c_impl()
+    }
+
+    /// Explicit 33x33 Stinespring branching matrix `B` as a list of 33 lists.
+    fn branching_matrix_b(&self) -> Vec<Vec<f64>> {
+        self.branching_matrix_b_impl()
+    }
+
+    /// Return the `k`-th 11x11 block of `B` (0 <= k < 3).
+    fn branching_block(&self, k: usize) -> PyResult<Vec<Vec<f64>>> {
+        self.branching_block_impl(k).map_err(PyErr::from)
     }
 }
 
