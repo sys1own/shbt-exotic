@@ -8,6 +8,7 @@ from shbt_exotic import (
     CoordinatePerturbationSweep,
     EntropicRefrigerator,
     ExoticEngine,
+    ExportPhaseModulationTable,
     GhostSeedSynthesizer,
     HardwareSynthesisAuditor,
     HeegaardFloerRelabeling,
@@ -15,6 +16,7 @@ from shbt_exotic import (
     HilSafetyMonitor,
     NewtonLockStasis,
     SafetyMonitor,
+    ThermalFluxReport,
     ThermalHILMonitor,
     UnifiedStinespringMap,
 )
@@ -106,6 +108,26 @@ def generate_results_tex(out_path: str | Path = "exotic_results.tex") -> Path:
     sweep = CoordinatePerturbationSweep(mu0=1.0, n_limit=n_limit, c_get_bound=c_get)
     sweep_ok, worst_detuning = sweep.verify_rigidity_limit()
     rigidity_status = "STATUS_NOMINAL_PASS" if sweep_ok else "STATUS_EMERGENCY_SHUTDOWN"
+    zone = sweep.safety_zone_grid()
+    safety_zone_total = zone["total"]
+    safety_zone_nominal = zone["nominal"]
+
+    # RF phase-modulation table (8x8 SHBT array)
+    phase_exporter = ExportPhaseModulationTable()
+    h_phase = [[(i + 1.0) / (j + 2.0) for j in range(8)] for i in range(8)]
+    v_eff = 0.5
+    phase_table = phase_exporter.table_entries(h_phase, v_eff)
+    phase_table_min_v = min(cmd.v_phase for cmd in phase_table)
+    phase_table_max_v = max(cmd.v_phase for cmd in phase_table)
+
+    # Thermal flux report for the 14.2 μW refrigeration core
+    flux = ThermalFluxReport()
+    flux_gamma_de = flux.gamma_de
+    flux_cooling_power = flux.cooling_power_w
+    flux_heat_flux = flux.heat_flux_w_per_m2
+    kapitza_unengineered = flux.kapitza_delta_t_unengineered_k
+    kapitza_matched = flux.kapitza_delta_t_matched_k
+    kapitza_justified = flux.acoustic_matching_justified
 
     # 512-bit closure-chain audit
     i_l_star = hil.i_l_star()
@@ -164,6 +186,19 @@ def generate_results_tex(out_path: str | Path = "exotic_results.tex") -> Path:
         f"\\newcommand{{\\ExoticEntropyArrow}}{{{format_scientific(entropy_arrow)}}}",
         f"\\newcommand{{\\ExoticClosureChainHolds}}{{{str(closure_chain_holds).lower()}}}",
         f"\\newcommand{{\\ExoticEntropyArrowPositive}}{{{str(entropy_arrow_positive).lower()}}}",
+        f"\\newcommand{{\\ExoticPhaseTableVOn}}{{3.8}}",
+        f"\\newcommand{{\\ExoticPhaseTableVcc}}{{7.4}}",
+        f"\\newcommand{{\\ExoticPhaseTableEntries}}{{64}}",
+        f"\\newcommand{{\\ExoticPhaseTableMinVPhase}}{{{format_scientific(phase_table_min_v)}}}",
+        f"\\newcommand{{\\ExoticPhaseTableMaxVPhase}}{{{format_scientific(phase_table_max_v)}}}",
+        f"\\newcommand{{\\ExoticFluxGammaDe}}{{{format_scientific(flux_gamma_de)}}}",
+        f"\\newcommand{{\\ExoticFluxCoolingPower}}{{{format_scientific(flux_cooling_power)}}}",
+        f"\\newcommand{{\\ExoticFluxHeatFlux}}{{{format_scientific(flux_heat_flux)}}}",
+        f"\\newcommand{{\\ExoticKapitzaDropUnengineered}}{{{format_scientific(kapitza_unengineered)}}}",
+        f"\\newcommand{{\\ExoticKapitzaDropMatched}}{{{format_scientific(kapitza_matched)}}}",
+        f"\\newcommand{{\\ExoticKapitzaJustified}}{{{str(kapitza_justified).lower()}}}",
+        f"\\newcommand{{\\ExoticSafetyZoneTotal}}{{{safety_zone_total}}}",
+        f"\\newcommand{{\\ExoticSafetyZoneNominal}}{{{safety_zone_nominal}}}",
     ]
 
     out_path.write_text("\n".join(lines) + "\n")

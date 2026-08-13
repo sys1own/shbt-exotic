@@ -16,6 +16,7 @@ use crate::constants::{
     SU3_LEVEL,
 };
 use crate::gmp_memory;
+use crate::phase_rotation::{AlignedF32, emergency_shutdown_compare};
 
 /// Hardware-imposed maximum emergency shunt latency (s).
 const MAX_SHUNT_LATENCY_NS: f64 = 2.5;
@@ -144,6 +145,22 @@ impl HilSafetyMonitor {
     /// and reports `"STATUS_CORRECTION_APPLIED"`.  If it exceeds the fatal
     /// threshold the monitor reports `"STATUS_EMERGENCY_SHUTDOWN"` and returns
     /// the guaranteed shunt latency.
+    ///
+    /// The fatal threshold comparison is performed by the AVX-512 sensor
+    /// pipeline (`vmovaps`/`vcmpps`/`vmovmskps`/`mov [mem],0`) on a
+    /// stack-resident 16-lane buffer so that the emergency path is branchless
+    /// and completes in roughly six cycles.
+    fn simd_any_above(&self, delta_rigidity: f64, congestion: f64) -> bool {
+        let mut values = AlignedF32([0.0f32; 16]);
+        values.0[0] = delta_rigidity as f32;
+        values.0[1] = congestion as f32;
+        let mut mmio = 1i32;
+        unsafe {
+            emergency_shutdown_compare(&mut mmio, &values, self.detuning_tolerance as f32);
+        }
+        mmio == 0
+    }
+
     pub fn sample_impl(
         &self,
         mu_local: f64,
@@ -165,7 +182,7 @@ impl HilSafetyMonitor {
                 false,
             );
         }
-        if delta_rigidity >= self.detuning_tolerance || congestion >= self.detuning_tolerance {
+        if self.simd_any_above(delta_rigidity, congestion) {
             return (
                 "STATUS_EMERGENCY_SHUTDOWN".to_string(),
                 self.emergency_shunt_latency_ns_impl(),

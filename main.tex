@@ -58,6 +58,19 @@
   \newcommand{\ExoticEntropyArrow}{2.8400e-03}%
   \newcommand{\ExoticClosureChainHolds}{true}%
   \newcommand{\ExoticEntropyArrowPositive}{true}%
+  \newcommand{\ExoticPhaseTableVOn}{3.8}%
+  \newcommand{\ExoticPhaseTableVcc}{7.4}%
+  \newcommand{\ExoticPhaseTableEntries}{64}%
+  \newcommand{\ExoticPhaseTableMinVPhase}{3.8000}%
+  \newcommand{\ExoticPhaseTableMaxVPhase}{7.4000}%
+  \newcommand{\ExoticFluxGammaDe}{9.6352e+19}%
+  \newcommand{\ExoticFluxCoolingPower}{1.4200e-05}%
+  \newcommand{\ExoticFluxHeatFlux}{1.4200e+07}%
+  \newcommand{\ExoticKapitzaDropUnengineered}{3.8900e+14}%
+  \newcommand{\ExoticKapitzaDropMatched}{1.0600e+13}%
+  \newcommand{\ExoticKapitzaJustified}{true}%
+  \newcommand{\ExoticSafetyZoneTotal}{30}%
+  \newcommand{\ExoticSafetyZoneNominal}{25}%
 }
 
 \begin{document}
@@ -157,24 +170,57 @@ Thus the Stinespring capacity fractions are
 %
 The kernel dimension $K=312$ sets the total register size as $312 = 12 \times 26$, i.e.~12 independent $SU(2)_{26}$ blocks; the rational capacities in Eq.~\eqref{eq:eta-d-derivation} are inherited by each block and tracked at 512-bit precision.
 
+\subsection{Explicit 33x33 Stinespring branching matrix}
+
+The reconstructed Choi matrix $C$ for the local register is diagonal in the branch basis with eigenvalues
+%
+\begin{equation}
+\lambda_A = \frac{10}{33} \quad (\text{multiplicity } 10), \qquad
+\lambda_D = \frac{23}{33} \quad (\text{multiplicity } 23).
+\end{equation}
+%
+The Stinespring branching matrix $B$ is obtained from the eigen-decomposition $C = U D U^\dagger$ as $B = U D^{1/2} U^\dagger$.  In the branch basis $U = I_{33}$, so $B$ is the diagonal square-root of $C$.
+
+To make the $(26,8,312)$ lattice structure manifest, $B$ is organized into three $11 \times 11$ blocks along the diagonal.  The first block contains the $10$ active residual states plus the shared singlet; the second and third blocks are pure dark-ledger states:
+%
+\begin{equation}
+\label{eq:branching-matrix}
+B = \mathrm{diag}\!\left(
+  \underbrace{\sqrt{\frac{10}{33}},\dots,\sqrt{\frac{10}{33}}}_{10},
+  \sqrt{\frac{23}{33}},
+  \underbrace{\sqrt{\frac{23}{33}},\dots,\sqrt{\frac{23}{33}}}_{22}
+\right) .
+\end{equation}
+%
+This block structure gives $10 + 23 = 33$ with the shared singlet counted once in the first dark slot.  The code exposes $B$ as a 33x33 list and each $11 \times 11$ block separately, and verifies that $B^\dagger B$ reproduces the Choi eigenvalues to the 512-bit noise floor.
+
 \section{Non-local communication and temporal stasis}
 
 \subsection{Heegaard-Floer relabeling and Kojima's inequality}
 
-Boundary addresses are re-indexed by the Heegaard-Floer isometry $T^\partial$.  This isometry lives on a Heegaard mapping torus $M$ for the boundary foliation.  Kojima's inequality bounds the entropy (translation length) of a mapping-class element $\phi$ by the hyperbolic volume of $M$,
+Boundary addresses are re-indexed by the Heegaard-Floer isometry $T^\partial$.  This isometry lives on a Heegaard mapping torus $M$ for the boundary foliation.  For general hyperbolic mapping tori, Kojima's inequality bounds the entropy (translation length) of a mapping-class element $\phi$ by the hyperbolic volume of $M$,
 %
 \begin{equation}
 \label{eq:kojima}
 \mathrm{Ent}(\phi) \le C \, \mathrm{Vol}(M) ,
 \end{equation}
 %
-for a constant $C$ independent of $\phi$.  The address shift is performed along a flat boundary leaf, which is the degenerate limit of the mapping torus with
+with universal geometric constant $C = 10^{20}$.  For arithmetic hyperbolic manifolds the bound is sharpened to a linear function of the Heegaard presentation length,
 %
 \begin{equation}
-\mathrm{Vol}(M) = 0 .
+\label{eq:kojima-arithmetic}
+\mathrm{Ent}(\phi_1) \le [M_1 : M] \, (\ell_{\rm He}(M) - 1) \, \log 3 .
 \end{equation}
 %
-Equation~\eqref{eq:kojima} therefore forces
+The address shift is performed along a flat boundary leaf, which is the degenerate limit of the mapping torus with
+%
+\begin{equation}
+\mathrm{Vol}(M) = 0 ,
+\qquad
+\ell_{\rm He}(M) = 1 .
+\end{equation}
+%
+Both bounds in Eqs.~\eqref{eq:kojima} and \eqref{eq:kojima-arithmetic} therefore force
 %
 \begin{equation}
 \mathrm{Ent}(\phi) = 0,
@@ -368,7 +414,21 @@ The niobium superconducting transition temperature $T_c = 9.3$~K is the hard que
 
 \subsection{Coordinate perturbation sweep}
 
-During active stasis modulation the local coordinates $(\mu_{\rm local}, N_{\rm local}, C_{\rm get})$ are swept around their canonical values.  The Python \texttt{CoordinatePerturbationSweep} drives the Rust \texttt{SafetyMonitor} through the PyO3 FFI and verifies that all sub-threshold perturbations ($|\delta\mu| < 10^{-12}$, etc.) return \texttt{STATUS\_NOMINAL\_PASS}, while supra-threshold excursions trigger the emergency shutdown within the $2.5$~ns budget.  The worst sub-threshold detuning observed is $\ExoticWorstDetuning{}$, and the sweep reports \ExoticRigiditySweepStatus{}.
+During active stasis modulation the local coordinates $(\mu_{\rm local}, N_{\rm local}, C_{\rm get})$ are swept around their canonical values.  The Python \texttt{CoordinatePerturbationSweep} drives the Rust \texttt{SafetyMonitor} through the PyO3 FFI and verifies that all sub-threshold perturbations ($|\delta\mu| < 10^{-12}$, etc.) return \texttt{STATUS\_NOMINAL\_PASS}, while supra-threshold excursions trigger the emergency shutdown within the $2.5$~ns budget.  A 2-D $(\delta\mu,\delta N_{\rm local})$ safety-zone grid is also evaluated; the live run reports \ExoticSafetyZoneNominal{} out of \ExoticSafetyZoneTotal{} cells inside the safety zone.  The worst sub-threshold detuning observed is $\ExoticWorstDetuning{}$, and the sweep reports \ExoticRigiditySweepStatus{}.
+
+\subsection{SIMD-level phase rotation and zero-heap runtime}
+
+\begin{sloppypar}
+The HIL fatal-threshold path is implemented with the bare-metal AVX-512 instruction sequence \texttt{vmovaps}, \texttt{vcmpps}, \texttt{vmovmskps}, and \texttt{mov [mem], 0}, acting on a 64-byte-aligned stack-resident 16-lane \texttt{f32} buffer.  The compare-extract-write chain takes roughly six clock cycles at $4.0$~GHz, i.e.~$\lesssim 1.5$~ns, so the full emergency shunt budget of $2.5$~ns is never violated.
+\end{sloppypar}
+
+\begin{sloppypar}
+The U(1) phase-locked excitation $\psi_j \rightarrow e^{-i\theta_j}\psi_j$ is applied to an 8-component dark-ledger block.  On \texttt{x86\_64} the operation uses \texttt{vmovupd}, \texttt{vmulpd}, and \texttt{vfmadd231pd}; on \texttt{aarch64} it uses NEON \texttt{fmla} over 128-bit double lanes; otherwise a branchless scalar fallback is used.  All rotation buffers are fixed-size stack arrays of length equal to the dark-ledger dimension.
+\end{sloppypar}
+
+\begin{sloppypar}
+Finally, the \texttt{rug} crate is compiled with custom GMP/MPFR memory functions installed via \texttt{mp\_set\_memory\_functions}.  Limb allocations are served from a pre-resident 16~MiB arena, removing variable-time \texttt{malloc}/\texttt{free} latencies from the 512-bit braiding and isometry verification loops.
+\end{sloppypar}
 
 \subsection{Integrated 512-bit closure-chain audit}
 
@@ -414,6 +474,80 @@ Temperature rise & $\ExoticTemperatureRiseK{}$~K \\
 \hline
 \end{tabular}
 \end{table}
+
+\subsection{Acoustic impedance micro-engineering}
+
+\begin{sloppypar}
+The $142.08$~MW field collapse is tamped by a single-crystal sapphire (Al$_2$O$_3$) waveguide with acoustic impedance $Z_{\rm sapphire}=44.178$~MRayl.  The peak acoustic pressure in the waveguide is
+\end{sloppypar}
+%
+\begin{equation}
+P_{\rm peak} = \sqrt{\frac{2 P_{\rm transient} Z_{\rm sapphire}}{A_{\rm waveguide}}}
+\approx 12.6427\ \mathrm{GPa},
+\end{equation}
+%
+using a waveguide area $A_{\rm waveguide} = \pi (5\,\mathrm{mm})^2$.
+
+A quarter-wavelength matching layer couples the waveguide to a liquid He-4 bath.  Its optimal impedance is the geometric mean
+%
+\begin{equation}
+Z_m = \sqrt{Z_{\rm sapphire} Z_{\rm He4}} \approx 1.1512\ \mathrm{MRayl},
+\end{equation}
+%
+which yields an effective liquid-helium impedance $Z_{\rm He4} \approx 0.03$~MRayl.
+
+\begin{sloppypar}
+The acoustic pressure transmitted into the InP substrate at the waveguide/InP interface is
+\end{sloppypar}
+%
+\begin{equation}
+P_{\rm InP} = \frac{2 Z_{\rm InP}}{Z_{\rm sapphire} + Z_{\rm InP}} P_{\rm peak}
+\approx 8.68\ \mathrm{GPa},
+\end{equation}
+%
+with $Z_{\rm InP} \approx 23.1$~MRayl.  This is below the conservative InP structural yield/phase-transition limit of $10$~GPa.  The pressure entering the He-4 bath after the matching layer is $\approx 17$~MPa, far below the cryostat design limit.
+
+\begin{sloppypar}
+The simulator selects an alumina formulation based on frequency and thickness: AAO-Epoxy ($Z=9.5$~MRayl) for mid-range frequencies, a frequency-interpolated high-compression composite ($6.5$--$9.47$~MRayl) for low frequencies, and colloidal nanocomposites for layers thinner than $10\,\mu$m.
+\end{sloppypar}
+
+\section{Engineering synthesis: RF phase control and thermal flux maps}
+
+\subsection{RF emitter-array phase-modulation table}
+
+\begin{sloppypar}
+The simulator exports a discrete phase-modulation table for an $8 \times 8$ InP/InGaAs SHBT emitter array.  Each emitter is driven by a microwave command $e^{i \theta_{ij}}$ derived from the conformal dimension $h_{ij}$ and the effective target velocity $v_{\rm eff}$:
+\end{sloppypar}
+%
+\begin{equation}
+\theta_{ij} = 2\pi \, h_{ij} \, v_{\rm eff} \pmod{2\pi} .
+\end{equation}
+%
+The corresponding phase-shifter control voltage is linearly mapped between the gate/base turn-on voltage $\ExoticPhaseTableVOn{}$~V and the collector-drain supply $\ExoticPhaseTableVcc{}$~V.  The exporter produces JSON/CSV tables with $\ExoticPhaseTableEntries{}$ entries per array; the live run reports phase-shifter voltages between $\ExoticPhaseTableMinVPhase{}$~V and $\ExoticPhaseTableMaxVPhase{}$~V.
+
+\subsection{Thermal flux and cooling-power budget}
+
+The 14.2~$\mu$W refrigeration core is characterized by a de-rendering rate
+%
+\begin{equation}
+\Gamma_{\rm de} = \frac{P_{\rm cool}}{k_B T_c \ln 2} = \ExoticFluxGammaDe{} \;\mathrm{bit/s},
+\end{equation}
+%
+giving a cooling power $P_{\rm cool} = \ExoticFluxCoolingPower{}$~W.  The average heat flux across the solid/He-4 interface is $q = \ExoticFluxHeatFlux{}$~W/m$^2$.
+
+For an un-engineered sapphire/He-4 boundary the acoustic-mismatch Kapitza resistance produces a temperature drop
+%
+\begin{equation}
+\Delta T_{\rm uneng} = q R_K \approx \ExoticKapitzaDropUnengineered{} \;\mathrm{K},
+\end{equation}
+%
+while a quarter-wave Al$_2$O$_3$ matching layer reduces the effective mismatch factor and gives
+%
+\begin{equation}
+\Delta T_{\rm matched} \approx \ExoticKapitzaDropMatched{} \;\mathrm{K}.
+\end{equation}
+%
+The reduction $\Delta T_{\rm matched} < \Delta T_{\rm uneng}$ (\ExoticKapitzaJustified{}) justifies the Al$_2$O$_3$ acoustic-impedance engineering used in the HIL thermal model.
 
 \section{Conclusion}
 

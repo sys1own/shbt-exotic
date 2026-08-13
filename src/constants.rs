@@ -12,6 +12,13 @@ pub const BOUNDARY_KERNEL_K: usize = 312;
 pub const VISIBLE_STATE_DIM: usize = 16;
 pub const DARK_LEDGER_DIM: usize = 8;
 
+/// Full Stinespring branching-matrix dimension and 11x11 block size.
+///
+/// The 33-dimensional local register decomposes into three 11x11 blocks:
+/// one active-visible block (10 active + 1 shared singlet) and two dark blocks.
+pub const STINESPRING_BRANCH_DIM: usize = 33;
+pub const STINESPRING_BLOCK_DIM: usize = 11;
+
 /// Rational capacities: completed dark capacity 23/33, residual 10/33.
 pub const DARK_COMPLETED_NUM: i64 = 23;
 pub const DARK_COMPLETED_DEN: i64 = 33;

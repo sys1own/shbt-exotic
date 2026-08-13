@@ -18,9 +18,13 @@ pub mod hardware;
 pub mod heegaard_floer;
 pub mod hil_safety;
 pub mod newton_lock;
+pub mod phase_rotation;
+pub mod acoustic_impedance;
+pub mod phase_table;
 pub mod refrigeration;
 pub mod shbt;
 pub mod stinespring;
+pub mod thermal_flux;
 
 pub use constants::*;
 pub use shbt::communication::*;
@@ -33,7 +37,11 @@ pub use hardware::*;
 pub use heegaard_floer::*;
 pub use hil_safety::*;
 pub use newton_lock::*;
+pub use phase_rotation::*;
+pub use acoustic_impedance::*;
+pub use phase_table::*;
 pub use refrigeration::*;
+pub use thermal_flux::*;
 pub use stinespring::*;
 
 use pyo3::prelude::*;
@@ -54,6 +62,11 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<shbt::safety_monitor::GateCycleShunt>()?;
     m.add_class::<shbt::safety_monitor::ThermalShuntAuditor>()?;
     m.add_class::<shbt::safety_monitor::SafetyMonitor>()?;
+    m.add_class::<acoustic_impedance::AcousticImpedanceEngine>()?;
+    m.add_class::<phase_table::ExportPhaseModulationTable>()?;
+    m.add_class::<phase_table::PhaseCommand>()?;
+    m.add_class::<thermal_flux::ThermalFluxReport>()?;
+    m.add_class::<thermal_flux::ThermalFluxCell>()?;
     m.add("AnomalyClosureError", m.py().get_type::<error::AnomalyClosureError>())?;
     Ok(())
 }
