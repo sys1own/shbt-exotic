@@ -20,6 +20,8 @@ pub const AIRBRIDGE_WIDTH_UM: f64 = 1.5;
 pub const AIRBRIDGE_HEIGHT_UM: f64 = 5.0;
 /// Niobium trace width (nm).
 pub const TRACE_WIDTH_NM: f64 = 300.0;
+/// Minimum resolvable feature size for standard electron-beam lithography (nm).
+pub const MIN_EBEAM_RESOLUTION_NM: f64 = 50.0;
 /// Nominal acoustic impedance for the matching layer (MRayl).
 pub const NOMINAL_IMPEDANCE_MRAYL: f64 = 1.1512;
 
@@ -166,6 +168,45 @@ impl GdsiiMaskExporter {
         Self
     }
 
+    /// Validate the mask against a simple electron-beam DRC.
+    ///
+    /// Checks that all drawn features are at least `MIN_EBEAM_RESOLUTION_NM` in
+    /// width and height.  Returns `(ok, Vec<violation messages>)`.
+    pub fn validate_drc_impl(&self) -> (bool, Vec<String>) {
+        let mut violations = Vec::new();
+
+        let features: [(&str, f64, f64); 3] = [
+            (
+                "SUBSTRATE_INP",
+                SUBSTRATE_SIZE_UM * 1000.0,
+                SUBSTRATE_SIZE_UM * 1000.0,
+            ),
+            (
+                "AIRBRIDGE_SPAN",
+                AIRBRIDGE_WIDTH_UM * 1000.0,
+                AIRBRIDGE_HEIGHT_UM * 1000.0,
+            ),
+            ("MET_NB_TRACE", TRACE_WIDTH_NM, AIRBRIDGE_HEIGHT_UM * 1000.0),
+        ];
+
+        for (name, width_nm, height_nm) in features {
+            if width_nm < MIN_EBEAM_RESOLUTION_NM {
+                violations.push(format!(
+                    "DRC violation: {} width {:.3} nm is below {:.3} nm e-beam resolution",
+                    name, width_nm, MIN_EBEAM_RESOLUTION_NM
+                ));
+            }
+            if height_nm < MIN_EBEAM_RESOLUTION_NM {
+                violations.push(format!(
+                    "DRC violation: {} height {:.3} nm is below {:.3} nm e-beam resolution",
+                    name, height_nm, MIN_EBEAM_RESOLUTION_NM
+                ));
+            }
+        }
+
+        (violations.is_empty(), violations)
+    }
+
     /// Export a minimal GDSII stream file for an 8×8 SHBT array.
     pub fn export_array_impl<P: AsRef<Path>>(&self, path: P) -> std::io::Result<()> {
         let mut f = File::create(path)?;
@@ -244,6 +285,11 @@ impl GdsiiMaskExporter {
         self.export_array_impl(path).map_err(|e| {
             PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("GDSII export failed: {}", e))
         })
+    }
+
+    /// Run the electron-beam DRC check and return `(ok, violations)`.
+    fn validate_drc(&self) -> (bool, Vec<String>) {
+        self.validate_drc_impl()
     }
 
     fn nominal_impedance_mrayl(&self) -> f64 {
@@ -580,5 +626,13 @@ mod tests {
         }
         let value = (mantissa as f64) * (16.0_f64).powi(exp - 14);
         assert!((value - 1.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn gdsii_drc_passes_for_shbt_features() {
+        let exporter = GdsiiMaskExporter::new();
+        let (ok, violations) = exporter.validate_drc_impl();
+        assert!(ok, "DRC failed: {:?}", violations);
+        assert!(violations.is_empty());
     }
 }

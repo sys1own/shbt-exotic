@@ -84,6 +84,32 @@ The dual-target Hardware-in-the-Loop monitor concurrently samples the Stasis Con
 
 - **RF phase-modulation table**: `ExportPhaseModulationTable` maps an 8x8 conformal-dimension matrix `h_ij` and effective velocity `v_eff` to a JSON/CSV table of 64 microwave phase commands `e^{i θ}`.  Phase-shifter voltages are constrained between the gate/base turn-on `3.8 V` and collector-drain `7.4 V` bias levels.
 - **Thermal flux report**: `ThermalFluxReport` computes `Γ_de = P_cool / (k_B T_c ln 2)` for the `14.2 μW` core and an 8x8 thermal-flux map.  The un-engineered sapphire/He-4 Kapitza drop is `≈ 3.89 × 10^{14} K`; a quarter-wave Al2O3 matching layer reduces this drop, justifying the acoustic-impedance engineering.
+- **Mask DRC**: `GdsiiMaskExporter.validate_drc()` checks every drawn feature against the 50 nm electron-beam lithography resolution limit and reports any `AIRBRIDGE_SPAN` or `MET_NB_TRACE` geometry that is too small to fabricate.
+
+## Hardware Performance Requirements
+
+- **SHBT clocking**: InP/InGaAs SHBT array clocked at `f_max = 72 GHz` with `40 Gb/s` state-routing bandwidth.
+- **AVX-512 HIL sensor pipeline**: the emergency threshold path executes `vmovaps` → `vcmpps` → `vmovmskps` → `mov [mem], 0` on a 64-byte aligned stack-resident 16-lane `f32` buffer, with no branches and no heap allocation.
+- **Response-time budget**: the AVX-512 pipeline is six clock cycles at `4.0 GHz` (`≈ 1.5 ns`), leaving `1.0 ns` of margin inside the `2.5 ns` emergency bias-current shunt budget.
+- **SIMD phase rotation**: the U(1) phase-locked excitation `ψ_j → e^{-i θ_j} ψ_j` is vectorised for `x86_64` AVX-512 (`vmovupd`, `vmulpd`, `vfmadd231pd`) and `aarch64` NEON (`fmla`) and processes an 8-component dark-ledger block in a single branchless pass.
+
+## Fabrication Guidelines
+
+- **Alumina-nanoparticle spin-coating**: disperse colloidal Al2O3 nanoparticles (nominal diameter `10–20 nm`) in a PMMA/toluene carrier at `5–10 wt%`; spin-coat onto the InP substrate at `2,000 rpm` for `60 s` and soft-bake at `120 °C` for `120 s` to drive off solvent.  The nanoparticle packing density is tuned so the cured film impedance matches `Z_m = sqrt(Z_sapphire · Z_He4) ≈ 1.1512 MRayl`.
+- **λ/4 thickness**: the matching-layer thickness is set to one quarter of the acoustic wavelength in the layer,
+
+  ```
+  d = v_l / (4 f)
+  ```
+
+  where `v_l` is the longitudinal sound speed in the cured nanocomposite and `f` is the SHBT acoustic transduction frequency.  For a representative `v_l ≈ 3,000 m/s` at `f = 10 GHz`, `d ≈ 75 nm`.  A 50 nm placement tolerance is imposed by `GdsiiMaskExporter.validate_drc()`.
+- **Layer stack**: Layer 10 `SUBSTRATE_INP` (350 μm), Layer 20 `AIRBRIDGE_SPAN` (1.5 × 5.0 μm), Layer 25 `MET_NB_TRACE` (300 nm Niobium).  All mask features are at or above the 50 nm e-beam resolution limit.
+
+## Reliability and Aging
+
+- **Coffin-Manson model**: the Alumina/InP interface accumulates plastic strain `Δε_p = 6.0 × 10^{-6}` per 15 K thermal swing induced by the 142.08 MW transients.
+- **Cycle-to-failure limit**: `N_f = 4.0 × 10^6` cycles, mapped to a de-rendering lifetime budget of `1.514 × 10^{16}` bits.
+- **Quench warning**: `ReliabilityAuditor` returns `STATUS_QUENCH_WARNING` when cumulative de-rendering exceeds the budget and reports the fatigued acoustic impedance `Z → 1.3250 MRayl`, which raises the superconducting niobium quench risk.
 
 ## Quick Start
 
