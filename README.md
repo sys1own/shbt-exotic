@@ -51,6 +51,13 @@ The dual-target Hardware-in-the-Loop monitor concurrently samples the Stasis Con
 - **AVX-512 sensor pipeline**: the HIL fatal-threshold compare uses `vmovaps` / `vcmpps` / `vmovmskps` / `mov [mem], 0` on a 64-byte aligned 16-lane buffer, completing in about six cycles (~1.5 ns at 4.0 GHz).
 - **U(1) phase-locked excitation**: the operator `ψ_j → e^{-i θ_j} ψ_j` is vectorised for x86_64 AVX-512 and aarch64 NEON, processing an entire 8-component dark-ledger block in a single branchless pass.
 
+## Acoustic Impedance Micro-Engineering
+
+- **Sapphire waveguide**: single-crystal Al2O3 with acoustic impedance `Z = 44.178 MRayl` tamps the 142.08 MW / 2.5 ns transient.
+- **Quarter-wave matching layer**: optimal impedance `Z_m = sqrt(Z_sapphire * Z_He4) ≈ 1.1512 MRayl` couples the waveguide to a liquid He-4 bath.
+- **Alumina formulation selector**: chooses AAO-Epoxy (`Z = 9.5 MRayl`), High-Compression Composite (`6.5–9.47 MRayl`), or Colloidal Nanocomposite (sub-10 μm layers) based on operating frequency and thickness.
+- **InP substrate verification**: the transmitted acoustic pressure into InP is computed from the boundary transmission coefficient and verified to stay below the InP structural yield/phase-transition limit (~10 GPa); the waveguide peak pressure of 12.6427 GPa is consistent with the 142.08 MW transient and the chosen waveguide area.
+
 ## Quick Start
 
 ```bash

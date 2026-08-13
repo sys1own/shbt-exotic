@@ -19,6 +19,7 @@ pub mod heegaard_floer;
 pub mod hil_safety;
 pub mod newton_lock;
 pub mod phase_rotation;
+pub mod acoustic_impedance;
 pub mod refrigeration;
 pub mod shbt;
 pub mod stinespring;
@@ -35,6 +36,7 @@ pub use heegaard_floer::*;
 pub use hil_safety::*;
 pub use newton_lock::*;
 pub use phase_rotation::*;
+pub use acoustic_impedance::*;
 pub use refrigeration::*;
 pub use stinespring::*;
 
@@ -56,6 +58,7 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<shbt::safety_monitor::GateCycleShunt>()?;
     m.add_class::<shbt::safety_monitor::ThermalShuntAuditor>()?;
     m.add_class::<shbt::safety_monitor::SafetyMonitor>()?;
+    m.add_class::<acoustic_impedance::AcousticImpedanceEngine>()?;
     m.add("AnomalyClosureError", m.py().get_type::<error::AnomalyClosureError>())?;
     Ok(())
 }

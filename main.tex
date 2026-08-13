@@ -429,6 +429,42 @@ Temperature rise & $\ExoticTemperatureRiseK{}$~K \\
 \end{tabular}
 \end{table}
 
+\subsection{Acoustic impedance micro-engineering}
+
+\begin{sloppypar}
+The $142.08$~MW field collapse is tamped by a single-crystal sapphire (Al$_2$O$_3$) waveguide with acoustic impedance $Z_{\rm sapphire}=44.178$~MRayl.  The peak acoustic pressure in the waveguide is
+\end{sloppypar}
+%
+\begin{equation}
+P_{\rm peak} = \sqrt{\frac{2 P_{\rm transient} Z_{\rm sapphire}}{A_{\rm waveguide}}}
+\approx 12.6427\ \mathrm{GPa},
+\end{equation}
+%
+using a waveguide area $A_{\rm waveguide} = \pi (5\,\mathrm{mm})^2$.
+
+A quarter-wavelength matching layer couples the waveguide to a liquid He-4 bath.  Its optimal impedance is the geometric mean
+%
+\begin{equation}
+Z_m = \sqrt{Z_{\rm sapphire} Z_{\rm He4}} \approx 1.1512\ \mathrm{MRayl},
+\end{equation}
+%
+which yields an effective liquid-helium impedance $Z_{\rm He4} \approx 0.03$~MRayl.
+
+\begin{sloppypar}
+The acoustic pressure transmitted into the InP substrate at the waveguide/InP interface is
+\end{sloppypar}
+%
+\begin{equation}
+P_{\rm InP} = \frac{2 Z_{\rm InP}}{Z_{\rm sapphire} + Z_{\rm InP}} P_{\rm peak}
+\approx 8.68\ \mathrm{GPa},
+\end{equation}
+%
+with $Z_{\rm InP} \approx 23.1$~MRayl.  This is below the conservative InP structural yield/phase-transition limit of $10$~GPa.  The pressure entering the He-4 bath after the matching layer is $\approx 17$~MPa, far below the cryostat design limit.
+
+\begin{sloppypar}
+The simulator selects an alumina formulation based on frequency and thickness: AAO-Epoxy ($Z=9.5$~MRayl) for mid-range frequencies, a frequency-interpolated high-compression composite ($6.5$--$9.47$~MRayl) for low frequencies, and colloidal nanocomposites for layers thinner than $10\,\mu$m.
+\end{sloppypar}
+
 \section{Conclusion}
 
 The \texttt{shbt-exotic} simulator demonstrates that non-local communication, temporal stasis, artificial ghost seeds, and entropic refrigeration can be grounded in a single isometric Stinespring framework on the $(26,8,312)$ SHBT branch.  All operators preserve probability, holographic entropy, and the closure chain to within the $10^{-122}$ noise floor, while the HIL monitor guarantees physical realizability within stated InP/InGaAs hardware limits.
