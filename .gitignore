@@ -15,6 +15,7 @@ Cargo.lock
 figures/
 *.tex
 !main.tex
+!exotic_results.tex
 *.so
 *Notes.bib
 *.synctex.gz

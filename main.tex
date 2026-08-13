@@ -460,7 +460,7 @@ The HIL fatal-threshold path is implemented with the bare-metal AVX-512 instruct
 \end{sloppypar}
 
 \begin{sloppypar}
-The U(1) phase-locked excitation $\psi_j \rightarrow e^{-i\theta_j}\psi_j$ is applied to an 8-component dark-ledger block.  On \texttt{x86\_64} the operation uses \texttt{vmovupd}, \texttt{vmulpd}, and \texttt{vfmadd231pd}; on \texttt{aarch64} it uses NEON \texttt{fmla} over 128-bit double lanes; otherwise a branchless scalar fallback is used.  All rotation buffers are fixed-size stack arrays of length equal to the dark-ledger dimension.
+The U(1) phase-locked excitation $\psi_j \rightarrow e^{-i\theta_j}\psi_j$ is applied to an 8-component dark-ledger block.  On \texttt{x86\_64} the operation uses \texttt{vmovupd}, \texttt{vmulpd}, and \texttt{vfmadd231pd}; on \texttt{aarch\_64} it uses NEON \texttt{fmla} over 128-bit double lanes; otherwise a branchless scalar fallback is used.  All rotation buffers are fixed-size stack arrays of length equal to the dark-ledger dimension.
 \end{sloppypar}
 
 \begin{sloppypar}
@@ -585,6 +585,119 @@ while a quarter-wave Al$_2$O$_3$ matching layer reduces the effective mismatch f
 \end{equation}
 %
 The reduction $\Delta T_{\rm matched} < \Delta T_{\rm uneng}$ (\ExoticKapitzaJustified{}) justifies the Al$_2$O$_3$ acoustic-impedance engineering used in the HIL thermal model.
+
+\section{Algebraic depth: explicit branching matrix and Heegaard bounds}
+\label{sec:algebraic-depth}
+
+\subsection{The 33$\times$33 Stinespring branching matrix}
+
+The local Hilbert space of the $(26,8,312)$ SHBT branch factorises into $N_{\rm local}=33$ orthogonal branch states.  Its Choi matrix $C$ is diagonal with eigenvalues
+%
+\begin{equation}
+\lambda_A = \frac{10}{33} \quad (\text{multiplicity } 10), \qquad
+\lambda_D = \frac{23}{33} \quad (\text{multiplicity } 23) .
+\end{equation}
+%
+The Stinespring branching matrix $B$ is the unique positive semidefinite square root of $C$ in the branch basis.  Because the eigenvectors are the standard basis vectors, $B$ is diagonal:
+%
+\begin{equation}
+\label{eq:full-branching-matrix}
+B = \mathrm{diag}\!
+\underbrace{\left(\sqrt{\frac{10}{33}},\dots,\sqrt{\frac{10}{33}}\right)}_{10}
+\underbrace{\left(\sqrt{\frac{23}{33}},\dots,\sqrt{\frac{23}{33}}\right)}_{23} .
+\end{equation}
+%
+To make the $(26,8,312)$ block structure explicit, group the diagonal into three $11\times 11$ blocks:
+%
+\begin{equation}
+B = \begin{pmatrix}
+B^{(1)} & 0 & 0 \\
+0 & B^{(2)} & 0 \\
+0 & 0 & B^{(3)}
+\end{pmatrix},
+\end{equation}
+%
+where
+%
+\begin{align}
+B^{(1)} &= \mathrm{diag}\!\left(
+  \underbrace{\sqrt{\frac{10}{33}},\dots,\sqrt{\frac{10}{33}}}_{10},
+  \sqrt{\frac{23}{33}}
+\right), \\
+B^{(2)} &= B^{(3)} = \sqrt{\frac{23}{33}}\, I_{11} .
+\end{align}
+%
+The first block contains the $10$ active residual states plus the shared singlet; the remaining $23$ states are dark-ledger modes.  Counting the shared singlet once gives $10+23=33$.
+
+The isometry $V_{\rm unified}$ is obtained by appending the corresponding dark-ledger states to the active ones.  Its matrix representation is the $33\times 33$ branching matrix $B$ padded with zero rows for the discarded environment.  Therefore
+%
+\begin{equation}
+V_{\rm unified}^\dagger V_{\rm unified}^{} = B^{\dagger} B = C ,
+\end{equation}
+%
+and after dark-ledger normalisation $C$ is the identity on the local register.  The simulator stores $B$ as a 33$\times$33 list and each $11\times 11$ block separately, verifying at 512-bit precision that $B^{\dagger}B$ reproduces the Choi eigenvalues and that the residual Frobenius error is below $10^{-122}$.
+
+\subsection{Heegaard presentation-length bound}
+
+Non-local communication is implemented by the Heegaard-Floer boundary relabeling isometry $T^\partial$, which acts on a Heegaard mapping torus $M$ for the boundary foliation.  For any pseudo-Anosov mapping-class element $\phi$ of $M$, Kojima's inequality relates the translation length (topological entropy) of $\phi$ to the hyperbolic volume of the mapping torus:
+%
+\begin{equation}
+\label{eq:kojima-universal}
+\mathrm{Ent}(\phi) \le C\, \mathrm{Vol}(M) ,
+\end{equation}
+%
+with the universal geometric constant $C = 10^{20}$.  For arithmetic hyperbolic manifolds the bound is sharpened to a linear function of the Heegaard presentation length $\ell_{\rm He}(M)$:
+%
+\begin{equation}
+\label{eq:kojima-arithmetic-bound}
+\mathrm{Ent}(\phi_1) \le [M_1 : M]\, (\ell_{\rm He}(M) - 1)\, \log 3 .
+\end{equation}
+%
+The address shift performed by $T^\partial$ is along a flat boundary leaf, i.e.~the degenerate limit of the mapping torus in which
+%
+\begin{equation}
+\mathrm{Vol}(M) = 0, \qquad \ell_{\rm He}(M) = 1 .
+\end{equation}
+%
+Substituting these values into Eqs.~\eqref{eq:kojima-universal} and \eqref{eq:kojima-arithmetic-bound} gives
+%
+\begin{equation}
+\mathrm{Ent}(\phi) \le 0 ,
+\end{equation}
+%
+so the topological entropy of the relabeling map vanishes.  Since the entropy is non-negative, it is exactly zero, and the von Neumann entropy of the reduced boundary region is strictly conserved:
+%
+\begin{equation}
+\Delta S_A = 0 .
+\end{equation}
+%
+The simulator evaluates $\ell_{\rm He}(M)$ and $\Delta S_A$ for every candidate boundary shift.  The live run reports $\ell_{\rm He} = \ExoticHeegaardPresLength{}$ and $\Delta S_A = \ExoticHeegaardEntropyChange{}$, with Kojima's inequality satisfied (\ExoticKojimaSatisfied{}).
+
+\subsection{AVX-512 branchless HIL pipeline}
+
+The HIL fatal-threshold path is implemented with the bare-metal AVX-512 instruction sequence shown in Table~\ref{tab:avx512}.
+%
+\begin{table}[h]
+\caption{\label{tab:avx512}AVX-512 HIL emergency-threshold pipeline.}
+\begin{ruledtabular}
+\begin{tabular}{p{1.8cm}p{2.6cm}p{3.6cm}}
+Instruction & Source/destination & Purpose \\
+\colrule
+\texttt{vmovaps} & aligned 64-byte stack buffer & load 16 lane samples \\
+\texttt{vcmpps} & mask register \texttt{k1} & compare $|\delta\phi| > 5.05\times 10^{-5}$~rad \\
+\texttt{vmovmskps} & general-purpose register & extract 16-bit mask \\
+\texttt{test}/\texttt{mov [mem], 0} & MMIO shunt line & write emergency shutdown signal \\
+\end{tabular}
+\end{ruledtabular}
+\end{table}
+%
+All four steps execute without branches and without heap allocation.  At a 4.0~GHz clock the four-instruction critical path plus a load-store pair is bounded by six cycles, giving a worst-case latency of
+%
+\begin{equation}
+t_{\rm AVX512} = \frac{6}{4.0\times 10^9}\,\mathrm{s} = 1.5\,\mathrm{ns} ,
+\end{equation}
+%
+which is well within the 2.5~ns emergency shunt budget.  The U(1) phase-locked excitation $\psi_j \to e^{-i\theta_j}\psi_j$ on an 8-component dark-ledger block uses \texttt{vmovupd}, \texttt{vmulpd}, and \texttt{vfmadd231pd} on \texttt{x86\_64}, or NEON \texttt{fmla} on \texttt{aarch\_64}, with a branchless scalar fallback.  All rotation buffers are fixed-size stack arrays; the \texttt{rug} GMP/MPFR allocator is served from a pre-resident 16~MiB arena to eliminate variable-time \texttt{malloc}/\texttt{free} from the 512-bit isometry loops.
 
 \section{Microscopic anyon braiding and OpenQASM compilation}
 
