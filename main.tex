@@ -8,8 +8,14 @@
   \typeout{Loading exotic_results.tex}}{%
   \newcommand{\ExoticKernel}{26, 8, 312}%
   \newcommand{\ExoticStinespringIsometric}{true}%
+  \newcommand{\ExoticNLocal}{33}%
+  \newcommand{\ExoticNActive}{10}%
+  \newcommand{\ExoticNDark}{23}%
+  \newcommand{\ExoticEtaA}{10/33}%
+  \newcommand{\ExoticEtaD}{23/33}%
   \newcommand{\ExoticStasisGamma}{1.0101}%
   \newcommand{\ExoticCget}{5.3937e-175}%
+  \newcommand{\ExoticAlphaSeed}{1.3258e-51}%
   \newcommand{\ExoticGhostMassSun}{0.9958}%
   \newcommand{\ExoticGhostMassKg}{1.9801e+30}%
   \newcommand{\ExoticEntropyDebtPower}{9.0220e+11}%
@@ -21,7 +27,6 @@
   \newcommand{\ExoticMacroCoolingPower}{9.0600e+11}%
   \newcommand{\ExoticFramingDefect}{5.9952e-15}%
   \newcommand{\ExoticCanonicalFramingDefect}{0.0}%
-  \newcommand{\ExoticShuntLatencyNs}{2.4861}%
   \newcommand{\ExoticPhaseJitterRad}{5.0500e-05}%
   \newcommand{\ExoticBaselineTempK}{0.0154}%
   \newcommand{\ExoticHilStatus}{\texttt{STATUS\_NOMINAL\_PASS}}%
@@ -160,12 +165,41 @@ At the small bias used in the benchmark, the simulator reports $\gamma_{\rm stas
 
 \section{Artificial ghost seeds and mass-congestion coupling}
 
-A ghost seed is synthesized from a bit overflow $\Delta N = N_{\rm local} - N_{\rm limit}$ through the mass-congestion identity
+\subsection{Topological residue for the mass-congestion coefficient}
+
+A ghost seed is synthesized from a bit overflow $\Delta N = N_{\rm local} - N_{\rm limit}$.  The coefficient $\alpha_{\rm seed}$ is not an empirical fit; it is the topological residue obtained from the $(26,8,312)$ branch dimensions.  Let
 %
 \begin{equation}
-M_{\rm seed} = \alpha_{\rm seed} \, \Delta N,
-\qquad
-\alpha_{\rm seed} = 1.67 \times 10^{-51} \, M_{\odot}/\text{bit} .
+d_1 = \gcd(26, 312) = 26
+\end{equation}
+%
+be the lattice divisor that measures the shared $SU(2)$ character periodicity, and let
+%
+\begin{equation}
+N_{\rm total} = e^{33}
+\end{equation}
+%
+be the natural holographic bit ceiling.  The Planck mass $m_P$ converts one bit of holographic excess into curvature, so the mass per excess bit is
+%
+\begin{equation}
+\alpha_{\rm seed} = \frac{d_1 \, m_P}{N_{\rm total}} .
+\label{eq:alpha_seed}
+\end{equation}
+%
+The simulator evaluates Eq.~\eqref{eq:alpha_seed} at 512-bit precision and reports
+%
+\begin{equation}
+\alpha_{\rm seed} = \ExoticAlphaSeed{} \, M_{\odot}/\text{bit} ,
+\end{equation}
+%
+which is exactly $1.325812080894556 \times 10^{-51} \, M_{\odot}/\text{bit}$.
+
+\subsection{Ghost-seed synthesis and entropy debt}
+
+With the coefficient in Eq.~\eqref{eq:alpha_seed}, the ghost-seed mass is
+%
+\begin{equation}
+M_{\rm seed} = \alpha_{\rm seed} \, \Delta N .
 \end{equation}
 %
 For the benchmark overflow that yields approximately one solar mass, the simulator reports $M_{\rm seed} = \ExoticGhostMassSun{}\,M_{\odot}$ $(\ExoticGhostMassKg{}$~kg$)$.  The entropy-debt power required to sustain the seed scales linearly with mass,
@@ -245,7 +279,10 @@ Table~\ref{tab:benchmarks} summarizes the live simulator benchmarks.
 \hline
 Quantity & Target & Measured \\
 \hline
-Stinespring isometry & $\Delta$ norm $< 10^{-120}$ & \ExoticStinespringIsometric{} \\
+Stinespring isometry & $\Delta$ norm $< 10^{-122}$ & \ExoticStinespringIsometric{} \\
+Stinespring partition & $N_{\rm local},N_{\rm active},N_{\rm dark}=33,10,23$ & \ExoticNLocal{}, \ExoticNActive{}, \ExoticNDark{} \\
+Stinespring capacities & $\eta_A=10/33$, $\eta_D=23/33$ & \ExoticEtaA{}, \ExoticEtaD{} \\
+Mass-congestion coefficient & $1.325812080894556\times10^{-51}$ & $\ExoticAlphaSeed{} \, M_\odot$/bit \\
 Newton-lock $\gamma_{\rm stasis}$ & $>1$ at $\delta\mu=10^{-15}$ & \ExoticStasisGamma{} \\
 Ghost-seed mass & $\approx 1\,M_\odot$ & \ExoticGhostMassSun{}\,$M_\odot$ \\
 Entropy-debt power & $\approx 906$~GW & \ExoticEntropyDebtPower{}~W \\

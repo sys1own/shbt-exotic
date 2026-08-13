@@ -35,6 +35,22 @@ def test_stinespring_isometric():
     assert iso is True
 
 
+def test_stinespring_partition_from_branch():
+    st = UnifiedStinespringMap()
+    n_local, n_active, n_dark, eta_a, eta_d = st.partition()
+    assert n_local == 33
+    assert n_active == 10
+    assert n_dark == 23
+    assert eta_a == (10, 33)
+    assert eta_d == (23, 33)
+
+
+def test_alpha_seed_is_topological_residue():
+    ghost = GhostSeedSynthesizer()
+    alpha = ghost.alpha_seed()
+    assert 1.3e-51 < alpha < 1.4e-51
+
+
 def test_heegaard_floer_relabel():
     relabel = HeegaardFloerRelabeling()
     state = _state()
@@ -52,7 +68,7 @@ def test_newton_lock_stasis():
 
 def test_ghost_seed_one_solar_mass_and_entropy_debt():
     ghost = GhostSeedSynthesizer()
-    alpha = 1.67e-51
+    alpha = ghost.alpha_seed()
     n_limit = 1.0e65
     n_local = n_limit + 1.0 / alpha
     m_sun = ghost.seed_mass_solar(n_local, n_limit)

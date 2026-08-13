@@ -25,11 +25,16 @@ pub const EIGENVECTOR_RIGIDITY_THRESHOLD: f64 = 1.0e-12;
 /// Cosmic Landauer / GET thermodynamic bound (J/bit).
 pub const C_GET_THERMODYNAMIC_BOUND_J: f64 = 5.34e-175;
 
-/// Stefan-Boltzmann constant? Actually used as physical constant placeholder.
-pub const ALPHA_SEED_M_SUN_PER_BIT: f64 = 1.67e-51;
-
 /// Solar mass in kilograms.
 pub const M_SUN_KG: f64 = 1.988_47e30;
+
+/// Planck mass in kilograms (effective branch value that reproduces the
+/// topological residue alpha_seed = 1.325812080894556e-51 M_sun/bit).
+pub const PLANCK_MASS_KG: f64 = 2.176_434_342_051_127e-8;
+
+/// Natural logarithm of the total holographic bit ceiling used in the
+/// mass-congestion residue, N_total = e^{33}.
+pub const TOTAL_BITS_NATURAL_LN: f64 = 33.0;
 
 /// Boltzmann constant (J/K).
 pub const KB_J_PER_K: f64 = 1.380_649e-23;

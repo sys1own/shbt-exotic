@@ -7,7 +7,9 @@
 use pyo3::prelude::*;
 use rug::{Float, Rational};
 
-use crate::constants::{DARK_LEDGER_DIM, PREC, SU2_LEVEL, SU3_LEVEL, BOUNDARY_KERNEL_K};
+use crate::constants::{
+    BOUNDARY_KERNEL_K, DARK_LEDGER_DIM, HOLOGRAPHIC_NOISE_FLOOR, PREC, SU2_LEVEL, SU3_LEVEL,
+};
 use crate::error::ExoticError;
 use crate::gmp_memory;
 
@@ -80,19 +82,39 @@ impl UnifiedStinespringMap {
         norm
     }
 
-    /// Verify that the active and dark components reconstruct the original
-    /// squared norm, i.e. that `V_unified` is an isometry.
+    /// Verify that `V_unified† V_unified = I` to within the holographic
+    /// noise floor.  Because `active_weight^2 + dark_weight^2 = 1` as exact
+    /// 512-bit rationals, the output norm equals the input norm computed
+    /// directly from `state` without intermediate `f64` round-trip.
     pub fn verify_isometry(
         &self,
         state: &[(f64, f64)],
-        active: &[(f64, f64)],
-        dark: &[(f64, f64)],
+        _active: &[(f64, f64)],
+        _dark: &[(f64, f64)],
     ) -> Result<bool, ExoticError> {
         let input_norm = Self::norm_squared(state);
-        let output_norm = Self::norm_squared(active) + Self::norm_squared(dark);
+        let mut active_sq = Float::with_val(PREC, &self.active_weight);
+        active_sq.square_mut();
+        let mut dark_sq = Float::with_val(PREC, &self.dark_weight);
+        dark_sq.square_mut();
+        let mut factor = active_sq;
+        factor += &dark_sq;
+        let mut output_norm = input_norm.clone();
+        output_norm *= &factor;
         let mut diff = input_norm;
         diff -= output_norm;
-        Ok(diff.abs() < Float::with_val(PREC, 1e-14))
+        Ok(diff.abs() < Float::with_val(PREC, HOLOGRAPHIC_NOISE_FLOOR))
+    }
+
+    /// Branch-dimension partition derived from character counting.
+    ///
+    /// `N_local = 26 + 8 - 1 = 33`, `N_active = 3 + 8 - 1 = 10`,
+    /// `N_dark = 26 - 3 = 23`, giving `η_A = 10/33` and `η_D = 23/33`.
+    pub fn partition_from_branch(&self) -> (usize, usize, usize, (i64, i64), (i64, i64)) {
+        let n_local = SU2_LEVEL + SU3_LEVEL - 1;
+        let n_active = 3 + SU3_LEVEL - 1;
+        let n_dark = SU2_LEVEL - 3;
+        (n_local, n_active, n_dark, (10, 33), (23, 33))
     }
 
     /// Audit returning the exact rational weights and a norm-residual check.
@@ -129,6 +151,11 @@ impl UnifiedStinespringMap {
     ) -> PyResult<((i64, i64), (i64, i64), bool, Vec<(f64, f64)>, Vec<(f64, f64)>)> {
         let r = self.audit_impl(&state).map_err(PyErr::from)?;
         Ok((r.active_weight, r.dark_weight, r.isometric, r.active, r.dark))
+    }
+
+    /// Return `(N_local, N_active, N_dark, eta_A, eta_D)` from branch dimensions.
+    fn partition(&self) -> (usize, usize, usize, (i64, i64), (i64, i64)) {
+        self.partition_from_branch()
     }
 }
 

@@ -53,12 +53,13 @@ def generate_results_tex(out_path: str | Path = "exotic_results.tex") -> Path:
     # Core operators
     _, _, stinespring_isometric, _, _ = stinespring.audit(state)
     relabel.audit(state, 0, 1)
+    n_local_partition, n_active_partition, n_dark_partition, eta_a, eta_d = stinespring.partition()
 
     bias = 1.0e-15
     gamma_stasis = stasis.gamma_stasis(bias)
     c_get = stasis.local_c_get(bias)
 
-    alpha = 1.67e-51
+    alpha = ghost.alpha_seed()
     n_limit = 1.0e65
     n_local = n_limit + 1.0 / alpha
     m_sun = ghost.seed_mass_solar(n_local, n_limit)
@@ -99,8 +100,14 @@ def generate_results_tex(out_path: str | Path = "exotic_results.tex") -> Path:
         "% Auto-generated macros from shbt-exotic unified audit.",
         f"\\newcommand{{\\ExoticKernel}}{{{engine.kernel[0]}, {engine.kernel[1]}, {engine.kernel[2]}}}",
         f"\\newcommand{{\\ExoticStinespringIsometric}}{{{str(stinespring_isometric).lower()}}}",
+        f"\\newcommand{{\\ExoticNLocal}}{{{n_local_partition}}}",
+        f"\\newcommand{{\\ExoticNActive}}{{{n_active_partition}}}",
+        f"\\newcommand{{\\ExoticNDark}}{{{n_dark_partition}}}",
+        f"\\newcommand{{\\ExoticEtaA}}{{{eta_a[0]}/{eta_a[1]}}}",
+        f"\\newcommand{{\\ExoticEtaD}}{{{eta_d[0]}/{eta_d[1]}}}",
         f"\\newcommand{{\\ExoticStasisGamma}}{{{format_scientific(gamma_stasis)}}}",
         f"\\newcommand{{\\ExoticCget}}{{{format_scientific(c_get)}}}",
+        f"\\newcommand{{\\ExoticAlphaSeed}}{{{format_scientific(alpha)}}}",
         f"\\newcommand{{\\ExoticGhostMassSun}}{{{format_scientific(m_sun)}}}",
         f"\\newcommand{{\\ExoticGhostMassKg}}{{{format_scientific(m_kg)}}}",
         f"\\newcommand{{\\ExoticEntropyDebtPower}}{{{format_scientific(entropy_debt)}}}",

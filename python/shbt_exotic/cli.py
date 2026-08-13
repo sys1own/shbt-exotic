@@ -46,7 +46,7 @@ def run_audit(args: argparse.Namespace) -> int:
     c_get = stasis.local_c_get(bias)
 
     # 4. Ghost-seed mass-congestion (~1 M_sun, with congestion < 10^-12)
-    alpha = 1.67e-51
+    alpha = ghost.alpha_seed()
     n_limit = 1.0e65
     n_local = n_limit + 1.0 / alpha
     m_seed = ghost.seed_mass_kg(n_local, n_limit)
