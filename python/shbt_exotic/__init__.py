@@ -11,6 +11,7 @@ from shbt_exotic._core import (
     SafetyMonitor,
     GateCycleShunt,
     ThermalShuntAuditor,
+    ThermalHILMonitor,
 )
 from shbt_exotic.stasis import StasisDilation
 from shbt_exotic.sweep import CoordinatePerturbationSweep
@@ -28,6 +29,7 @@ __all__ = [
     "SafetyMonitor",
     "GateCycleShunt",
     "ThermalShuntAuditor",
+    "ThermalHILMonitor",
     "StasisDilation",
     "CoordinatePerturbationSweep",
 ]

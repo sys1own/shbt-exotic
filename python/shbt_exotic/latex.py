@@ -15,6 +15,7 @@ from shbt_exotic import (
     HilSafetyMonitor,
     NewtonLockStasis,
     SafetyMonitor,
+    ThermalHILMonitor,
     UnifiedStinespringMap,
 )
 
@@ -90,13 +91,17 @@ def generate_results_tex(out_path: str | Path = "exotic_results.tex") -> Path:
     f_max = hw.f_max_hz()
     bandwidth = hw.routing_bandwidth_bps()
 
-    # Gate-cycle shunt safety and coordinate rigidity sweep
+    # Gate-cycle shunt safety and Debye T^3 thermal HIL audit
     monitor = SafetyMonitor()
     shunt_status, shunt_latency_ns, shunt_cycles, thermal_status = monitor.simulate_shutdown(
         mu_local, n_local, n_limit, c_get
     )
+    hil_thermal = monitor.hil_thermal_monitor()
     thermal = monitor.thermal_shunt_auditor()
     temperature_rise_k = thermal.temperature_rise_k()
+    debye_final_temp_k = hil_thermal.final_temperature_k()
+    dissipation_volume_cm3 = hil_thermal.volume_cm3()
+    debye_heat_capacity_j_per_k = hil_thermal.heat_capacity_j_per_k()
 
     sweep = CoordinatePerturbationSweep(mu0=1.0, n_limit=n_limit, c_get_bound=c_get)
     sweep_ok, worst_detuning = sweep.verify_rigidity_limit()
@@ -140,6 +145,10 @@ def generate_results_tex(out_path: str | Path = "exotic_results.tex") -> Path:
         f"\\newcommand{{\\ExoticShuntCycles}}{{{shunt_cycles}}}",
         f"\\newcommand{{\\ExoticThermalStatus}}{{\\texttt{{{escape_underscores(thermal_status)}}}}}",
         f"\\newcommand{{\\ExoticTemperatureRiseK}}{{{format_scientific(temperature_rise_k)}}}",
+        f"\\newcommand{{\\ExoticDebyeFinalTempK}}{{{format_scientific(debye_final_temp_k)}}}",
+        f"\\newcommand{{\\ExoticDissipationVolume}}{{{format_scientific(dissipation_volume_cm3)}}}",
+        f"\\newcommand{{\\ExoticMinDissipationVolume}}{{{format_scientific(48.98)}}}",
+        f"\\newcommand{{\\ExoticDebyeHeatCapacityJK}}{{{format_scientific(debye_heat_capacity_j_per_k)}}}",
         f"\\newcommand{{\\ExoticRigiditySweepStatus}}{{\\texttt{{{escape_underscores(rigidity_status)}}}}}",
         f"\\newcommand{{\\ExoticWorstDetuning}}{{{format_scientific(worst_detuning)}}}",
     ]

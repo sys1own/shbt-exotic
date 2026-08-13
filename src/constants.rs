@@ -68,3 +68,13 @@ pub const N_LOCAL_BITS: f64 = 1.0e65;
 
 /// Maximum tolerable phase jitter for topological edge-state transport (rad).
 pub const PHASE_JITTER_THRESHOLD_RAD: f64 = 5.05e-5;
+
+/// Debye T^3 proportionality constant for InP acoustic phonons (J/(m^3 K^4)).
+pub const INP_DEBYE_A_J_PER_M3_K4: f64 = 3.877_594_83;
+
+/// Niobium superconducting transition temperature (K).
+pub const NIOBIUM_TRANSITION_TEMP_K: f64 = 9.3;
+
+/// Minimum InP interconnect dissipation volume to avoid a thermal quench (cm^3).
+/// Exact value derived from the Debye T^3 model for T_c = 9.3 K, rounded to 48.98 cm^3.
+pub const MIN_DISSIPATION_VOLUME_CM3: f64 = 48.982_249_547_178_32;

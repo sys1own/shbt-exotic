@@ -14,6 +14,7 @@ from shbt_exotic import (
     HilSafetyMonitor,
     NewtonLockStasis,
     SafetyMonitor,
+    ThermalHILMonitor,
     UnifiedStinespringMap,
 )
 
@@ -67,12 +68,12 @@ def run_audit(args: argparse.Namespace) -> int:
     nominal = hil.is_nominal(status)
     framing_defect = hil.framing_defect(mu_local, n_local, n_limit, c_get)
 
-    # 7. Gate-cycle shunt safety and thermal audit
+    # 7. Gate-cycle shunt safety and Debye T^3 thermal HIL audit
     monitor = SafetyMonitor()
     shunt_status, latency_ns, cycles, thermal = monitor.simulate_shutdown(
         mu_local, n_local, n_limit, c_get
     )
-    thermal_auditor = monitor.thermal_shunt_auditor()
+    hil_thermal = monitor.hil_thermal_monitor()
 
     # 8. Hardware invariants
     hw_status = hw.audit(72.0e9, 40.0e9)
@@ -105,7 +106,9 @@ def run_audit(args: argparse.Namespace) -> int:
     print(f"Shunt latency (ns):        {latency_ns:.6f}")
     print(f"Shunt gate cycles:         {cycles}")
     print(f"Thermal status:            {thermal}")
-    print(f"Temperature rise (K):      {thermal_auditor.temperature_rise_k():.6e}")
+    print(f"Debye final temp (K):      {hil_thermal.final_temperature_k():.6f}")
+    print(f"Dissipation volume (cm^3): {hil_thermal.volume_cm3():.4f}")
+    print(f"Heat capacity (J/K):       {hil_thermal.heat_capacity_j_per_k():.6e}")
     print(f"Hardware status:           {hw_status}")
     print(f"Rigidity sweep OK:         {sweep_ok}")
     print(f"Worst sub-threshold detuning: {worst_detuning:.6e}")
@@ -114,6 +117,7 @@ def run_audit(args: argparse.Namespace) -> int:
         nominal
         and kojima_ok
         and shunt_status == "STATUS_NOMINAL_PASS"
+        and hil_thermal.is_nominal()
         and hw_status == "STATUS_NOMINAL_PASS"
         and sweep_ok
     )

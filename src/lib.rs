@@ -24,6 +24,7 @@ pub mod stinespring;
 
 pub use constants::*;
 pub use shbt::communication::*;
+pub use shbt::hil::*;
 pub use shbt::mass_congestion::*;
 pub use shbt::safety_monitor::*;
 pub use error::*;
@@ -49,6 +50,7 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<hardware::HardwareSynthesisAuditor>()?;
     m.add_class::<stinespring::ExoticEngine>()?;
     m.add_class::<shbt::communication::HeegaardMappingTorus>()?;
+    m.add_class::<shbt::hil::ThermalHILMonitor>()?;
     m.add_class::<shbt::safety_monitor::GateCycleShunt>()?;
     m.add_class::<shbt::safety_monitor::ThermalShuntAuditor>()?;
     m.add_class::<shbt::safety_monitor::SafetyMonitor>()?;

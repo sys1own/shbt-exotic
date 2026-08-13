@@ -13,6 +13,7 @@ from shbt_exotic import (
     HilSafetyMonitor,
     NewtonLockStasis,
     SafetyMonitor,
+    ThermalHILMonitor,
     ThermalShuntAuditor,
     UnifiedStinespringMap,
 )
@@ -172,6 +173,33 @@ def test_coordinate_perturbation_sweep_rigidity():
     ok, worst = sweep.verify_rigidity_limit()
     assert ok is True
     assert worst < 1.0e-12
+
+
+def test_thermal_hil_debye_t3_model():
+    monitor = ThermalHILMonitor()
+    assert monitor.audit() == "STATUS_NOMINAL_PASS"
+    assert monitor.final_temperature_k() < 9.3
+    assert monitor.volume_cm3() >= 48.98
+
+
+def test_thermal_hil_quench_for_small_volume():
+    monitor = ThermalHILMonitor(
+        a_inp=3.87759483,
+        t_i=15.4e-3,
+        t_c=9.3,
+        power_w=142.08e6,
+        tau_s=2.5e-9,
+        volume_cm3=1.0,
+    )
+    assert monitor.audit() == "STATUS_EMERGENCY_SHUTDOWN"
+    assert monitor.final_temperature_k() > 9.3
+
+
+def test_safety_monitor_thermal_hil_shuts_down_on_quench():
+    monitor = SafetyMonitor()
+    # The default design volume is 50 cm^3, so nominal mu should pass.
+    _, _, _, thermal = monitor.simulate_shutdown(1.0, 1.0e65, 1.0e65, 5.34e-175)
+    assert thermal == "STATUS_NOMINAL_PASS"
 
 
 if __name__ == "__main__":

@@ -45,6 +45,10 @@
   \newcommand{\ExoticShuntCycles}{180}%
   \newcommand{\ExoticThermalStatus}{\texttt{STATUS\_NOMINAL\_PASS}}%
   \newcommand{\ExoticTemperatureRiseK}{3.0000e-50}%
+  \newcommand{\ExoticDebyeFinalTempK}{9.3000}%
+  \newcommand{\ExoticDissipationVolume}{50.0000}%
+  \newcommand{\ExoticMinDissipationVolume}{48.9800}%
+  \newcommand{\ExoticDebyeHeatCapacityJK}{1.0000e-03}%
   \newcommand{\ExoticRigiditySweepStatus}{\texttt{STATUS\_NOMINAL\_PASS}}%
   \newcommand{\ExoticWorstDetuning}{9.9000e-13}%
 }
@@ -274,7 +278,7 @@ The total thermodynamic arrow $dS_{\rm total}/dt_{\rm lc}$ remains positive for 
 
 The HIL monitor samples two registers simultaneously: the Stasis Control Register $C_{\rm get}$ and the Mass-Congestion Register $N_{\rm local}/N_{\rm limit}$.  The eigenvector rigidity detuning $|\mu_{\rm local} - \mu_0|$ is kept below $10^{-12}$.  If detuning enters the $0.5 \times 10^{-12}$ correction band, a Solovay-Kitaev sequence is applied; if it reaches the fatal threshold, the monitor returns \texttt{STATUS\_EMERGENCY\_SHUTDOWN} and all bias currents are shunted in fewer than $2.5$~ns.  The simulator reports an emergency shunt latency of $\ExoticShuntLatencyNs{}$~ns, well below the limit.
 
-\subsection{Gate-cycle shunt physics}
+\subsection{Gate-cycle shunt physics and Debye \texorpdfstring{$T^3$}{T3} thermal model}
 
 The $142.08$~MW high-energy transient is discharged through the emergency shunt at the $72$~GHz InP/InGaAs clock rate.  The shunt latency is simulated at the gate-cycle level; the number of available cycles is
 %
@@ -283,7 +287,32 @@ N_{\rm cycles} = \lfloor f_{\max} \, \tau_{\max} \rfloor
 = \lfloor (72\,\mathrm{GHz})(2.5\,\mathrm{ns}) \rfloor = \ExoticShuntCycles{}.
 \end{equation}
 %
-At each cycle the dual-target monitor re-samples the Stasis and Mass-Congestion registers; the moment the rigidity detuning crosses $10^{-12}$ the shunt completes.  The thermal audit gives a temperature rise of $\ExoticTemperatureRiseK{}$~K, so the dilution refrigerator does not quench; the gate-cycle and thermal audits report \ExoticShuntStatus{} and \ExoticThermalStatus{}, respectively.
+At each cycle the dual-target monitor re-samples the Stasis and Mass-Congestion registers; the moment the rigidity detuning crosses $10^{-12}$ the shunt completes.
+
+The InP substrate is modelled with the acoustic-phonon Debye $T^3$ volumetric heat capacity
+%
+\begin{equation}
+C_{v,\mathrm{vol}}(T) = a_{\rm InP} \, T^3,
+\qquad
+a_{\rm InP} = 3.87759483 \;\mathrm{J}/(\mathrm{m}^3 \, \mathrm{K}^4).
+\label{eq:debye}
+\end{equation}
+%
+The energy dumped during the $2.5$~ns shunt is $E = P \tau$.  Integrating Eq.~\eqref{eq:debye} from the initial temperature $T_i = 15.4$~mK to the final temperature $T_f$ gives
+%
+\begin{equation}
+E = \frac{a_{\rm InP} \, V}{4} \, \bigl(T_f^4 - T_i^4\bigr),
+\label{eq:debye_integral}
+\end{equation}
+%
+so that
+%
+\begin{equation}
+T_f = \left( \frac{4 E}{a_{\rm InP} V} + T_i^4 \right)^{1/4}.
+\label{eq:tfinal}
+\end{equation}
+%
+The niobium superconducting transition temperature $T_c = 9.3$~K is the hard quench limit.  The minimum dissipation volume that keeps $T_f \le T_c$ is therefore $V_{\rm min} = \ExoticMinDissipationVolume{}$~cm$^3$.  The simulator uses a design volume $V = \ExoticDissipationVolume{}$~cm$^3$ and reports $T_f = \ExoticDebyeFinalTempK{}$~K with heat capacity $C = \ExoticDebyeHeatCapacityJK{}$~J/K.  If $V < V_{\rm min}$ (or equivalently $T_f > T_c$) the HIL monitor returns \texttt{STATUS\_EMERGENCY\_SHUTDOWN} and shunts all bias currents.  The legacy holographic thermal audit reports a temperature rise of $\ExoticTemperatureRiseK{}$~K, and the gate-cycle and Debye thermal audits report \ExoticShuntStatus{} and \ExoticThermalStatus{}, respectively.
 
 \subsection{Coordinate perturbation sweep}
 
