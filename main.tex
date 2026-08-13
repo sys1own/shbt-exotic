@@ -672,6 +672,20 @@ Z_{\rm fatigue} = 1.3250\;\mathrm{MRayl} ,
 %
 raising the thermal boundary resistance and the risk of a superconducting niobium quench.  The \texttt{ReliabilityAuditor} therefore returns \texttt{STATUS\_QUENCH\_WARNING} once the lifetime budget is exceeded.
 
+\section{CAD/EDA export synthesis}
+
+The simulator can emit fabrication-ready layout files.  The GDSII mask exporter produces an $8 \times 8$ InP/InGaAs SHBT array with $50\,\mu$m pitch.  The layer stack is
+%
+\begin{itemize}
+\item Layer 10, \texttt{SUBSTRATE\_INP}: $350 \times 350\,\mu$m InP substrate outline;
+\item Layer 20, \texttt{AIRBRIDGE\_SPAN}: $1.5 \times 5.0\,\mu$m bridge per emitter;
+\item Layer 25, \texttt{MET\_NB\_TRACE}: $300\,$nm niobium trace per emitter.
+\end{itemize}
+%
+Database units are set to $1\,$pm, giving sub-nanometre coordinate resolution.
+
+For the sapphire waveguide, a STEP ISO 10303-21 B-rep is generated as a \texttt{MANIFOLD\_SOLID\_BREP} with a \texttt{CLOSED\_SHELL} of six planar \texttt{ADVANCED\_FACE}s.  The waveguide dimensions are chosen to match the nominal $1.1512\,$MRayl acoustic-impedance interface between the sapphire waveguide and the liquid He-4 bath.
+
 \section{Conclusion}
 
 The \texttt{shbt-exotic} simulator demonstrates that non-local communication, temporal stasis, artificial ghost seeds, and entropic refrigeration can be grounded in a single isometric Stinespring framework on the $(26,8,312)$ SHBT branch.  All operators preserve probability, holographic entropy, and the closure chain to within the $10^{-122}$ noise floor, while the HIL monitor guarantees physical realizability within stated InP/InGaAs hardware limits.

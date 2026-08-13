@@ -45,6 +45,9 @@ governs all four protocols.  Every state vector is tracked at 512-bit precision 
   - Coffin-Manson model for the Alumina/InP interface: plastic strain `Δεp = 6.0 × 10^{-6}` from `15 K` thermal swings.
   - Cycle-to-failure limit `Nf = 4.0 × 10^6` cycles; equivalent de-rendering lifetime budget `1.514 × 10^16` bits.
   - Returns `STATUS_QUENCH_WARNING` when cumulative de-rendering exceeds the budget and reports the shifted acoustic impedance `Z → 1.3250 MRayl` that raises the superconducting niobium quench risk.
+- **CAD/EDA export synthesis**
+  - `GdsiiMaskExporter` writes an 8×8 SHBT array GDSII mask with 50 μm pitch, Layer 10 `SUBSTRATE_INP` (350 μm), Layer 20 `AIRBRIDGE_SPAN` (1.5×5.0 μm), and Layer 25 `MET_NB_TRACE` (300 nm Niobium). Coordinates are stored at 1 pm per database unit for sub-nanometer precision.
+  - `StepSolidModel` exports ISO 10303-21 B-Rep `MANIFOLD_SOLID_BREP` geometry for the sapphire waveguide, sized to the 1.1512 MRayl nominal impedance interface.
 
 ## Hardware Architecture
 

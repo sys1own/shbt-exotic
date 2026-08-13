@@ -8,6 +8,8 @@ from shbt_exotic import (
     CalibrationEngine,
     CoordinatePerturbationSweep,
     ReliabilityAuditor,
+    GdsiiMaskExporter,
+    StepSolidModel,
     EntropicRefrigerator,
     ExoticEngine,
     FibonacciBraidCompiler,
@@ -205,6 +207,21 @@ def run_braid_compiler(args: argparse.Namespace) -> int:
     return 0
 
 
+def run_cad_export(args: argparse.Namespace) -> int:
+    if args.export_gds:
+        GdsiiMaskExporter().export_array(args.export_gds)
+        print(f"GDSII mask written to {args.export_gds}")
+    if args.export_step:
+        StepSolidModel().export_waveguide(
+            args.export_step,
+            args.step_length,
+            args.step_width,
+            args.step_height,
+        )
+        print(f"STEP B-Rep written to {args.export_step}")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         prog="shbt-exotic",
@@ -237,7 +254,37 @@ def main() -> int:
         default=0,
         help="Target qubit index for the OpenQASM output (default: 0)",
     )
+    parser.add_argument(
+        "--export-gds",
+        metavar="PATH",
+        help="Export the 8x8 SHBT array GDSII mask to PATH",
+    )
+    parser.add_argument(
+        "--export-step",
+        metavar="PATH",
+        help="Export the sapphire waveguide STEP B-Rep to PATH",
+    )
+    parser.add_argument(
+        "--step-length",
+        type=float,
+        default=350e-6,
+        help="STEP waveguide length in metres (default: 350e-6)",
+    )
+    parser.add_argument(
+        "--step-width",
+        type=float,
+        default=5e-6,
+        help="STEP waveguide width in metres (default: 5e-6)",
+    )
+    parser.add_argument(
+        "--step-height",
+        type=float,
+        default=1.5e-6,
+        help="STEP waveguide height in metres (default: 1.5e-6)",
+    )
     args = parser.parse_args()
+    if args.export_gds or args.export_step:
+        return run_cad_export(args)
     if args.braid_openqasm or args.braid_info:
         return run_braid_compiler(args)
     if not args.audit:

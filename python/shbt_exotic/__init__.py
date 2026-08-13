@@ -19,6 +19,8 @@ from shbt_exotic._core import (
     FibonacciBraidCompiler,
     CalibrationEngine,
     ReliabilityAuditor,
+    GdsiiMaskExporter,
+    StepSolidModel,
     AnomalyClosureError,
 )
 from shbt_exotic.stasis import StasisDilation
@@ -45,6 +47,8 @@ __all__ = [
     "FibonacciBraidCompiler",
     "CalibrationEngine",
     "ReliabilityAuditor",
+    "GdsiiMaskExporter",
+    "StepSolidModel",
     "StasisDilation",
     "CoordinatePerturbationSweep",
     "AnomalyClosureError",

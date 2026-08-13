@@ -7,6 +7,8 @@ from shbt_exotic import (
     FibonacciBraidCompiler,
     CalibrationEngine,
     ReliabilityAuditor,
+    GdsiiMaskExporter,
+    StepSolidModel,
     AnomalyClosureError,
     AcousticImpedanceEngine,
     CoordinatePerturbationSweep,
@@ -425,6 +427,31 @@ def test_reliability_quench_warning_after_exceeding_lifetime():
     assert not nominal
     assert remaining == 0.0
     assert impedance == pytest.approx(1.3250, abs=1e-9)
+
+
+def test_gdsii_mask_export(tmp_path):
+    exporter = GdsiiMaskExporter()
+    path = tmp_path / "shbt_array.gds"
+    exporter.export_array(str(path))
+    data = path.read_bytes()
+    assert data[:6] == bytes([0x00, 0x06, 0x00, 0x02, 0x02, 0x58])
+    assert len(data) > 1000
+
+
+def test_step_waveguide_export(tmp_path):
+    model = StepSolidModel()
+    path = tmp_path / "waveguide.step"
+    model.export_waveguide(str(path), 350e-6, 5e-6, 1.5e-6)
+    text = path.read_text()
+    assert text.startswith("ISO-10303-21;")
+    assert "MANIFOLD_SOLID_BREP" in text
+    assert "CLOSED_SHELL" in text
+    assert "ADVANCED_FACE" in text
+
+
+def test_step_nominal_impedance():
+    model = StepSolidModel()
+    assert model.nominal_impedance_mrayl() == pytest.approx(1.1512, abs=1e-9)
 
 
 if __name__ == "__main__":

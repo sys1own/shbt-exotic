@@ -29,6 +29,7 @@ pub mod mass_congestion_engine;
 pub mod anyon_braid;
 pub mod calibration;
 pub mod reliability;
+pub mod cad_export;
 
 pub use constants::*;
 pub use shbt::communication::*;
@@ -51,6 +52,7 @@ pub use mass_congestion_engine::*;
 pub use anyon_braid::*;
 pub use calibration::*;
 pub use reliability::*;
+pub use cad_export::*;
 
 use pyo3::prelude::*;
 
@@ -79,6 +81,8 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<anyon_braid::FibonacciBraidCompiler>()?;
     m.add_class::<calibration::CalibrationEngine>()?;
     m.add_class::<reliability::ReliabilityAuditor>()?;
+    m.add_class::<cad_export::GdsiiMaskExporter>()?;
+    m.add_class::<cad_export::StepSolidModel>()?;
     m.add("AnomalyClosureError", m.py().get_type::<error::AnomalyClosureError>())?;
     Ok(())
 }
