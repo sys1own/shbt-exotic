@@ -1,4 +1,4 @@
-# shbt-exotic `v1.1.0`
+# SHBT-Exotic v1.1.0: Unified Spacetime Engineering and Synthesis Platform
 
 Unified simulator for exotic SHBT technologies: non-local holographic communication, temporal stasis, artificial ghost-seed gravity wells, and entropic refrigeration.  This release ships the integrated engineering stress suite and CAD-to-physics validator.
 
