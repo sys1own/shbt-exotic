@@ -9,6 +9,8 @@ from shbt_exotic import (
     HarmonicAuditor,
     LabHAL,
     TelemetryBridge,
+    EngineeringStressSuite,
+    CadPhysicsValidator,
     CalibrationEngine,
     ReliabilityAuditor,
     GdsiiMaskExporter,
@@ -632,6 +634,32 @@ def test_telemetry_shutdown_on_large_error():
         errors, bridge.phase_jitter_threshold_rad(), 1.85, 9.12e3, 0.0, 1.0e-9
     )
     assert shutdown
+
+
+def test_cad_physics_validator_default_airbridge_safe():
+    validator = CadPhysicsValidator()
+    flex_hz = validator.validate_airbridge_um(5.0, 1.5, 0.3)
+    assert flex_hz > 0.0
+
+
+def test_cad_physics_validator_rejects_resonant_airbridge():
+    validator = CadPhysicsValidator()
+    with pytest.raises(Exception):
+        validator.validate_airbridge_um(12.0, 1.5, 0.3)
+
+
+def test_engineering_stress_suite_all_pass():
+    suite = EngineeringStressSuite()
+    report = suite.run_all()
+    assert report.all_pass
+    assert report.kinematic_stable
+    assert report.decoherence_floor_ok
+    assert report.thermal_ballistics_ok
+    assert report.heat_sink_lifetime_ok
+    assert report.cad_physics_ok
+    assert report.telemetry_cycle_ns < 1.5
+    assert report.final_substrate_temp_k < 9.3
+    assert report.sk_logical_error < 1.0e-122
 
 
 if __name__ == "__main__":

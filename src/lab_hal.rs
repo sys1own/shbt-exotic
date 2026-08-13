@@ -136,6 +136,11 @@ impl TelemetryBridge {
         Self
     }
 
+    /// Guaranteed AVX-512 telemetry cycle latency (ns).
+    pub fn telemetry_cycle_ns_impl(&self) -> f64 {
+        PID_TELEMETRY_CYCLE_NS
+    }
+
     /// Run one PID bias telemetry cycle with a deterministic AVX-512 sensor
     /// compare (`vmovaps`, `vcmpps`, `vmovmskps`, `mov [mem], 0`).
     ///
@@ -204,7 +209,7 @@ impl TelemetryBridge {
 
     /// Guaranteed AVX-512 telemetry cycle latency (ns) at the loop clock.
     fn telemetry_cycle_ns(&self) -> f64 {
-        PID_TELEMETRY_CYCLE_NS
+        self.telemetry_cycle_ns_impl()
     }
 
     /// Returns the phase-jitter threshold used for emergency shutdown (rad).

@@ -25,6 +25,8 @@ from shbt_exotic import (
     ThermalFluxReport,
     ThermalHILMonitor,
     UnifiedStinespringMap,
+    EngineeringStressSuite,
+    CadPhysicsValidator,
 )
 
 
@@ -190,6 +192,12 @@ def generate_results_tex(out_path: str | Path = "exotic_results.tex") -> Path:
     telemetry = TelemetryBridge()
     telemetry_cycle_ns = telemetry.telemetry_cycle_ns()
 
+    # Integrated engineering stress suite
+    suite = EngineeringStressSuite()
+    stress = suite.run_all()
+    cad_validator = CadPhysicsValidator()
+    cad_flex_hz = cad_validator.validate_airbridge_um(5.0, 1.5, 0.3)
+
     # 512-bit closure-chain audit
     i_l_star = hil.i_l_star()
     i_q_star = hil.i_q_star()
@@ -292,6 +300,17 @@ def generate_results_tex(out_path: str | Path = "exotic_results.tex") -> Path:
         f"\\newcommand{{\\ExoticHarmonicStatus}}{{\\texttt{{{escape_underscores(harmonic_status)}}}}}",
         # HAL telemetry
         f"\\newcommand{{\\ExoticTelemetryCycleNs}}{{{format_scientific(telemetry_cycle_ns)}}}",
+        # Engineering stress suite
+        f"\\newcommand{{\\ExoticScenarioAStatus}}{{\\texttt{{{escape_underscores(stress.scenario_a_status)}}}}}",
+        f"\\newcommand{{\\ExoticScenarioBStatus}}{{\\texttt{{{escape_underscores(stress.scenario_b_status)}}}}}",
+        f"\\newcommand{{\\ExoticScenarioCStatus}}{{\\texttt{{{escape_underscores(stress.scenario_c_status)}}}}}",
+        f"\\newcommand{{\\ExoticScenarioDStatus}}{{\\texttt{{{escape_underscores(stress.scenario_d_status)}}}}}",
+        f"\\newcommand{{\\ExoticStressAllPass}}{{{str(stress.all_pass).lower()}}}",
+        f"\\newcommand{{\\ExoticStressFinalTempK}}{{{format_scientific(stress.final_substrate_temp_k)}}}",
+        f"\\newcommand{{\\ExoticStressSKError}}{{{format_scientific(stress.sk_logical_error)}}}",
+        f"\\newcommand{{\\ExoticStressConsumedBits}}{{{format_scientific(stress.consumed_lifetime_bits)}}}",
+        f"\\newcommand{{\\ExoticStressShiftedImpedance}}{{{format_scientific(stress.shifted_impedance_mrayl)}}}",
+        f"\\newcommand{{\\ExoticCadAirbridgeFlexHz}}{{{format_scientific(cad_flex_hz)}}}",
     ]
 
     out_path.write_text("\n".join(lines) + "\n")

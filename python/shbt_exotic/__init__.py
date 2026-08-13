@@ -26,7 +26,10 @@ from shbt_exotic._core import (
     ReliabilityAuditor,
     GdsiiMaskExporter,
     StepSolidModel,
+    EngineeringStressSuite,
+    CadPhysicsValidator,
     AnomalyClosureError,
+    DesignRuleViolation,
 )
 from shbt_exotic.stasis import StasisDilation
 from shbt_exotic.sweep import CoordinatePerturbationSweep
@@ -59,6 +62,8 @@ __all__ = [
     "ReliabilityAuditor",
     "GdsiiMaskExporter",
     "StepSolidModel",
+    "EngineeringStressSuite",
+    "CadPhysicsValidator",
     "StasisDilation",
     "CoordinatePerturbationSweep",
     "AnomalyClosureError",

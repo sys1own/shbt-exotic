@@ -30,6 +30,8 @@ pub mod anyon_braid;
 pub mod lindblad;
 pub mod harmonic_audit;
 pub mod lab_hal;
+pub mod cad_physics;
+pub mod stress_suite;
 pub mod calibration;
 pub mod reliability;
 pub mod cad_export;
@@ -87,10 +89,13 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<lab_hal::LabHAL>()?;
     m.add_class::<lab_hal::IQDacSample>()?;
     m.add_class::<lab_hal::TelemetryBridge>()?;
+    m.add_class::<cad_physics::CadPhysicsValidator>()?;
+    m.add_class::<stress_suite::EngineeringStressSuite>()?;
     m.add_class::<calibration::CalibrationEngine>()?;
     m.add_class::<reliability::ReliabilityAuditor>()?;
     m.add_class::<cad_export::GdsiiMaskExporter>()?;
     m.add_class::<cad_export::StepSolidModel>()?;
     m.add("AnomalyClosureError", m.py().get_type::<error::AnomalyClosureError>())?;
+    m.add("DesignRuleViolation", m.py().get_type::<error::DesignRuleViolation>())?;
     Ok(())
 }
