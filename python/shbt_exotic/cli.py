@@ -1,0 +1,95 @@
+"""Command-line interface for the shbt-exotic unified simulator."""
+
+import argparse
+import sys
+
+from shbt_exotic import (
+    EntropicRefrigerator,
+    ExoticEngine,
+    GhostSeedSynthesizer,
+    HeegaardFloerRelabeling,
+    HilSafetyMonitor,
+    NewtonLockStasis,
+    UnifiedStinespringMap,
+)
+
+
+def _normalized_state(dim: int = 8) -> list:
+    return [(1.0 / (dim**0.5), 0.0) for _ in range(dim)]
+
+
+def run_audit(args: argparse.Namespace) -> int:
+    engine = ExoticEngine()
+    stinespring = UnifiedStinespringMap()
+    relabel = HeegaardFloerRelabeling()
+    stasis = NewtonLockStasis()
+    ghost = GhostSeedSynthesizer()
+    fridge = EntropicRefrigerator()
+    hil = HilSafetyMonitor()
+
+    state = _normalized_state()
+
+    # 1. Unified Stinespring map
+    active, dark = stinespring.de_render(state)
+    _, _, iso, _, _ = stinespring.audit(state)
+
+    # 2. Heegaard-Floer relabeling (non-local communication)
+    relabeled = relabel.relabel(state, 0, 1)
+
+    # 3. Newton-lock temporal stasis
+    bias = 1.0e-15
+    gamma = stasis.gamma_stasis(bias)
+    c_get = stasis.local_c_get(bias)
+
+    # 4. Ghost-seed mass-congestion (~1 M_sun, with congestion < 10^-12)
+    alpha = 1.67e-51
+    n_limit = 1.0e65
+    n_local = n_limit + 1.0 / alpha
+    m_seed = ghost.seed_mass_kg(n_local, n_limit)
+    mu_local = ghost.local_mu_perturbation(n_local, n_limit, 1.0)
+
+    # 5. Entropic refrigeration
+    t_c = 10.0e-3
+    gamma_de = fridge.de_rendering_rate(14.2e-6, t_c)
+    p_cool = fridge.cooling_power(gamma_de, t_c)
+
+    # 6. HIL dual-target audit
+    status = hil.audit(mu_local, n_local, n_limit, c_get)
+    nominal = hil.is_nominal(status)
+
+    print("SHBT Exotic Technologies — Unified Audit")
+    print("=" * 50)
+    print(f"Kernel (SU(2), SU(3), K): {engine.kernel}")
+    print(f"Stinespring isometric:     {iso}")
+    print(f"Heegaard-Floer relabel:    {len(relabeled)} components")
+    print(f"Newton-lock gamma:         {gamma:.6e}")
+    print(f"Local C_get (J/bit):       {c_get:.6e}")
+    print(f"Ghost-seed mass (kg):      {m_seed:.6e}")
+    print(f"Mu local perturbation:     {mu_local:.6e}")
+    print(f"Refrigeration P_cool (W):  {p_cool:.6e}")
+    print(f"De-rendering rate (b/s):   {gamma_de:.6e}")
+    print(f"HIL status:                {status}")
+    print(f"HIL nominal:               {nominal}")
+
+    return 0 if nominal else 1
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        prog="shbt-exotic",
+        description="Unified SHBT exotic-technology simulator",
+    )
+    parser.add_argument(
+        "--audit",
+        action="store_true",
+        help="Run the unified HIL audit of all four exotic protocols",
+    )
+    args = parser.parse_args()
+    if not args.audit:
+        parser.print_help()
+        return 0
+    return run_audit(args)
+
+
+if __name__ == "__main__":
+    sys.exit(main())
