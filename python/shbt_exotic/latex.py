@@ -11,6 +11,7 @@ from shbt_exotic import (
     GhostSeedSynthesizer,
     HardwareSynthesisAuditor,
     HeegaardFloerRelabeling,
+    HeegaardMappingTorus,
     HilSafetyMonitor,
     NewtonLockStasis,
     SafetyMonitor,
@@ -54,6 +55,11 @@ def generate_results_tex(out_path: str | Path = "exotic_results.tex") -> Path:
     _, _, stinespring_isometric, _, _ = stinespring.audit(state)
     relabel.audit(state, 0, 1)
     n_local_partition, n_active_partition, n_dark_partition, eta_a, eta_d = stinespring.partition()
+
+    # Heegaard mapping torus / Kojima inequality
+    torus = HeegaardMappingTorus()
+    relabeled = relabel.relabel(state, 0, 1)
+    ell_he, delta_s, kojima_ok = torus.evaluate(state, relabeled)
 
     bias = 1.0e-15
     gamma_stasis = stasis.gamma_stasis(bias)
@@ -105,6 +111,10 @@ def generate_results_tex(out_path: str | Path = "exotic_results.tex") -> Path:
         f"\\newcommand{{\\ExoticNDark}}{{{n_dark_partition}}}",
         f"\\newcommand{{\\ExoticEtaA}}{{{eta_a[0]}/{eta_a[1]}}}",
         f"\\newcommand{{\\ExoticEtaD}}{{{eta_d[0]}/{eta_d[1]}}}",
+        f"\\newcommand{{\\ExoticHeegaardPresLength}}{{{format_scientific(ell_he)}}}",
+        f"\\newcommand{{\\ExoticHeegaardEntropyChange}}{{{format_scientific(delta_s)}}}",
+        f"\\newcommand{{\\ExoticKojimaSatisfied}}{{{str(kojima_ok).lower()}}}",
+        f"\\newcommand{{\\ExoticStasisScale}}{{{format_scientific(1.0e-12)}}}",
         f"\\newcommand{{\\ExoticStasisGamma}}{{{format_scientific(gamma_stasis)}}}",
         f"\\newcommand{{\\ExoticCget}}{{{format_scientific(c_get)}}}",
         f"\\newcommand{{\\ExoticAlphaSeed}}{{{format_scientific(alpha)}}}",

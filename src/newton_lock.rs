@@ -45,17 +45,18 @@ impl NewtonLockStasis {
 
     /// Local GET cost for a given density bias.
     ///
-    /// `C_get(x) = C_get_bound * exp(bias(x) / 1e-13)` so that a bias at the
-    /// HIL threshold `1e-12` yields `gamma_stasis = exp(10) ≈ 2.2e4`.
+    /// `C_get(x) = C_get_bound * exp(bias(x) / delta_Phi)` with the modular
+    /// detuning limit `delta_Phi = 10^{-12}`.  A bias reaching `delta_Phi`
+    /// triggers `AnomalyClosureError`.
     pub fn local_c_get_impl(&self, bias: f64) -> Result<f64, ExoticError> {
         let _ = self.mu0;
         if bias.abs() >= EIGENVECTOR_RIGIDITY_THRESHOLD {
-            return Err(ExoticError::RigidityViolationError(format!(
-                "density bias {} exceeds HIL rigidity threshold {}",
+            return Err(ExoticError::AnomalyClosureError(format!(
+                "density bias {} reaches modular detuning limit {}",
                 bias, EIGENVECTOR_RIGIDITY_THRESHOLD
             )));
         }
-        let scale = 1e-13;
+        let scale = EIGENVECTOR_RIGIDITY_THRESHOLD;
         let gamma = (bias / scale).exp();
         Ok(self.c_get_scale * gamma)
     }
@@ -130,5 +131,20 @@ mod tests {
     #[test]
     fn non_zero_mean_bias_fails() {
         assert!(NewtonLockStasis::validate_zero_mean_bias(&[0.1, 0.05, 0.05]).is_err());
+    }
+
+    #[test]
+    fn bias_at_modular_detuning_limit_raises_anomaly() {
+        let stasis = NewtonLockStasis::new();
+        assert!(stasis.local_c_get_impl(1.0e-12).is_err());
+        assert!(stasis.local_c_get_impl(-1.0e-12).is_err());
+    }
+
+    #[test]
+    fn stasis_dilation_uses_1e_minus_12_scale() {
+        let stasis = NewtonLockStasis::new();
+        let gamma = stasis.gamma_stasis_impl(1.0e-15).unwrap();
+        // exp(1e-15 / 1e-12) = exp(1e-3) ≈ 1.0010005
+        assert!(gamma > 1.001 && gamma < 1.002);
     }
 }

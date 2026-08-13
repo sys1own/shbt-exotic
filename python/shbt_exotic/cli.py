@@ -10,6 +10,7 @@ from shbt_exotic import (
     GhostSeedSynthesizer,
     HardwareSynthesisAuditor,
     HeegaardFloerRelabeling,
+    HeegaardMappingTorus,
     HilSafetyMonitor,
     NewtonLockStasis,
     SafetyMonitor,
@@ -39,6 +40,8 @@ def run_audit(args: argparse.Namespace) -> int:
 
     # 2. Heegaard-Floer relabeling (non-local communication)
     relabeled = relabel.relabel(state, 0, 1)
+    torus = HeegaardMappingTorus()
+    ell_he, delta_s, kojima_ok = torus.evaluate(state, relabeled)
 
     # 3. Newton-lock temporal stasis
     bias = 1.0e-15
@@ -85,6 +88,9 @@ def run_audit(args: argparse.Namespace) -> int:
     print(f"Kernel (SU(2), SU(3), K): {engine.kernel}")
     print(f"Stinespring isometric:     {iso}")
     print(f"Heegaard-Floer relabel:    {len(relabeled)} components")
+    print(f"Heegaard pres. length:     {ell_he:.6f}")
+    print(f"Kojima ΔS_A:               {delta_s:.6e}")
+    print(f"Kojima satisfied:          {kojima_ok}")
     print(f"Newton-lock gamma:         {gamma:.6e}")
     print(f"Local C_get (J/bit):       {c_get:.6e}")
     print(f"Ghost-seed mass (kg):      {m_seed:.6e}  ({m_sun:.3f} M_sun)")
@@ -106,6 +112,7 @@ def run_audit(args: argparse.Namespace) -> int:
 
     all_ok = (
         nominal
+        and kojima_ok
         and shunt_status == "STATUS_NOMINAL_PASS"
         and hw_status == "STATUS_NOMINAL_PASS"
         and sweep_ok

@@ -9,6 +9,7 @@ from shbt_exotic import (
     GhostSeedSynthesizer,
     HardwareSynthesisAuditor,
     HeegaardFloerRelabeling,
+    HeegaardMappingTorus,
     HilSafetyMonitor,
     NewtonLockStasis,
     SafetyMonitor,
@@ -59,11 +60,35 @@ def test_heegaard_floer_relabel():
     assert relabel.audit(state, 0, 1) is True
 
 
+def test_heegaard_mapping_torus_kojima():
+    torus = HeegaardMappingTorus()
+    state = _state()
+    target = state.copy()
+    ell, delta_s, ok = torus.evaluate(state, target)
+    assert ell == pytest.approx(1.0, rel=1e-15)
+    assert abs(delta_s) < 1e-15
+    assert ok is True
+
+    perturbed = [(v[0] + 1e-3, v[1]) for v in state]
+    _, delta_s_bad, ok_bad = torus.evaluate(state, perturbed)
+    assert ok_bad is False
+
+
 def test_newton_lock_stasis():
     stasis = NewtonLockStasis()
     gamma0 = stasis.gamma_stasis(0.0)
     gamma1 = stasis.gamma_stasis(1.0e-15)
     assert gamma1 > gamma0
+    # exp(1e-15 / 1e-12) ≈ 1.001
+    assert gamma1 == pytest.approx(1.0010005, abs=1e-6)
+
+
+def test_newton_lock_anomaly_at_modular_detuning_limit():
+    stasis = NewtonLockStasis()
+    with pytest.raises(Exception):
+        stasis.local_c_get(1.0e-12)
+    with pytest.raises(Exception):
+        stasis.gamma_stasis(1.0e-12)
 
 
 def test_ghost_seed_one_solar_mass_and_entropy_debt():
