@@ -29,6 +29,7 @@ pub mod mass_congestion_engine;
 pub mod anyon_braid;
 pub mod lindblad;
 pub mod harmonic_audit;
+pub mod lab_hal;
 pub mod calibration;
 pub mod reliability;
 pub mod cad_export;
@@ -83,6 +84,9 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<anyon_braid::FibonacciBraidCompiler>()?;
     m.add_class::<lindblad::LindbladSolver>()?;
     m.add_class::<harmonic_audit::HarmonicAuditor>()?;
+    m.add_class::<lab_hal::LabHAL>()?;
+    m.add_class::<lab_hal::IQDacSample>()?;
+    m.add_class::<lab_hal::TelemetryBridge>()?;
     m.add_class::<calibration::CalibrationEngine>()?;
     m.add_class::<reliability::ReliabilityAuditor>()?;
     m.add_class::<cad_export::GdsiiMaskExporter>()?;

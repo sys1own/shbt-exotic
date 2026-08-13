@@ -7,6 +7,8 @@ from shbt_exotic import (
     FibonacciBraidCompiler,
     LindbladSolver,
     HarmonicAuditor,
+    LabHAL,
+    TelemetryBridge,
     CalibrationEngine,
     ReliabilityAuditor,
     GdsiiMaskExporter,
@@ -585,6 +587,51 @@ def test_harmonic_natural_frequency_estimates():
     for _, f in freqs:
         assert math.isfinite(f)
         assert f > 0.0
+
+
+def test_lab_hal_iq_voltage_mapping():
+    hal = LabHAL()
+    i, q = hal.iq_voltage_v(0.0, 1.0, 7.4)
+    assert math.isclose(i, 7.4, rel_tol=1e-12)
+    assert math.isclose(q, 0.0, abs_tol=1e-12)
+    i, q = hal.iq_voltage_v(math.pi / 2.0, 0.5, 7.4)
+    assert math.isclose(i, 0.0, abs_tol=1e-12)
+    assert math.isclose(q, 3.7, rel_tol=1e-12)
+
+
+def test_lab_hal_dac_codes():
+    hal = LabHAL()
+    assert hal.voltage_to_dac_code(-7.4, 7.4, 16) == 0
+    # 0.0 maps to the midpoint offset-binary code.
+    assert hal.voltage_to_dac_code(0.0, 7.4, 16) == 32768
+    assert hal.voltage_to_dac_code(7.4, 7.4, 16) == 65535
+
+
+def test_telemetry_bridge_latency():
+    bridge = TelemetryBridge()
+    assert bridge.telemetry_cycle_ns() < 1.5
+
+
+def test_telemetry_pid_cycle():
+    bridge = TelemetryBridge()
+    errors = [0.0] * 16
+    errors[0] = 1.0e-6
+    control, integral, shutdown = bridge.pid_bias_cycle(
+        errors, bridge.phase_jitter_threshold_rad(), 1.85, 9.12e3, 0.0, 1.0e-9
+    )
+    assert not shutdown
+    assert control > 0.0
+    assert integral > 0.0
+
+
+def test_telemetry_shutdown_on_large_error():
+    bridge = TelemetryBridge()
+    errors = [0.0] * 16
+    errors[0] = 1.0e-3
+    _, _, shutdown = bridge.pid_bias_cycle(
+        errors, bridge.phase_jitter_threshold_rad(), 1.85, 9.12e3, 0.0, 1.0e-9
+    )
+    assert shutdown
 
 
 if __name__ == "__main__":
