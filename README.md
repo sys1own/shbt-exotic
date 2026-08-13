@@ -1,4 +1,4 @@
-# shbt-exotic
+# SHBT-Exotic: Unified Spacetime Engineering and Synthesis Platform
 
 Unified simulator for exotic SHBT technologies: non-local holographic communication, temporal stasis, artificial ghost-seed gravity wells, and entropic refrigeration.
 
