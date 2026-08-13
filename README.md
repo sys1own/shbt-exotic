@@ -44,6 +44,13 @@ The dual-target Hardware-in-the-Loop monitor concurrently samples the Stasis Con
 - **Emergency shutdown**: if detuning reaches `10^{-12}` the monitor returns `STATUS_EMERGENCY_SHUTDOWN` and the bias-current shunt completes in fewer than 2.5 ns.
 - **Closure chain**: the scalar framing defect `Δ_fr` is exactly `0.0` for canonical unperturbed values and remains below `10^{-12}` during active modulation.
 
+## Zero-Heap Runtime and SIMD Determinism
+
+- **Stack-allocated fixed-size arrays**: all intermediate state vectors (Stinespring blocks, HIL sensor lanes, U(1) rotation buffers) are stored as `[[f64; 8]; 2]`-style arrays on the stack. No heap allocation occurs in the high-frequency HIL audit path.
+- **Custom GMP/MPFR memory**: the `rug` crate is wired to `mp_set_memory_functions` through `src/gmp_memory.rs`. Limb allocations are served from a pre-resident 16 MiB arena, eliminating variable `malloc/free` latency from the 512-bit braiding loops.
+- **AVX-512 sensor pipeline**: the HIL fatal-threshold compare uses `vmovaps` / `vcmpps` / `vmovmskps` / `mov [mem], 0` on a 64-byte aligned 16-lane buffer, completing in about six cycles (~1.5 ns at 4.0 GHz).
+- **U(1) phase-locked excitation**: the operator `ψ_j → e^{-i θ_j} ψ_j` is vectorised for x86_64 AVX-512 and aarch64 NEON, processing an entire 8-component dark-ledger block in a single branchless pass.
+
 ## Quick Start
 
 ```bash

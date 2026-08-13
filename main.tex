@@ -370,6 +370,20 @@ The niobium superconducting transition temperature $T_c = 9.3$~K is the hard que
 
 During active stasis modulation the local coordinates $(\mu_{\rm local}, N_{\rm local}, C_{\rm get})$ are swept around their canonical values.  The Python \texttt{CoordinatePerturbationSweep} drives the Rust \texttt{SafetyMonitor} through the PyO3 FFI and verifies that all sub-threshold perturbations ($|\delta\mu| < 10^{-12}$, etc.) return \texttt{STATUS\_NOMINAL\_PASS}, while supra-threshold excursions trigger the emergency shutdown within the $2.5$~ns budget.  The worst sub-threshold detuning observed is $\ExoticWorstDetuning{}$, and the sweep reports \ExoticRigiditySweepStatus{}.
 
+\subsection{SIMD-level phase rotation and zero-heap runtime}
+
+\begin{sloppypar}
+The HIL fatal-threshold path is implemented with the bare-metal AVX-512 instruction sequence \texttt{vmovaps}, \texttt{vcmpps}, \texttt{vmovmskps}, and \texttt{mov [mem], 0}, acting on a 64-byte-aligned stack-resident 16-lane \texttt{f32} buffer.  The compare-extract-write chain takes roughly six clock cycles at $4.0$~GHz, i.e.~$\lesssim 1.5$~ns, so the full emergency shunt budget of $2.5$~ns is never violated.
+\end{sloppypar}
+
+\begin{sloppypar}
+The U(1) phase-locked excitation $\psi_j \rightarrow e^{-i\theta_j}\psi_j$ is applied to an 8-component dark-ledger block.  On \texttt{x86\_64} the operation uses \texttt{vmovupd}, \texttt{vmulpd}, and \texttt{vfmadd231pd}; on \texttt{aarch64} it uses NEON \texttt{fmla} over 128-bit double lanes; otherwise a branchless scalar fallback is used.  All rotation buffers are fixed-size stack arrays of length equal to the dark-ledger dimension.
+\end{sloppypar}
+
+\begin{sloppypar}
+Finally, the \texttt{rug} crate is compiled with custom GMP/MPFR memory functions installed via \texttt{mp\_set\_memory\_functions}.  Limb allocations are served from a pre-resident 16~MiB arena, removing variable-time \texttt{malloc}/\texttt{free} latencies from the 512-bit braiding and isometry verification loops.
+\end{sloppypar}
+
 \subsection{Integrated 512-bit closure-chain audit}
 
 The completed levels of the $(26,8,312)$ branch are

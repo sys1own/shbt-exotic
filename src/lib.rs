@@ -18,6 +18,7 @@ pub mod hardware;
 pub mod heegaard_floer;
 pub mod hil_safety;
 pub mod newton_lock;
+pub mod phase_rotation;
 pub mod refrigeration;
 pub mod shbt;
 pub mod stinespring;
@@ -33,6 +34,7 @@ pub use hardware::*;
 pub use heegaard_floer::*;
 pub use hil_safety::*;
 pub use newton_lock::*;
+pub use phase_rotation::*;
 pub use refrigeration::*;
 pub use stinespring::*;
 
