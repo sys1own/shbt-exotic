@@ -21,8 +21,8 @@ macros: rust
 	$(PYTHON) -m shbt_exotic.latex
 
 paper: figures macros
-	pdflatex -interaction=nonstopmode main.tex
-	pdflatex -interaction=nonstopmode main.tex
+	pdflatex -interaction=nonstopmode -jobname=exotic main.tex
+	pdflatex -interaction=nonstopmode -jobname=exotic main.tex
 
 test: rust
 	$(PYTEST) tests/ -q
@@ -31,5 +31,5 @@ cargo-test:
 	cargo test -q
 
 clean:
-	rm -rf $(VENV) target python/shbt_exotic/*.so python/shbt_exotic/__pycache__ tests/__pycache__ exotic_results.tex figures/*.pdf *.aux *.log *.out *.toc *.synctex.gz *.pdf
-	find . -type d -name __pycache__ -exec rm -rf {} +
+	rm -rf $(VENV) target python/shbt_exotic/*.so python/shbt_exotic/__pycache__ tests/__pycache__ exotic_results.tex figures/*.pdf exotic.aux exotic.log exotic.out exotic.toc exotic.synctex.gz exoticNotes.bib *.aux *.log *.out *.toc *.synctex.gz *Notes.bib
+	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true

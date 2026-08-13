@@ -55,5 +55,11 @@ pub const MACRO_COOLING_POWER_W: f64 = 906.0e9;
 /// Dilution refrigerator baseline temperature for HIL operation (K).
 pub const BASELINE_TEMPERATURE_K: f64 = 15.4e-3;
 
+/// Alias for the cryogenic base temperature used in thermal audits.
+pub const TEMPERATURE_K: f64 = BASELINE_TEMPERATURE_K;
+
+/// Local holographic bit budget used for thermal heat-capacity estimates.
+pub const N_LOCAL_BITS: f64 = 1.0e65;
+
 /// Maximum tolerable phase jitter for topological edge-state transport (rad).
 pub const PHASE_JITTER_THRESHOLD_RAD: f64 = 5.05e-5;

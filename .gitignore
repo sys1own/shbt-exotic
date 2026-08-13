@@ -11,10 +11,11 @@ Cargo.lock
 *.out
 *.toc
 *.pdf
+!exotic.pdf
 figures/
 *.tex
 !main.tex
 *.so
-mainNotes.bib
+*Notes.bib
 *.synctex.gz
 

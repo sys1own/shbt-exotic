@@ -4,6 +4,7 @@ import argparse
 import sys
 
 from shbt_exotic import (
+    CoordinatePerturbationSweep,
     EntropicRefrigerator,
     ExoticEngine,
     GhostSeedSynthesizer,
@@ -11,6 +12,7 @@ from shbt_exotic import (
     HeegaardFloerRelabeling,
     HilSafetyMonitor,
     NewtonLockStasis,
+    SafetyMonitor,
     UnifiedStinespringMap,
 )
 
@@ -62,8 +64,21 @@ def run_audit(args: argparse.Namespace) -> int:
     nominal = hil.is_nominal(status)
     framing_defect = hil.framing_defect(mu_local, n_local, n_limit, c_get)
 
-    # 7. Hardware invariants
+    # 7. Gate-cycle shunt safety and thermal audit
+    monitor = SafetyMonitor()
+    shunt_status, latency_ns, cycles, thermal = monitor.simulate_shutdown(
+        mu_local, n_local, n_limit, c_get
+    )
+    thermal_auditor = monitor.thermal_shunt_auditor()
+
+    # 8. Hardware invariants
     hw_status = hw.audit(72.0e9, 40.0e9)
+
+    # 9. Coordinate perturbation sweep for 10^{-12} rigidity limit
+    sweep = CoordinatePerturbationSweep(
+        mu0=1.0, n_limit=n_limit, c_get_bound=c_get
+    )
+    sweep_ok, worst_detuning = sweep.verify_rigidity_limit()
 
     print("SHBT Exotic Technologies — Unified Audit")
     print("=" * 50)
@@ -80,9 +95,22 @@ def run_audit(args: argparse.Namespace) -> int:
     print(f"Framing defect:            {framing_defect:.6e}")
     print(f"HIL status:                {status}")
     print(f"HIL nominal:               {nominal}")
+    print(f"Shunt status:              {shunt_status}")
+    print(f"Shunt latency (ns):        {latency_ns:.6f}")
+    print(f"Shunt gate cycles:         {cycles}")
+    print(f"Thermal status:            {thermal}")
+    print(f"Temperature rise (K):      {thermal_auditor.temperature_rise_k():.6e}")
     print(f"Hardware status:           {hw_status}")
+    print(f"Rigidity sweep OK:         {sweep_ok}")
+    print(f"Worst sub-threshold detuning: {worst_detuning:.6e}")
 
-    return 0 if nominal and hw_status == "STATUS_NOMINAL_PASS" else 1
+    all_ok = (
+        nominal
+        and shunt_status == "STATUS_NOMINAL_PASS"
+        and hw_status == "STATUS_NOMINAL_PASS"
+        and sweep_ok
+    )
+    return 0 if all_ok else 1
 
 
 def main() -> int:
