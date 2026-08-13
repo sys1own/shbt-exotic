@@ -8,6 +8,7 @@ from shbt_exotic import (
     CoordinatePerturbationSweep,
     EntropicRefrigerator,
     ExoticEngine,
+    FibonacciBraidCompiler,
     GhostSeedSynthesizer,
     HardwareSynthesisAuditor,
     HeegaardFloerRelabeling,
@@ -162,6 +163,18 @@ def run_audit(args: argparse.Namespace) -> int:
     return 0 if all_ok else 1
 
 
+def run_braid_compiler(args: argparse.Namespace) -> int:
+    compiler = FibonacciBraidCompiler()
+    n = args.braid_depth
+    if args.braid_info:
+        print(f"Braid gate count (n={n}): {compiler.gate_count(n)}")
+        print(f"Approximation error: {compiler.approximation_error(n):.6e}")
+        return 0
+    qasm = compiler.compile_openqasm(n, args.braid_qubit)
+    print(qasm, end="")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         prog="shbt-exotic",
@@ -172,7 +185,31 @@ def main() -> int:
         action="store_true",
         help="Run the unified HIL audit of all four exotic protocols",
     )
+    parser.add_argument(
+        "--braid-openqasm",
+        action="store_true",
+        help="Emit the n=9 Solovay-Kitaev braid compilation as OpenQASM 2.0",
+    )
+    parser.add_argument(
+        "--braid-info",
+        action="store_true",
+        help="Report braid gate count and approximation error for --braid-depth",
+    )
+    parser.add_argument(
+        "--braid-depth",
+        type=int,
+        default=9,
+        help="Solovay-Kitaev recursion depth (default: 9)",
+    )
+    parser.add_argument(
+        "--braid-qubit",
+        type=int,
+        default=0,
+        help="Target qubit index for the OpenQASM output (default: 0)",
+    )
     args = parser.parse_args()
+    if args.braid_openqasm or args.braid_info:
+        return run_braid_compiler(args)
     if not args.audit:
         parser.print_help()
         return 0

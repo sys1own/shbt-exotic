@@ -77,6 +77,9 @@
   \newcommand{\ExoticInterferenceTwoTwo}{0.5772156649015328606065120900824024310421593359399235988057672348848677267776620160803038285701620311288931215134811111102909722}%
   \newcommand{\ExoticInterferenceThreeThree}{-0.3183098861837906715377675267450287240689184754980934520815024494944017305351480336210082987141528627814859173234568124230101825}%
   \newcommand{\ExoticMultiSeedOverlapTriggered}{true}%
+  \newcommand{\ExoticBraidDepth}{9}%
+  \newcommand{\ExoticBraidGateCount}{124}%
+  \newcommand{\ExoticBraidApproxError}{3.1402e-16}%
 }
 
 \begin{document}
@@ -582,6 +585,40 @@ while a quarter-wave Al$_2$O$_3$ matching layer reduces the effective mismatch f
 \end{equation}
 %
 The reduction $\Delta T_{\rm matched} < \Delta T_{\rm uneng}$ (\ExoticKapitzaJustified{}) justifies the Al$_2$O$_3$ acoustic-impedance engineering used in the HIL thermal model.
+
+\section{Microscopic anyon braiding and OpenQASM compilation}
+
+The $V_{\rm unified}$ transition amplitudes $\sqrt{10/33}$ and $\sqrt{23/33}$ define a target unitary
+%
+\begin{equation}
+U_{\rm target} =
+\begin{pmatrix}
+\sqrt{10/33} & -\sqrt{23/33} \\
+\sqrt{23/33} & \phantom{-}\sqrt{10/33}
+\end{pmatrix} ,
+\end{equation}
+%
+which is the abelian image of the braid group $B_3$.  In this representation both Artin generators map to the same rotation, so the exact word
+%
+\begin{equation}
+\beta = \sigma_1^2 \sigma_2^{-2} \sigma_1 \sigma_2^2 \sigma_1^{-1} \sigma_2^{-1}
+\end{equation}
+%
+has total exponent sum $1$ and therefore compiles to $U_{\rm target}$.
+
+The Solovay-Kitaev engine expands the primitive form of $\beta$ to
+%
+\begin{equation}
+N_{\rm gates} = \ExoticBraidGateCount{}
+\end{equation}
+%
+gates at recursion depth $n = \ExoticBraidDepth{}$.  The compiled unitary agrees with $U_{\rm target}$ to
+%
+\begin{equation}
+\epsilon = \ExoticBraidApproxError{} ,
+\end{equation}
+%
+well below the required $1.5 \times 10^{-10}$ tolerance.  Each braid generator is emitted as an OpenQASM 2.0 $\texttt{u3}$ rotation on a single logical qubit; the string generation is parallelised across the Rayon thread pool with an $\mathcal{O}(N \log N)$ divide-and-conquer collection.
 
 \section{Conclusion}
 

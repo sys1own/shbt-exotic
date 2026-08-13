@@ -9,6 +9,7 @@ from shbt_exotic import (
     EntropicRefrigerator,
     ExoticEngine,
     ExportPhaseModulationTable,
+    FibonacciBraidCompiler,
     GhostSeedSynthesizer,
     HardwareSynthesisAuditor,
     HeegaardFloerRelabeling,
@@ -139,6 +140,12 @@ def generate_results_tex(out_path: str | Path = "exotic_results.tex") -> Path:
     kapitza_matched = flux.kapitza_delta_t_matched_k
     kapitza_justified = flux.acoustic_matching_justified
 
+    # Fibonacci anyon braid compiler
+    braid = FibonacciBraidCompiler()
+    braid_depth = 9
+    braid_gate_count = braid.gate_count(braid_depth)
+    braid_approx_error = braid.approximation_error(braid_depth)
+
     # 512-bit closure-chain audit
     i_l_star = hil.i_l_star()
     i_q_star = hil.i_q_star()
@@ -215,6 +222,9 @@ def generate_results_tex(out_path: str | Path = "exotic_results.tex") -> Path:
         f"\\newcommand{{\\ExoticInterferenceTwoTwo}}{{{i22}}}",
         f"\\newcommand{{\\ExoticInterferenceThreeThree}}{{{i33}}}",
         f"\\newcommand{{\\ExoticMultiSeedOverlapTriggered}}{{{str(overlap_triggered).lower()}}}",
+        f"\\newcommand{{\\ExoticBraidDepth}}{{{braid_depth}}}",
+        f"\\newcommand{{\\ExoticBraidGateCount}}{{{braid_gate_count}}}",
+        f"\\newcommand{{\\ExoticBraidApproxError}}{{{format_scientific(braid_approx_error)}}}",
     ]
 
     out_path.write_text("\n".join(lines) + "\n")

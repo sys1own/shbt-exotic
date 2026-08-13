@@ -4,6 +4,7 @@ import pytest
 
 from shbt_exotic import (
     MassCongestionEngine,
+    FibonacciBraidCompiler,
     AnomalyClosureError,
     AcousticImpedanceEngine,
     CoordinatePerturbationSweep,
@@ -320,6 +321,48 @@ def test_multi_seed_overlap_passes_below_threshold():
     assert triggered is False
     assert status == "STATUS_NOMINAL_PASS"
     assert total_delta == pytest.approx(8e-13, rel=1e-6)
+
+
+def test_fibonacci_braid_compiler_beta_sequence():
+    compiler = FibonacciBraidCompiler()
+    beta = compiler.beta_sequence()
+    # Primitive expansion: sigma2^{-2} becomes two sigma2^{-1} factors.
+    assert len(beta) == 7
+    assert beta[0] == "sigma1^2"
+    assert beta[1] == "sigma2^-1"
+    assert beta[2] == "sigma2^-1"
+
+
+def test_fibonacci_braid_sk_nine_gates():
+    compiler = FibonacciBraidCompiler()
+    assert compiler.gate_count(9) == 124
+
+
+def test_fibonacci_braid_sk_nine_error():
+    compiler = FibonacciBraidCompiler()
+    err = compiler.approximation_error(9)
+    assert err <= 1.5e-10
+
+
+def test_fibonacci_braid_openqasm():
+    compiler = FibonacciBraidCompiler()
+    qasm = compiler.compile_openqasm(9, 0)
+    assert qasm.startswith("OPENQASM 2.0")
+    assert "u3(" in qasm
+    assert qasm.count("u3(") == 124
+    assert "sigma1" in qasm
+    assert "sigma2" in qasm
+
+
+def test_fibonacci_braid_target_unitary_weights():
+    compiler = FibonacciBraidCompiler()
+    u = compiler.target_unitary()
+    c = (10.0 / 33.0) ** 0.5
+    s = (23.0 / 33.0) ** 0.5
+    assert u[0][0] == pytest.approx((c, 0.0), abs=1e-12)
+    assert u[0][1] == pytest.approx((-s, 0.0), abs=1e-12)
+    assert u[1][0] == pytest.approx((s, 0.0), abs=1e-12)
+    assert u[1][1] == pytest.approx((c, 0.0), abs=1e-12)
 
 
 if __name__ == "__main__":

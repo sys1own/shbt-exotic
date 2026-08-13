@@ -16,6 +16,7 @@ from shbt_exotic._core import (
     ExportPhaseModulationTable,
     ThermalFluxReport,
     MassCongestionEngine,
+    FibonacciBraidCompiler,
     AnomalyClosureError,
 )
 from shbt_exotic.stasis import StasisDilation
@@ -39,6 +40,7 @@ __all__ = [
     "ExportPhaseModulationTable",
     "ThermalFluxReport",
     "MassCongestionEngine",
+    "FibonacciBraidCompiler",
     "StasisDilation",
     "CoordinatePerturbationSweep",
     "AnomalyClosureError",

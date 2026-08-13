@@ -32,6 +32,11 @@ governs all four protocols.  Every state vector is tracked at 512-bit precision 
 - **Multi-seed interference**
   - `g_{μν} = η_{μν} + Σ_i h_{μν}^{(i)} + I_{μν}` with 512-bit interference coefficients `I_00, I_11, I_22, I_33`.
   - `R_congestion = 2.954 × 10^15 m` bit-congestion radius; overlap safety audit raises `AnomalyClosureError` if `|Δμ| > 10^{-12}`.
+- **Fibonacci anyon braid compiler**
+  - Maps `V_unified` transition weights `sqrt(10/33)` and `sqrt(23/33)` to an abelian `B_3` representation.
+  - Base word `β = σ1^2 σ2^{-2} σ1 σ2^2 σ1^{-1} σ2^{-1}` has exponent sum `1`, compiling to `U_target`.
+  - Solovay-Kitaev expansion to `n = 9` yields 124 physical `u3` gates with approximation error `≤ 1.5 × 10^{-10}`.
+  - `compile_openqasm(n, qubit)` emits OpenQASM 2.0 in parallel over Rayon thread pools (`O(N log N)`).
 
 ## Hardware Architecture
 
