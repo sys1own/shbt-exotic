@@ -105,6 +105,7 @@ The dual-target Hardware-in-the-Loop monitor concurrently samples the Stasis Con
 
   where `v_l` is the longitudinal sound speed in the cured nanocomposite and `f` is the SHBT acoustic transduction frequency.  For a representative `v_l ≈ 3,000 m/s` at `f = 10 GHz`, `d ≈ 75 nm`.  A 50 nm placement tolerance is imposed by `GdsiiMaskExporter.validate_drc()`.
 - **Layer stack**: Layer 10 `SUBSTRATE_INP` (350 μm), Layer 20 `AIRBRIDGE_SPAN` (1.5 × 5.0 μm), Layer 25 `MET_NB_TRACE` (300 nm Niobium).  All mask features are at or above the 50 nm e-beam resolution limit.
+- **Manufacturing inspection**: SEM sidewall inspection of the InP ridge and airbridge release trenches is recommended on a per-wafer sampling plan.  Random residue, footing, or under-etch defects in the InP ridges perturb the waveguide effective index and can couple into the microwave phase-shifter control loop; sidewall-angle metrology with a `±2°` tolerance is the minimum gate for preventing phase-error propagation into the HIL telemetry path.
 
 ## Reliability and Aging
 
@@ -151,7 +152,7 @@ shbt-exotic --audit
 | HIL status | `STATUS_NOMINAL_PASS` | nominal pass |
 | Hardware clock | `≤ 72 GHz` | `72 GHz` |
 | Routing bandwidth | `≤ 40 Gb/s` | `40 Gb/s` |
-| Kinematic detuning | `|μ_comp − μ_0| ≤ 10^{-12}` at `v_eff = 10^3 m/s` | nominal pass |
+| Kinematic detuning | `|μ_comp − μ_0| ≤ 10^{-12}` (Scenario A, 0.1 c) | nominal pass |
 | Resonance damping | `η ≥ 1.15×10^{-3}`, `ζ ≥ 6.0×10^{-4}` for all four FEA modes | nominal pass |
 | Stress suite | All four scenarios + CAD-to-physics validator | all pass |
 | Release version | `v1.1.0` production-ready | `v1.1.0` |
