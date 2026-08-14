@@ -18,4 +18,5 @@ figures/
 *.so
 *Notes.bib
 *.synctex.gz
+exotic_page-*.png
 

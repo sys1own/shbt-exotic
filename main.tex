@@ -9,6 +9,7 @@
 \usepackage{seqsplit}
 \usepackage{graphicx}
 \usepackage{hyperref}
+\usepackage{placeins}
 
 \InputIfFileExists{exotic_results.tex}{%
   \typeout{Loading exotic_results.tex}}{%
@@ -333,7 +334,7 @@ g_{\mu\nu} = \eta_{\mu\nu} + \sum_i h_{\mu\nu}^{(i)} + I_{\mu\nu} .
 %
 The 512-bit interference coefficients are
 %
-\begin{quote}
+\begin{quote}\footnotesize
 \label{eq:interference-coefficients}
 $\displaystyle I_{00} = \expandafter\seqsplit\expandafter{\ExoticInterferenceZeroZero{}}$\\
 $\displaystyle I_{11} = \expandafter\seqsplit\expandafter{\ExoticInterferenceOneOne{}}$\\
@@ -358,7 +359,7 @@ Table~\ref{tab:benchmarks} summarizes the live simulator benchmarks.
 \scriptsize
 \setlength{\tabcolsep}{1.5pt}
 \caption{Live operational benchmarks.  Left: algebraic, thermodynamic, and mass-congestion sectors.  Right: HIL, closure-chain, and hardware sectors.}
-\label{tab:benchmarks}\label{tab:benchmarks2}
+\label{tab:benchmarks}
 \begin{tabular}{p{1.9cm}p{2.3cm}p{2.6cm}|p{1.9cm}p{2.3cm}p{2.6cm}}
 \hline
 Quantity & Target & Measured & Quantity & Target & Measured \\
@@ -393,6 +394,7 @@ Cooling power & $14.2$~$\mu$W & \ExoticCoolingPower{}~W & Hardware status & SNP 
 
 Figures~\ref{fig:dilation} and \ref{fig:seed} show the relationships encoded in Eqs.~\eqref{eq:newton_lock} and the mass-congestion identity, respectively.
 
+\FloatBarrier
 \section{Entropic refrigeration and the thermodynamic arrow}
 
 The refrigerator strips active gauge charges into the dark ledger.  The cooling power is
@@ -494,7 +496,7 @@ which is strictly positive (\ExoticEntropyArrowPositive{}).  All six exotic oper
 
 Table~\ref{tab:hil} lists the HIL safety thresholds.
 %
-\begin{table}[htbp]
+\begin{table}[!ht]
 \centering
 \caption{HIL safety thresholds.}
 \label{tab:hil}
@@ -548,6 +550,7 @@ with $Z_{\rm InP} \approx 23.1$~MRayl.  This is below the conservative InP struc
 The simulator selects an alumina formulation based on frequency and thickness: AAO-Epoxy ($Z=9.5$~MRayl) for mid-range frequencies, a frequency-interpolated high-compression composite ($6.5$--$9.47$~MRayl) for low frequencies, and colloidal nanocomposites for layers thinner than $10\,\mu$m.
 \end{sloppypar}
 
+\FloatBarrier
 \clearpage
 \section{Engineering synthesis: RF phase control and thermal flux maps}
 
@@ -678,7 +681,7 @@ The simulator evaluates $\ell_{\rm He}(M)$ and $\Delta S_A$ for every candidate 
 
 The HIL fatal-threshold path is implemented with the bare-metal AVX-512 instruction sequence shown in Table~\ref{tab:avx512}.
 %
-\begin{table}[t]
+\begin{table}[!ht]
 \caption{\label{tab:avx512}AVX-512 HIL emergency-threshold pipeline.}
 \begin{ruledtabular}
 \begin{tabular}{p{1.6cm}p{2.3cm}p{3.3cm}}
@@ -700,6 +703,7 @@ t_{\rm AVX512} = \frac{6}{4.0\times 10^9}\,\mathrm{s} = 1.5\,\mathrm{ns} ,
 %
 which is well within the 2.5~ns emergency shunt budget.  The U(1) phase-locked excitation $\psi_j \to e^{-i\theta_j}\psi_j$ on an 8-component dark-ledger block uses \texttt{vmovupd}, \texttt{vmulpd}, and \texttt{vfmadd231pd} on \texttt{x86\_64}, or NEON \texttt{fmla} on \texttt{aarch\_64}, with a branchless scalar fallback.  All rotation buffers are fixed-size stack arrays; the \texttt{rug} GMP/MPFR allocator is served from a pre-resident 16~MiB arena to eliminate variable-time \texttt{malloc}/\texttt{free} from the 512-bit isometry loops.
 
+\FloatBarrier
 \section{Microscopic anyon braiding and OpenQASM compilation}
 
 The $V_{\rm unified}$ transition amplitudes $\sqrt{10/33}$ and $\sqrt{23/33}$ define a target unitary
@@ -820,15 +824,16 @@ The velocity-dependent density-multiplier compensation is
 %
 Here $N_{\rm total}=e^{33}\simeq\ExoticNTotal$ is the natural holographic bit ceiling and $c$ is the speed of light.
 
-\begin{table}[t]
+\begin{table}[!ht]
 \caption{512-bit bit-congestion wake constants used in the kinematic correction.}
-\begin{tabular}{cp{0.75\linewidth}}
+\small
+\begin{tabular}{cp{0.7\linewidth}}
 \hline\hline
 Constant & 512-bit value \\
 \hline
-$\alpha_{\rm wake}^{(1)}$ & \begin{quote}\seqsplit{\ExoticWakeOne}\end{quote} \\
-$\alpha_{\rm wake}^{(2)}$ & \begin{quote}\seqsplit{\ExoticWakeTwo}\end{quote} \\
-$\alpha_{\rm wake}^{(3)}$ & \begin{quote}\seqsplit{\ExoticWakeThree}\end{quote} \\
+$\alpha_{\rm wake}^{(1)}$ & $ \expandafter\seqsplit\expandafter{\ExoticWakeOne{}} $ \\
+$\alpha_{\rm wake}^{(2)}$ & $ \expandafter\seqsplit\expandafter{\ExoticWakeTwo{}} $ \\
+$\alpha_{\rm wake}^{(3)}$ & $ \expandafter\seqsplit\expandafter{\ExoticWakeThree{}} $ \\
 \hline\hline
 \end{tabular}
 \end{table}
@@ -836,6 +841,7 @@ $\alpha_{\rm wake}^{(3)}$ & \begin{quote}\seqsplit{\ExoticWakeThree}\end{quote} 
 For a representative slow transit with $v_{\rm eff}=10^3\,$m/s and $\Delta N=10^5$, the compensated multiplier is $\mu_{\rm comp}=\ExoticMuCompensated$, and the evaluated Lagrangian is $L_{\rm int}=\ExoticDynamicLagrangian$.
 The implementation raises an anomaly whenever $|\mu_{\rm comp}-\mu_0|>10^{-12}$, preserving eigenvector rigidity during high-velocity transits.
 
+\FloatBarrier
 \section{Lindblad noise floors and anyon-braid stability}
 
 Real-world charge noise and sapphire-waveguide phonon coupling are captured by the Lindblad master equation.  The charge-dephasing and phonon-exchange jump operators are
@@ -885,7 +891,7 @@ guaranteeing that the physical control latency of $1.5\,$ns is never exceeded.
 
 The STEP-exported sapphire waveguide assembly is audited against the four critical FEA modes listed in Table~\ref{tab:resonance}.
 
-\begin{table}[t]
+\begin{table}[!ht]
 \caption{Critical resonance modes and damping requirements.}
 \label{tab:resonance}
 \begin{tabular}{lcccc}
@@ -912,7 +918,7 @@ and the resulting temperature rise in the InP support columns is computed using 
 
 Table~\ref{tab:acousticfea} collects the sapphire waveguide acoustic design values.  The single-crystal sapphire waveguide has impedance $Z_{\rm Al_2O_3}=44.178\,$MRayl, the quarter-wave matching layer targets $Z_m\approx1.1512\,$MRayl, and the selected alumina formulation provides the acoustic damping required by the resonance audit.
 
-\begin{table}[t]
+\begin{table}[!ht]
 \caption{Acoustic FEA parameters for megawatt transient management.}
 \label{tab:acousticfea}
 \begin{tabular}{lc}
@@ -929,9 +935,29 @@ SK logical error floor & $\ExoticSKLogicalError$ \\
 \end{tabular}
 \end{table}
 
+\FloatBarrier
 \section{Integrated engineering stress suite}\label{sec:stress-suite}
 
 The production-ready simulator must survive six extreme operational scenarios and a CAD-to-physics consistency check.  The `EngineeringStressSuite` runs the following stress tests and emits the reliability matrix in Table~\ref{tab:reliability}.
+
+\begin{table*}[!t]
+\small
+\caption{Engineering Reliability Matrix.}
+\label{tab:reliability}
+\begin{tabular}{@{}lcc@{}}
+\hline\hline
+Discipline & Criterion & Result \\
+\hline
+Kinematic stability & $|\mu_{\rm comp}-\mu_0|\le10^{-12}$ at $0.1\,c$ & \ExoticScenarioAStatus{} \\
+Decoherence floor & $\varepsilon_9 < 10^{-122}$ & \ExoticScenarioBStatus{} \\
+Thermal ballistics & $T_f < 9.3\,$K and $t_{\rm cycle}<1.5\,$ns & \ExoticScenarioCStatus{} \\
+Heat-sink lifetime & Quench warning at $1.514\times10^{16}$ bits & \ExoticScenarioDStatus{} \\
+Warp metric & $|\det g +1|\le10^{-12}$, $\lambda_{\rm Gram}^{\min}>0$ & \ExoticScenarioEStatus{} \\
+Causal authorization & Spacelike target raises `AnomalyClosureError` & \ExoticScenarioFStatus{} \\
+Acoustic integrity & Airbridge flexural frequency $\neq 19.82\,$MHz & \ExoticStressAllPass{} \\
+\hline\hline
+\end{tabular}
+\end{table*}
 
 \subsection{Scenario A: kinematic congestion wake}
 Two 1-solar-mass ghost seeds are placed in a counter-rotating transit at $0.1\,c$.  The dynamic interference Lagrangian and velocity-dependent wake compensation keep $|\mu_{\rm comp}-\mu_0|\le10^{-12}$ across the entire 64-step transit.  Scenario status: \ExoticScenarioAStatus{}.
@@ -954,27 +980,11 @@ The de-rendering rate is ramped in eleven $0.1\times$ increments until the safe 
 \subsection{CAD-to-physics consistency}
 The exported GDSII airbridge ($5.0\times1.5\times0.3\,\mu$m) has an estimated flexural frequency of $\ExoticCadAirbridgeFlexHz\,$Hz, safely away from the critical $19.82\,$MHz flexural mode.  A deliberately longer bridge is correctly rejected by `CadPhysicsValidator`.
 
-\begin{table*}[t]
-\small
-\caption{Engineering Reliability Matrix.}
-\label{tab:reliability}
-\begin{tabular}{@{}lcc@{}}
-\hline\hline
-Discipline & Criterion & Result \\
-\hline
-Kinematic stability & $|\mu_{\rm comp}-\mu_0|\le10^{-12}$ at $0.1\,c$ & \ExoticScenarioAStatus{} \\
-Decoherence floor & $\varepsilon_9 < 10^{-122}$ & \ExoticScenarioBStatus{} \\
-Thermal ballistics & $T_f < 9.3\,$K and $t_{\rm cycle}<1.5\,$ns & \ExoticScenarioCStatus{} \\
-Heat-sink lifetime & Quench warning at $1.514\times10^{16}$ bits & \ExoticScenarioDStatus{} \\
-Warp metric & $|\det g +1|\le10^{-12}$, $\lambda_{\rm Gram}^{\min}>0$ & \ExoticScenarioEStatus{} \\
-Causal authorization & Spacelike target raises `AnomalyClosureError` & \ExoticScenarioFStatus{} \\
-Acoustic integrity & Airbridge flexural frequency $\neq 19.82\,$MHz & \ExoticStressAllPass{} \\
-\hline\hline
-\end{tabular}
-\end{table*}
-
 All six technology sectors report nominal pass, with overall suite result \texttt{\ExoticStressAllPass{}}.
 
+
+
+\FloatBarrier
 \setcounter{section}{18}
 \section{Holographic warp metrics and ADM formalism}\label{sec:warp}
 
