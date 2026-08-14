@@ -88,7 +88,7 @@
 \title{Exotic Technologies in Static Holographic Boundary Theory: A Unified Simulator}
 
 \begin{abstract}
-We present a unified Rust/Python simulator for four exotic protocols in Static Holographic Boundary Theory (SHBT): non-local holographic communication, temporal stasis, artificial ghost-seed gravity wells, and entropic refrigeration.  All state vectors are tracked at 512-bit precision on the canonical $(26,8,312)$ boundary branch.  The four protocols are grounded in a single isometric Stinespring map $V_{\rm unified}$ that splits active boundary degrees of freedom from a dark ledger with exact fractional capacities $10/33$ and $23/33$.  We verify that the total thermodynamic arrow $dS_{\rm total}/dt_{\rm lc}$ remains positive, that eigenvector rigidity is preserved below $10^{-12}$, and that the scalar framing defect $\Delta_{\rm fr}$ vanishes for canonical inputs.  Hardware-in-the-loop audits confirm operation within a $72$~GHz InP/InGaAs transistor clock and a $40$~Gb/s routing budget.
+We present a unified Rust/Python simulator for six exotic protocols in Static Holographic Boundary Theory (SHBT): non-local holographic communication, temporal stasis, artificial ghost-seed gravity wells, entropic refrigeration, holographic warp drive, and modular state translocation.  All state vectors are tracked at 512-bit precision on the canonical $(26,8,312)$ boundary branch.  The six protocols are grounded in a single isometric Stinespring map $V_{\rm unified}$ that splits active boundary degrees of freedom from a dark ledger with exact fractional capacities $10/33$ and $23/33$.  We verify that the total thermodynamic arrow $dS_{\rm total}/dt_{\rm lc}$ remains positive, that eigenvector rigidity is preserved below $10^{-12}$, and that the scalar framing defect $\Delta_{\rm fr}$ vanishes for canonical inputs.  Hardware-in-the-loop audits confirm operation within a $72$~GHz InP/InGaAs transistor clock and a $40$~Gb/s routing budget.
 \end{abstract}
 
 \maketitle
@@ -102,7 +102,7 @@ Static Holographic Boundary Theory (SHBT) treats bulk geometry as a rendered ima
 \label{eq:closure}
 \end{equation}
 %
-acts as a consistency constraint on every protocol.  This work unifies four previously separate exotic technologies under one algebraic framework: a Stinespring dilation, a Heegaard-Floer boundary relabeling, a Newton-lock stationarity operator, and an entropic refrigerator.
+acts as a consistency constraint on every protocol.  This work unifies six previously separate exotic technologies under one algebraic framework: non-local holographic communication, temporal stasis, artificial ghost-seed gravity wells, entropic refrigeration, holographic warp drive, and modular state translocation.
 
 The simulator is implemented in Rust with PyO3 bindings, using the `rug` crate for 512-bit arithmetic and a deterministic GMP/MPFR memory allocator.  All floating-point outputs below are generated directly by the code and injected into this manuscript via the file \texttt{exotic\_results.tex}.
 
