@@ -166,12 +166,14 @@ The dual-target Hardware-in-the-Loop monitor concurrently samples the Stasis Con
 
 ## Integrated Engineering Stress Suite
 
-`EngineeringStressSuite` (Rust/PyO3) runs four automated extreme scenarios:
+`EngineeringStressSuite` (Rust/PyO3) runs six automated extreme scenarios:
 
 - **Scenario A — Kinematic Congestion Wake**: two 1 M_☉ ghost seeds in a counter-rotating transit at 0.1 c; `MassCongestionEngine.compensated_mu()` keeps `|μ_comp − μ_0| ≤ 10^{-12}` across the transit.
 - **Scenario B — Noisy Braid Audit**: Solovay-Kitaev depth `n=9` anyon braiding while a one-qubit density matrix is evolved under 72 GHz charge-noise Lindblad jumps; the SK logical error floor remains below `10^{-122}`.
 - **Scenario C — Emergency Field Collapse**: 142.08 MW field-collapse transient; the AVX-512 telemetry loop completes in `≈ 1.14 ns` and the Debye `T^3` InP substrate temperature stays below the 9.3 K Nb quench limit.
 - **Scenario D — Entropic Heat-Sink Saturation**: de-rendering rate is ramped until the `1.514 × 10^{16}` bit lifetime budget is exceeded; `ReliabilityAuditor` raises `STATUS_QUENCH_WARNING` and reports acoustic impedance drift to `1.3250 MRayl`.
+- **Scenario E — 10 m Warp Bubble Ramp**: `ADMMetricAuditor` executes a Phase A ramp to 142.08 MW for a 10 m bubble; the HIL monitor holds `|det(g) + 1| ≤ 10^{-12}` and `λ_min^Gram > 0` within the 1.5 ns SIMD telemetry window.
+- **Scenario F — Spacelike Authorization Failure**: `ModularStateTranslocator` is asked to translocate to a coordinate outside the future light-cone; the engine correctly raises `AnomalyClosureError` and aborts.
 - **CAD-to-Physics Check**: `CadPhysicsValidator` cross-references exported GDSII airbridge dimensions against the 19.82 MHz flexural resonance mode and raises `DesignRuleViolation` for resonant geometries.
 
 ## Quick Start
@@ -198,8 +200,10 @@ shbt-exotic --audit
 | Routing bandwidth | `≤ 40 Gb/s` | `40 Gb/s` |
 | Kinematic detuning | `|μ_comp − μ_0| ≤ 10^{-12}` (Scenario A, 0.1 c) | nominal pass |
 | Resonance damping | `η ≥ 1.15×10^{-3}`, `ζ ≥ 6.0×10^{-4}` for all four FEA modes | nominal pass |
-| Stress suite | All four scenarios + CAD-to-physics validator | all pass |
-| Release version | `v1.1.0` production-ready | `v1.1.0` |
+| Warp metric | `|det(g) + 1| ≤ 10^{-12}` and `λ_min^Gram > 0` (Scenario E, 142.08 MW) | verified |
+| Causal authorization | Reject spacelike targets (Scenario F) | nominal pass |
+| Stress suite | All six scenarios + CAD-to-physics validator | all pass |
+| Release version | `v1.2.0-unified` production-ready | `v1.2.0-unified` |
 
 ## Code Availability
 
@@ -207,3 +211,7 @@ shbt-exotic --audit
 - `shbt-warp`: [https://github.com/sys1own/shbt-warp](https://github.com/sys1own/shbt-warp)
 - `shbt-recon`: [https://github.com/sys1own/shbt-recon](https://github.com/sys1own/shbt-recon)
 - `shbt-exotic`: [https://github.com/sys1own/shbt-exotic](https://github.com/sys1own/shbt-exotic)
+
+## About
+
+`shbt-exotic` is the production-grade unified platform for Static Holographic Boundary Theory (SHBT) engineering. It supports six exotic protocols: non-local holographic communication, temporal stasis, artificial ghost-seed gravity wells, entropic refrigeration, holographic warp drive, and modular state translocation.
