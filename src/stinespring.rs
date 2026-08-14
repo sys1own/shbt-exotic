@@ -107,6 +107,11 @@ impl UnifiedStinespringMap {
         Ok(diff.abs() < Float::with_val(PREC, HOLOGRAPHIC_NOISE_FLOOR))
     }
 
+    /// Return the dark-branch weight `sqrt(23/33)` as `f64`.
+    pub fn dark_weight_f64(&self) -> f64 {
+        self.dark_weight.to_f64()
+    }
+
     /// Branch-dimension partition derived from character counting.
     ///
     /// `N_local = 26 + 8 - 1 = 33`, `N_active = 3 + 8 - 1 = 10`,

@@ -1,6 +1,50 @@
 # SHBT-Exotic: Unified Spacetime Engineering and Synthesis Platform
 
-Unified simulator for exotic SHBT technologies: non-local holographic communication, temporal stasis, artificial ghost-seed gravity wells, and entropic refrigeration.  This release ships the integrated engineering stress suite and CAD-to-physics validator.
+Production-grade, unified spacetime engineering platform for Static Holographic Boundary Theory (SHBT):
+
+1. Non-local holographic communication
+2. Temporal stasis
+3. Artificial ghost-seed gravity wells
+4. Entropic refrigeration
+5. Holographic warp drive
+6. Modular state translocation
+
+This release ships the integrated engineering stress suite, ADM warp-metric auditor, modular translocator, and CAD-to-physics validator.
+
+## Warp Integration
+
+The `ADMMetricAuditor` evaluates the 3+1D ADM metric for a 10 m SHBT warp bubble:
+
+- Lapse: `α = 1`
+- Spatial metric: `γ_ij = δ_ij`
+- Shift vector: `β^i = -v_eff f_SHBT(x) n^i`
+
+The 4x4 covariant metric components are
+
+```
+g_00 = -1 + β^2
+g_0i = g_i0 = β n_i
+g_ij = δ_ij
+```
+
+The Lorentzian determinant audit `|det(g) + 1| ≤ 10^{-12}` and Gram positivity check `λ_min^Gram > 0` are enforced at every grid point.  The 142.08 MW power benchmark is calibrated for the 10 m bubble radius used in `scenario_e_warp_bubble_ramp`.
+
+## Translocator Integration
+
+`ModularStateTranslocator` implements the de-rendering / re-rendering cycle
+
+```
+R^rerender = T^∂ O^excitation D^derender†
+```
+
+- `D^derender` is the Stinespring dark-ledger projection (`UnifiedStinespringMap`), splitting the visible state into a `10/33` active residual and a `23/33` dark component.
+- `O^excitation` is the phase-locked U(1) rotation applied to the dark branch.
+- `T^∂` is the Heegaard-Floer boundary relabeling isometry.
+- The `10/33` active residual is kept as the passive stress-energy tensor `T_{μν}^{passive}`; the active metric slices are nullified while the passive ledger is preserved.
+
+## Safety Protocols
+
+Causal authorization is the mandatory gate for both translocation and non-local communication.  A target coordinate `x_tar` is accepted only when it lies inside the future light-cone of the source coordinate, `x_tar ∈ J^+(x_src)`.  Any spacelike or past target raises `AnomalyClosureError` and aborts the operation.
 
 ## Theoretical Foundation
 
@@ -82,9 +126,9 @@ The dual-target Hardware-in-the-Loop monitor concurrently samples the Stasis Con
 
 ## Engineering Synthesis
 
-- **RF phase-modulation table**: `ExportPhaseModulationTable` maps an 8x8 conformal-dimension matrix `h_ij` and effective velocity `v_eff` to a JSON/CSV table of 64 microwave phase commands `e^{i θ}`.  Phase-shifter voltages are constrained between the gate/base turn-on `3.8 V` and collector-drain `7.4 V` bias levels.
-- **Thermal flux report**: `ThermalFluxReport` computes `Γ_de = P_cool / (k_B T_c ln 2)` for the `14.2 μW` core and an 8x8 thermal-flux map.  The un-engineered sapphire/He-4 Kapitza drop is `≈ 3.89 × 10^{14} K`; a quarter-wave Al2O3 matching layer reduces this drop, justifying the acoustic-impedance engineering.
-- **Mask DRC**: `GdsiiMaskExporter.validate_drc()` checks every drawn feature against the 50 nm electron-beam lithography resolution limit and reports any `AIRBRIDGE_SPAN` or `MET_NB_TRACE` geometry that is too small to fabricate.
+- **RF phase-modulation table**: `ExportPhaseModulationTable` maps an 8x8 conformal-dimension matrix `h_ij` and effective velocity `v_eff` to a JSON/CSV table of 64 microwave phase commands `e^{i θ}` for warp-emitter arrays and translocator control lines.  Phase-shifter voltages are constrained between the gate/base turn-on `3.8 V` and collector-drain `7.4 V` bias levels.
+- **Thermal flux report**: `ThermalFluxReport` computes `Γ_de = P_cool / (k_B T_c ln 2)` for the `14.2 μW` core and an 8x8 thermal-flux map.  The un-engineered sapphire/He-4 Kapitza drop is `≈ 3.89 × 10^{14} K`; a quarter-wave Al2O3 matching layer reduces this drop, justifying the acoustic-impedance engineering for both warp-emitter arrays and translocator waveguides.
+- **Mask DRC**: `GdsiiMaskExporter.validate_drc()` checks every drawn feature against the 50 nm electron-beam lithography resolution limit and reports any `AIRBRIDGE_SPAN` or `MET_NB_TRACE` geometry that is too small to fabricate.  The same layer stack supports 8x8 warp-emitter arrays and translocator waveguide terminations.
 
 ## Hardware Performance Requirements
 

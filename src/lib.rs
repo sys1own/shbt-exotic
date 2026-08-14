@@ -35,6 +35,9 @@ pub mod stress_suite;
 pub mod calibration;
 pub mod reliability;
 pub mod cad_export;
+pub mod causal_coordinate;
+pub mod warp_metric;
+pub mod modular_translocator;
 
 pub use constants::*;
 pub use shbt::communication::*;
@@ -58,6 +61,9 @@ pub use anyon_braid::*;
 pub use calibration::*;
 pub use reliability::*;
 pub use cad_export::*;
+pub use causal_coordinate::*;
+pub use warp_metric::*;
+pub use modular_translocator::*;
 
 use pyo3::prelude::*;
 
@@ -90,6 +96,9 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<lab_hal::IQDacSample>()?;
     m.add_class::<lab_hal::TelemetryBridge>()?;
     m.add_class::<cad_physics::CadPhysicsValidator>()?;
+    m.add_class::<causal_coordinate::CausalCoordinate>()?;
+    m.add_class::<warp_metric::ADMMetricAuditor>()?;
+    m.add_class::<modular_translocator::ModularStateTranslocator>()?;
     m.add_class::<stress_suite::EngineeringStressSuite>()?;
     m.add_class::<calibration::CalibrationEngine>()?;
     m.add_class::<reliability::ReliabilityAuditor>()?;

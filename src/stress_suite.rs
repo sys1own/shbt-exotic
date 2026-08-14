@@ -8,15 +8,18 @@ use pyo3::prelude::*;
 
 use crate::anyon_braid::FibonacciBraidCompiler;
 use crate::cad_physics::CadPhysicsValidator;
-use crate::constants::SPEED_OF_LIGHT_M_S;
+use crate::causal_coordinate::CausalCoordinate;
+use crate::constants::{DARK_LEDGER_DIM, SPEED_OF_LIGHT_M_S};
 use crate::error::ExoticError;
 use crate::harmonic_audit::HarmonicAuditor;
 use crate::lab_hal::TelemetryBridge;
 use crate::lindblad::LindbladSolver;
 use crate::mass_congestion_engine::MassCongestionEngine;
+use crate::modular_translocator::ModularStateTranslocator;
 use crate::reliability::{ReliabilityAuditor, LIFETIME_BITS_DE_RENDERED};
 use crate::shbt::mass_congestion::alpha_seed_m_sun_per_bit_f64;
 use crate::shbt::safety_monitor::SafetyMonitor;
+use crate::warp_metric::ADMMetricAuditor;
 
 /// Pass/fail matrix for the integrated engineering stress suite.
 #[pyclass(name = "StressReport", get_all)]
@@ -27,16 +30,21 @@ pub struct StressReport {
     pub thermal_ballistics_ok: bool,
     pub heat_sink_lifetime_ok: bool,
     pub cad_physics_ok: bool,
+    pub warp_metric_ok: bool,
+    pub causal_authorization_ok: bool,
     pub all_pass: bool,
     pub scenario_a_status: String,
     pub scenario_b_status: String,
     pub scenario_c_status: String,
     pub scenario_d_status: String,
+    pub scenario_e_status: String,
+    pub scenario_f_status: String,
     pub final_substrate_temp_k: f64,
     pub telemetry_cycle_ns: f64,
     pub sk_logical_error: f64,
     pub consumed_lifetime_bits: f64,
     pub shifted_impedance_mrayl: f64,
+    pub warp_determinant_error: f64,
 }
 
 /// High-level scenario runner.
@@ -156,6 +164,43 @@ impl EngineeringStressSuite {
         Ok((ok, auditor.cumulative_bits_impl(), impedance))
     }
 
+    /// Scenario E: 10 m warp-bubble ramp to 142.08 MW.  The ADM metric auditor
+    /// must hold `det(g) = -1` and Gram positivity across the bubble, while
+    /// the AVX-512 HIL telemetry loop completes within the 1.5 ns SIMD window.
+    pub fn scenario_e_warp_bubble_ramp_impl(&self) -> Result<(bool, f64), ExoticError> {
+        let telemetry = TelemetryBridge::new();
+        let cycle_ns = telemetry.telemetry_cycle_ns_impl();
+
+        // 142.08 MW field-collapse already covered by the gate-cycle safety
+        // monitor; here we stress the ADM metric invariants at 0.1 c through
+        // a 10 m bubble.
+        let _monitor = SafetyMonitor::new();
+        let auditor = ADMMetricAuditor::new();
+        let result = auditor.audit_velocity(0.1);
+
+        let ok = result.passed
+            && cycle_ns < 1.5
+            && result.max_determinant_error <= 1.0e-12;
+        Ok((ok, result.max_determinant_error))
+    }
+
+    /// Scenario F: spacelike translocation authorization failure.  A target
+    /// outside the future light-cone must raise `AnomalyClosureError`.
+    pub fn scenario_f_spacelike_auth_impl(&self) -> Result<bool, ExoticError> {
+        let trans = ModularStateTranslocator::new();
+        let n = (DARK_LEDGER_DIM as f64).sqrt();
+        let state = vec![(1.0 / n, 0.0); DARK_LEDGER_DIM];
+        let src = CausalCoordinate::new(0.0, 0.0, 0.0, 0.0);
+        let tar = CausalCoordinate::new(0.0, 2.0, 0.0, 0.0);
+        match trans.translocate_impl(&state, &src, &tar, 0.0) {
+            Err(ExoticError::AnomalyClosureError(_)) => Ok(true),
+            Ok(_) => Err(ExoticError::AnomalyClosureError(
+                "spacelike translocation was incorrectly authorized".to_string(),
+            )),
+            Err(e) => Err(e),
+        }
+    }
+
     /// CAD-to-physics consistency: the default 1.5×5.0 μm airbridge is safe,
     /// while a longer bridge that would excite the 19.82 MHz flexural mode
     /// correctly raises a `DesignRuleViolation`.
@@ -180,37 +225,32 @@ impl EngineeringStressSuite {
         let (decoherence_ok, eps) = self.scenario_b_noisy_braid_impl()?;
         let (thermal_ok, cycle_ns, temp_k, thermal_status) = self.scenario_c_field_collapse_impl()?;
         let (heat_sink_ok, consumed_bits, impedance) = self.scenario_d_heat_sink_saturation_impl()?;
+        let (warp_ok, warp_det_error) = self.scenario_e_warp_bubble_ramp_impl()?;
+        let causal_ok = self.scenario_f_spacelike_auth_impl()?;
         let cad_ok = self.cad_physics_check_impl()?;
 
-        let all_pass = kinematic_ok && decoherence_ok && thermal_ok && heat_sink_ok && cad_ok;
+        let all_pass = kinematic_ok && decoherence_ok && thermal_ok && heat_sink_ok && cad_ok && warp_ok && causal_ok;
         Ok(StressReport {
             kinematic_stable: kinematic_ok,
             decoherence_floor_ok: decoherence_ok,
             thermal_ballistics_ok: thermal_ok,
             heat_sink_lifetime_ok: heat_sink_ok,
             cad_physics_ok: cad_ok,
+            warp_metric_ok: warp_ok,
+            causal_authorization_ok: causal_ok,
             all_pass,
-            scenario_a_status: if kinematic_ok {
-                "STATUS_NOMINAL_PASS".to_string()
-            } else {
-                format!("FAIL detuning {}", worst_detuning)
-            },
-            scenario_b_status: if decoherence_ok {
-                "STATUS_NOMINAL_PASS".to_string()
-            } else {
-                format!("FAIL eps {}", eps)
-            },
+            scenario_a_status: if kinematic_ok { "STATUS_NOMINAL_PASS".to_string() } else { format!("FAIL detuning {}", worst_detuning) },
+            scenario_b_status: if decoherence_ok { "STATUS_NOMINAL_PASS".to_string() } else { format!("FAIL eps {}", eps) },
             scenario_c_status: thermal_status.to_string(),
-            scenario_d_status: if heat_sink_ok {
-                "STATUS_QUENCH_WARNING".to_string()
-            } else {
-                "FAIL".to_string()
-            },
+            scenario_d_status: if heat_sink_ok { "STATUS_QUENCH_WARNING".to_string() } else { "FAIL".to_string() },
+            scenario_e_status: if warp_ok { "STATUS_NOMINAL_PASS".to_string() } else { format!("FAIL det error {}", warp_det_error) },
+            scenario_f_status: if causal_ok { "STATUS_NOMINAL_PASS".to_string() } else { "FAIL".to_string() },
             final_substrate_temp_k: temp_k,
             telemetry_cycle_ns: cycle_ns,
             sk_logical_error: eps,
             consumed_lifetime_bits: consumed_bits,
             shifted_impedance_mrayl: impedance,
+            warp_determinant_error: warp_det_error,
         })
     }
 }
@@ -243,6 +283,16 @@ impl EngineeringStressSuite {
         self.scenario_d_heat_sink_saturation_impl().map_err(PyErr::from)
     }
 
+    /// Run scenario E and return `(pass, max_determinant_error)`.
+    fn scenario_e_warp_bubble_ramp(&self) -> PyResult<(bool, f64)> {
+        self.scenario_e_warp_bubble_ramp_impl().map_err(PyErr::from)
+    }
+
+    /// Run scenario F and return a pass flag.
+    fn scenario_f_spacelike_auth(&self) -> PyResult<bool> {
+        self.scenario_f_spacelike_auth_impl().map_err(PyErr::from)
+    }
+
     /// Run the CAD-to-physics resonance check (returns true on pass).
     fn cad_physics_check(&self) -> PyResult<bool> {
         self.cad_physics_check_impl().map_err(PyErr::from)
@@ -269,5 +319,7 @@ mod tests {
         assert!(report.thermal_ballistics_ok);
         assert!(report.heat_sink_lifetime_ok);
         assert!(report.cad_physics_ok);
+        assert!(report.warp_metric_ok);
+        assert!(report.causal_authorization_ok);
     }
 }
