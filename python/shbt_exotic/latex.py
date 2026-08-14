@@ -157,7 +157,7 @@ def generate_results_tex(out_path: str | Path = "exotic_results.tex") -> Path:
 
     # Dynamic interference and wake compensation
     n_total = mass_engine.n_total()
-    wake1, wake2, wake3 = mass_engine.wake_constants_f64()
+    wake1, wake2, wake3 = mass_engine.wake_constants_str()
     v_eff = 1.0e3  # representative slow transit
     delta_n = 1.0e5
     mu0 = 1.0
@@ -290,9 +290,9 @@ def generate_results_tex(out_path: str | Path = "exotic_results.tex") -> Path:
         f"\\newcommand{{\\ExoticBraidGateCount}}{{{braid_gate_count}}}",
         f"\\newcommand{{\\ExoticBraidApproxError}}{{{format_scientific(braid_approx_error)}}}",
         # Dynamic interference
-        f"\\newcommand{{\\ExoticWakeOne}}{{{format_scientific(wake1)}}}",
-        f"\\newcommand{{\\ExoticWakeTwo}}{{{format_scientific(wake2)}}}",
-        f"\\newcommand{{\\ExoticWakeThree}}{{{format_scientific(wake3)}}}",
+        f"\\newcommand{{\\ExoticWakeOne}}{{{wake1}}}",
+        f"\\newcommand{{\\ExoticWakeTwo}}{{{wake2}}}",
+        f"\\newcommand{{\\ExoticWakeThree}}{{{wake3}}}",
         f"\\newcommand{{\\ExoticNTotal}}{{{format_scientific(n_total)}}}",
         f"\\newcommand{{\\ExoticMuCompensated}}{{{format_scientific(mu_compensated)}}}",
         f"\\newcommand{{\\ExoticDynamicLagrangian}}{{{format_scientific(l_int)}}}",

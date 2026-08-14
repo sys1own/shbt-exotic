@@ -1,10 +1,12 @@
 //! SHBT Exotic Technologies — unified Rust/Python simulator.
 //!
-//! Implements the four exotic protocols from the feasibility audit:
+//! Implements the six exotic protocols from the unified platform:
 //!   1. Non-local holographic communication (Heegaard-Floer relabeling isometry)
 //!   2. Temporal stasis (Newton-lock stationarity)
 //!   3. Artificial ghost-seed gravity wells (mass-congestion coupling)
 //!   4. Entropic refrigeration (holographic heat sink)
+//!   5. Holographic warp drive (3+1D ADM metric projection)
+//!   6. Modular state translocation (Stinespring de-render / re-render cycle)
 //!
 //! All state-vector arithmetic is performed at 512-bit precision using the
 //! `rug` crate, with a custom GMP/MPFR memory allocator to keep the HIL
