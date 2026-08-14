@@ -11,7 +11,6 @@ use crate::cad_physics::CadPhysicsValidator;
 use crate::causal_coordinate::CausalCoordinate;
 use crate::constants::{DARK_LEDGER_DIM, SPEED_OF_LIGHT_M_S};
 use crate::error::ExoticError;
-use crate::harmonic_audit::HarmonicAuditor;
 use crate::lab_hal::TelemetryBridge;
 use crate::lindblad::LindbladSolver;
 use crate::mass_congestion_engine::MassCongestionEngine;

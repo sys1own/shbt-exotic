@@ -6,12 +6,12 @@
 
 use pyo3::prelude::*;
 
-use crate::constants::{
-    BASELINE_TEMPERATURE_K, PHASE_JITTER_THRESHOLD_RAD,
-};
+use crate::constants::PHASE_JITTER_THRESHOLD_RAD;
 use crate::error::ExoticError;
 use crate::phase_rotation::{emergency_shutdown_compare, AlignedF32};
-use crate::phase_table::{PhaseCommand, COLLECTOR_DRAIN_V, GATE_BASE_TURN_ON_V};
+use crate::phase_table::{PhaseCommand, COLLECTOR_DRAIN_V};
+#[cfg(test)]
+use crate::phase_table::GATE_BASE_TURN_ON_V;
 
 /// DAC full-scale voltage used for the InP/InGaAs RF phase-shifter bias (V).
 pub const DAC_V_MAX: f64 = COLLECTOR_DRAIN_V;

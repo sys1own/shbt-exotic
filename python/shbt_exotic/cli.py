@@ -140,7 +140,7 @@ def run_audit(args: argparse.Namespace) -> int:
     # 13. Holographic warp-drive metric audit (10 m bubble)
     adm = ADMMetricAuditor()
     warp_audit = adm.audit(0.1)
-    warp_ok = warp_audit["passed"]
+    warp_status = "STATUS_NOMINAL_PASS" if warp_audit["passed"] else "FAIL"
 
     # 14. Modular state translocation audit with causal authorization
     transloc = ModularStateTranslocator()
@@ -148,6 +148,7 @@ def run_audit(args: argparse.Namespace) -> int:
     tar = CausalCoordinate(1.0, 0.0, 0.0, 0.0)
     rec, passive = transloc.translocate(state, src, tar, 0.421)
     causal_ok = len(rec) == len(state) and len(passive) == len(state)
+    causal_status = "STATUS_NOMINAL_PASS" if causal_ok else "FAIL"
 
     print("SHBT Exotic Technologies — Unified Audit")
     print("=" * 50)
@@ -184,10 +185,10 @@ def run_audit(args: argparse.Namespace) -> int:
     print(f"Reliability consumed:      {rel_consumed:.6e} cycles")
     print(f"Fatigue shifted Z:         {rel_impedance:.4f} MRayl")
     print(f"Reliability warn status:   {rel_warn_status}")
-    print(f"Warp metric passed:        {warp_ok}")
+    print(f"Warp metric status:        {warp_status}")
     print(f"Warp det error:            {warp_audit['max_determinant_error']:.6e}")
     print(f"Warp Gram λ_min:           {warp_audit['min_gram_eigenvalue']:.6e}")
-    print(f"Translocation causal pass: {causal_ok}")
+    print(f"Translocation status:      {causal_status}")
     print("-" * 50)
     print("512-bit closure-chain audit")
     print(f"I_l^*:                     {i_l_star:.6f}")
@@ -210,8 +211,8 @@ def run_audit(args: argparse.Namespace) -> int:
         and grid_ok
         and calibration_ok
         and reliability_ok
-        and warp_ok
-        and causal_ok
+        and warp_status == "STATUS_NOMINAL_PASS"
+        and causal_status == "STATUS_NOMINAL_PASS"
     )
     return 0 if all_ok else 1
 

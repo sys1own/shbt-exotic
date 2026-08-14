@@ -677,7 +677,7 @@ The simulator evaluates $\ell_{\rm He}(M)$ and $\Delta S_A$ for every candidate 
 
 The HIL fatal-threshold path is implemented with the bare-metal AVX-512 instruction sequence shown in Table~\ref{tab:avx512}.
 %
-\begin{table}[h]
+\begin{table}[t]
 \caption{\label{tab:avx512}AVX-512 HIL emergency-threshold pipeline.}
 \begin{ruledtabular}
 \begin{tabular}{p{1.6cm}p{2.3cm}p{3.3cm}}
@@ -819,7 +819,7 @@ The velocity-dependent density-multiplier compensation is
 %
 Here $N_{\rm total}=e^{33}\simeq\ExoticNTotal$ is the natural holographic bit ceiling and $c$ is the speed of light.
 
-\begin{table}[h]
+\begin{table}[t]
 \caption{512-bit bit-congestion wake constants used in the kinematic correction.}
 \begin{tabular}{cc}
 \hline\hline
@@ -884,7 +884,7 @@ guaranteeing that the physical control latency of $1.5\,$ns is never exceeded.
 
 The STEP-exported sapphire waveguide assembly is audited against the four critical FEA modes listed in Table~\ref{tab:resonance}.
 
-\begin{table}[h]
+\begin{table}[t]
 \caption{Critical resonance modes and damping requirements.}
 \label{tab:resonance}
 \begin{tabular}{lcccc}
@@ -911,7 +911,7 @@ and the resulting temperature rise in the InP support columns is computed using 
 
 Table~\ref{tab:acousticfea} collects the sapphire waveguide acoustic design values.  The single-crystal sapphire waveguide has impedance $Z_{\rm Al_2O_3}=44.178\,$MRayl, the quarter-wave matching layer targets $Z_m\approx1.1512\,$MRayl, and the selected alumina formulation provides the acoustic damping required by the resonance audit.
 
-\begin{table}[h]
+\begin{table}[t]
 \caption{Acoustic FEA parameters for megawatt transient management.}
 \label{tab:acousticfea}
 \begin{tabular}{lc}
@@ -974,6 +974,7 @@ Acoustic integrity & Airbridge flexural frequency $\neq 19.82\,$MHz & \ExoticStr
 
 All six technology sectors report nominal pass, with overall suite result \texttt{\ExoticStressAllPass{}}.
 
+\setcounter{section}{18}
 \section{Holographic warp metrics and ADM formalism}\label{sec:warp}
 
 The SHBT holographic warp drive is realized by projecting the $(26,8,312)$ character excitations onto a $3+1$D ADM foliation.  The lapse is fixed to unity, $\alpha=1$, the spatial metric is Euclidean, $\gamma_{ij}=\delta_{ij}$, and the shift vector is longitudinal,
