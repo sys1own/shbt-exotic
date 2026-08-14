@@ -490,7 +490,7 @@ so the closure chain \eqref{eq:closure} is satisfied: \ExoticClosureChainHolds{}
 \frac{dS_{\rm total}}{dt_{\rm lc}} = \Gamma_{\rm de} k_B \ln 2 + \frac{P_{\rm cool}}{T_c} = \ExoticEntropyArrow{} \;\mathrm{K}^{-1}\mathrm{W},
 \end{equation}
 %
-which is strictly positive (\ExoticEntropyArrowPositive{}).  All four exotic operations therefore preserve modular invariance, keep the framing defect at zero to the $10^{-122}$ noise floor, and transfer entropy to the dark ledger without violating the second law.
+which is strictly positive (\ExoticEntropyArrowPositive{}).  All six exotic operations therefore preserve modular invariance, keep the framing defect at zero to the $10^{-122}$ noise floor, and transfer entropy to the dark ledger without violating the second law.
 
 Table~\ref{tab:hil} lists the HIL safety thresholds.
 %
@@ -930,7 +930,7 @@ SK logical error floor & $\ExoticSKLogicalError$ \\
 
 \section{Integrated engineering stress suite}\label{sec:stress-suite}
 
-The production-ready simulator must survive four extreme operational scenarios and a CAD-to-physics consistency check.  The `EngineeringStressSuite` runs the following stress tests and emits the reliability matrix in Table~\ref{tab:reliability}.
+The production-ready simulator must survive six extreme operational scenarios and a CAD-to-physics consistency check.  The `EngineeringStressSuite` runs the following stress tests and emits the reliability matrix in Table~\ref{tab:reliability}.
 
 \subsection{Scenario A: kinematic congestion wake}
 Two 1-solar-mass ghost seeds are placed in a counter-rotating transit at $0.1\,c$.  The dynamic interference Lagrangian and velocity-dependent wake compensation keep $|\mu_{\rm comp}-\mu_0|\le10^{-12}$ across the entire 64-step transit.  Scenario status: \ExoticScenarioAStatus{}.
