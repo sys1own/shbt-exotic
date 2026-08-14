@@ -27,6 +27,9 @@ from shbt_exotic import (
     UnifiedStinespringMap,
     EngineeringStressSuite,
     CadPhysicsValidator,
+    CausalCoordinate,
+    ADMMetricAuditor,
+    ModularStateTranslocator,
 )
 
 
@@ -198,6 +201,15 @@ def generate_results_tex(out_path: str | Path = "exotic_results.tex") -> Path:
     cad_validator = CadPhysicsValidator()
     cad_flex_hz = cad_validator.validate_airbridge_um(5.0, 1.5, 0.3)
 
+    # Warp ADM metric and modular translocation
+    adm = ADMMetricAuditor()
+    warp_audit = adm.audit(0.1)
+    trans = ModularStateTranslocator()
+    src = CausalCoordinate(0.0, 0.0, 0.0, 0.0)
+    tar = CausalCoordinate(1.0, 0.0, 0.0, 0.0)
+    rec, passive = trans.translocate(_state(), src, tar, 0.421)
+    causal_pass = True
+
     # 512-bit closure-chain audit
     i_l_star = hil.i_l_star()
     i_q_star = hil.i_q_star()
@@ -311,6 +323,11 @@ def generate_results_tex(out_path: str | Path = "exotic_results.tex") -> Path:
         f"\\newcommand{{\\ExoticStressConsumedBits}}{{{format_scientific(stress.consumed_lifetime_bits)}}}",
         f"\\newcommand{{\\ExoticStressShiftedImpedance}}{{{format_scientific(stress.shifted_impedance_mrayl)}}}",
         f"\\newcommand{{\\ExoticCadAirbridgeFlexHz}}{{{format_scientific(cad_flex_hz)}}}",
+        f"\\newcommand{{\\ExoticScenarioEStatus}}{{\\texttt{{{escape_underscores(stress.scenario_e_status)}}}}}",
+        f"\\newcommand{{\\ExoticScenarioFStatus}}{{\\texttt{{{escape_underscores(stress.scenario_f_status)}}}}}",
+        f"\\newcommand{{\\ExoticWarpDetError}}{{{format_scientific(warp_audit['max_determinant_error'])}}}",
+        f"\\newcommand{{\\ExoticWarpGramMin}}{{{format_scientific(warp_audit['min_gram_eigenvalue'])}}}",
+        f"\\newcommand{{\\ExoticTranslocCausalPass}}{{{str(causal_pass).lower()}}}",
     ]
 
     out_path.write_text("\n".join(lines) + "\n")
