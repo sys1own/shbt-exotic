@@ -333,13 +333,13 @@ g_{\mu\nu} = \eta_{\mu\nu} + \sum_i h_{\mu\nu}^{(i)} + I_{\mu\nu} .
 %
 The 512-bit interference coefficients are
 %
-\begin{flushleft}
+\begin{quote}
 \label{eq:interference-coefficients}
 $\displaystyle I_{00} = \expandafter\seqsplit\expandafter{\ExoticInterferenceZeroZero{}}$\\
 $\displaystyle I_{11} = \expandafter\seqsplit\expandafter{\ExoticInterferenceOneOne{}}$\\
 $\displaystyle I_{22} = \expandafter\seqsplit\expandafter{\ExoticInterferenceTwoTwo{}}$\\
 $\displaystyle I_{33} = \expandafter\seqsplit\expandafter{\ExoticInterferenceThreeThree{}}$
-\end{flushleft}
+\end{quote}
 %
 They are stored and evaluated at 512-bit precision to keep the correction below the $10^{-122}$ holographic noise floor.  The bit-congestion radius that defines the minimum safe separation between overlapping seeds is
 %
@@ -548,6 +548,7 @@ with $Z_{\rm InP} \approx 23.1$~MRayl.  This is below the conservative InP struc
 The simulator selects an alumina formulation based on frequency and thickness: AAO-Epoxy ($Z=9.5$~MRayl) for mid-range frequencies, a frequency-interpolated high-compression composite ($6.5$--$9.47$~MRayl) for low frequencies, and colloidal nanocomposites for layers thinner than $10\,\mu$m.
 \end{sloppypar}
 
+\clearpage
 \section{Engineering synthesis: RF phase control and thermal flux maps}
 
 \subsection{RF emitter-array phase-modulation table}
@@ -821,13 +822,13 @@ Here $N_{\rm total}=e^{33}\simeq\ExoticNTotal$ is the natural holographic bit ce
 
 \begin{table}[t]
 \caption{512-bit bit-congestion wake constants used in the kinematic correction.}
-\begin{tabular}{cc}
+\begin{tabular}{cp{0.75\linewidth}}
 \hline\hline
-Constant & Leading value \\
+Constant & 512-bit value \\
 \hline
-$\alpha_{\rm wake}^{(1)}$ & \seqsplit{\ExoticWakeOne} \\
-$\alpha_{\rm wake}^{(2)}$ & \seqsplit{\ExoticWakeTwo} \\
-$\alpha_{\rm wake}^{(3)}$ & \seqsplit{\ExoticWakeThree} \\
+$\alpha_{\rm wake}^{(1)}$ & \begin{quote}\seqsplit{\ExoticWakeOne}\end{quote} \\
+$\alpha_{\rm wake}^{(2)}$ & \begin{quote}\seqsplit{\ExoticWakeTwo}\end{quote} \\
+$\alpha_{\rm wake}^{(3)}$ & \begin{quote}\seqsplit{\ExoticWakeThree}\end{quote} \\
 \hline\hline
 \end{tabular}
 \end{table}

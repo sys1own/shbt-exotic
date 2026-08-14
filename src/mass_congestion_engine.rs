@@ -363,6 +363,15 @@ impl MassCongestionEngine {
         self.wake_constants_f64_impl()
     }
 
+    /// 512-bit wake coefficients as exact decimal strings.
+    fn wake_constants_str(&self) -> [String; 3] {
+        [
+            WAKE_1_STR.to_string(),
+            WAKE_2_STR.to_string(),
+            WAKE_3_STR.to_string(),
+        ]
+    }
+
     /// Total holographic bit ceiling `N_total = e^{33}`.
     fn n_total(&self) -> f64 {
         self.n_total_impl()

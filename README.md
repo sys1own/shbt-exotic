@@ -243,9 +243,9 @@ shbt-exotic --audit
 | HIL status | `STATUS_NOMINAL_PASS` | nominal pass |
 | Hardware clock | `≤ 72 GHz` | `72 GHz` |
 | Routing bandwidth | `≤ 40 Gb/s` | `40 Gb/s` |
-| Kinematic detuning | `|μ_comp − μ_0| ≤ 10^{-12}` (Scenario A, 0.1 c) | nominal pass |
+| Kinematic detuning | `|μ_comp − μ_0| ≤ 10^{-12}` (Scenario A, 0.1 c) | verified |
 | Resonance damping | `η ≥ 1.15×10^{-3}`, `ζ ≥ 6.0×10^{-4}` for all four FEA modes | nominal pass |
-| Warp metric determinant | `|det(g) + 1| ≤ 10^{-12}` (Scenario E, 142.08 MW) | verified |
+| Warp metric | `|det(g) + 1| ≤ 10^{-12}` (Scenario E, 142.08 MW) | verified |
 | Gram positivity | `λ_min^Gram > 0` (Scenario E) | verified |
 | Causal authorization | Reject spacelike targets (Scenario F) | nominal pass |
 | Stress suite | All six scenarios + CAD-to-physics validator | all pass |

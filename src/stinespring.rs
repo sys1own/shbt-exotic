@@ -254,7 +254,7 @@ pub struct StinespringAudit {
     pub dark: Vec<(f64, f64)>,
 }
 
-/// High-level exotic engine that exposes the four protocols through a single
+/// High-level exotic engine that exposes the six protocols through a single
 /// entry point and performs a dual-target HIL audit.
 #[pyclass(name = "ExoticEngine")]
 pub struct ExoticEngine {
