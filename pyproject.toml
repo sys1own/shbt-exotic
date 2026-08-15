@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "shbt-exotic"
-version = "1.2.0"
+version = "1.2.1"
 description = "Unified SHBT exotic-technology simulator: non-local communication, temporal stasis, ghost seeds, entropic refrigeration, holographic warp drive, and modular state translocation."
 readme = "README.md"
 license = {text = "MIT"}
