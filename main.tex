@@ -109,7 +109,7 @@ The simulator is implemented in Rust with PyO3 bindings, using the `rug` crate f
 
 \section{The unified Stinespring map}
 
-\subsection{Definition}
+\subsection{The Stinespring dilation as artificial de-rendering}
 
 The dark ledger is introduced as an auxiliary Hilbert space $H_{\rm dark}$.  The unified Stinespring map
 %
@@ -205,6 +205,7 @@ B = \mathrm{diag}\!\left(
 %
 This block structure gives $10 + 23 = 33$ with the shared singlet counted once in the first dark slot.  The code exposes $B$ as a 33x33 list and each $11 \times 11$ block separately, and verifies that $B^\dagger B$ reproduces the Choi eigenvalues to the 512-bit noise floor.
 
+\clearpage
 \section{Non-local communication and temporal stasis}
 
 \subsection{Heegaard-Floer relabeling and Kojima's inequality}
@@ -354,7 +355,7 @@ The `MassCongestionEngine` computes the effective density multiplier from the su
 
 Table~\ref{tab:benchmarks} summarizes the live simulator benchmarks.
 %
-\begin{table*}[!t]
+\begin{table*}[t!]
 \centering
 \scriptsize
 \setlength{\tabcolsep}{1.5pt}
@@ -824,19 +825,18 @@ The velocity-dependent density-multiplier compensation is
 %
 Here $N_{\rm total}=e^{33}\simeq\ExoticNTotal$ is the natural holographic bit ceiling and $c$ is the speed of light.
 
-\begin{table}[!ht]
-\caption{512-bit bit-congestion wake constants used in the kinematic correction.}
-\small
-\begin{tabular}{cp{0.7\linewidth}}
+\begin{quote}\small
+\textbf{512-bit bit-congestion wake constants used in the kinematic correction.}
+\begin{tabular}{@{}p{0.18\linewidth}p{0.60\linewidth}@{}}
 \hline\hline
 Constant & 512-bit value \\
 \hline
-$\alpha_{\rm wake}^{(1)}$ & $ \expandafter\seqsplit\expandafter{\ExoticWakeOne{}} $ \\
-$\alpha_{\rm wake}^{(2)}$ & $ \expandafter\seqsplit\expandafter{\ExoticWakeTwo{}} $ \\
-$\alpha_{\rm wake}^{(3)}$ & $ \expandafter\seqsplit\expandafter{\ExoticWakeThree{}} $ \\
+$\alpha_{\rm wake}^{(1)}$ & $\displaystyle \expandafter\seqsplit\expandafter{\ExoticWakeOne{}}$ \\
+$\alpha_{\rm wake}^{(2)}$ & $\displaystyle \expandafter\seqsplit\expandafter{\ExoticWakeTwo{}}$ \\
+$\alpha_{\rm wake}^{(3)}$ & $\displaystyle \expandafter\seqsplit\expandafter{\ExoticWakeThree{}}$ \\
 \hline\hline
 \end{tabular}
-\end{table}
+\end{quote}
 
 For a representative slow transit with $v_{\rm eff}=10^3\,$m/s and $\Delta N=10^5$, the compensated multiplier is $\mu_{\rm comp}=\ExoticMuCompensated$, and the evaluated Lagrangian is $L_{\rm int}=\ExoticDynamicLagrangian$.
 The implementation raises an anomaly whenever $|\mu_{\rm comp}-\mu_0|>10^{-12}$, preserving eigenvector rigidity during high-velocity transits.
@@ -985,6 +985,7 @@ All six technology sectors report nominal pass, with overall suite result \textt
 
 
 \FloatBarrier
+\clearpage
 \setcounter{section}{18}
 \section{Holographic warp metrics and ADM formalism}\label{sec:warp}
 
