@@ -334,14 +334,12 @@ g_{\mu\nu} = \eta_{\mu\nu} + \sum_i h_{\mu\nu}^{(i)} + I_{\mu\nu} .
 \end{equation}
 %
 The 512-bit interference coefficients are
-%
-\begin{quote}\footnotesize
-\label{eq:interference-coefficients}
-$\displaystyle I_{00} = \expandafter\seqsplit\expandafter{\ExoticInterferenceZeroZero{}}$\\
-$\displaystyle I_{11} = \expandafter\seqsplit\expandafter{\ExoticInterferenceOneOne{}}$\\
-$\displaystyle I_{22} = \expandafter\seqsplit\expandafter{\ExoticInterferenceTwoTwo{}}$\\
-$\displaystyle I_{33} = \expandafter\seqsplit\expandafter{\ExoticInterferenceThreeThree{}}$
-\end{quote}
+\begin{itemize}\small
+\item $I_{00} = \expandafter\seqsplit\expandafter{\ExoticInterferenceZeroZero{}}$
+\item $I_{11} = \expandafter\seqsplit\expandafter{\ExoticInterferenceOneOne{}}$
+\item $I_{22} = \expandafter\seqsplit\expandafter{\ExoticInterferenceTwoTwo{}}$
+\item $I_{33} = \expandafter\seqsplit\expandafter{\ExoticInterferenceThreeThree{}}$
+\end{itemize}
 %
 They are stored and evaluated at 512-bit precision to keep the correction below the $10^{-122}$ holographic noise floor.  The bit-congestion radius that defines the minimum safe separation between overlapping seeds is
 %
@@ -354,29 +352,6 @@ The `MassCongestionEngine` computes the effective density multiplier from the su
 \section{Operational benchmarks}
 
 Table~\ref{tab:benchmarks} summarizes the live simulator benchmarks.
-%
-\begin{table*}[t!]
-\centering
-\scriptsize
-\setlength{\tabcolsep}{1.5pt}
-\caption{Live operational benchmarks.  Left: algebraic, thermodynamic, and mass-congestion sectors.  Right: HIL, closure-chain, and hardware sectors.}
-\label{tab:benchmarks}
-\begin{tabular}{p{1.9cm}p{2.3cm}p{2.6cm}|p{1.9cm}p{2.3cm}p{2.6cm}}
-\hline
-Quantity & Target & Measured & Quantity & Target & Measured \\
-\hline
-Stinespring isometry & $\Delta$ norm $< 10^{-122}$ & \ExoticStinespringIsometric{} & Framing defect (canonical) & $0.0$ & \ExoticCanonicalFramingDefect{} \\
-Stinespring partition & $33,10,23$ & \ExoticNLocal{}, \ExoticNActive{}, \ExoticNDark{} & Framing defect (active) & $< 10^{-12}$ & \ExoticFramingDefect{} \\
-Stinespring capacities & $10/33$, $23/33$ & \ExoticEtaA{}, \ExoticEtaD{} & Completed levels & $6$, $13$ & \ExoticILStar{}, \ExoticIQStar{} \\
-Mass-congestion coefficient & $1.326\times10^{-51}$ & $\ExoticAlphaSeed{} \, M_\odot$/bit & Entropy arrow & $>0$ & \ExoticEntropyArrow{} W/K \\
-Newton-lock $\gamma_{\rm stasis}$ & $>1$ at $10^{-15}$ & \ExoticStasisGamma{} & Closure chain holds & \texttt{true} & \ExoticClosureChainHolds{} \\
-Ghost-seed mass & $\approx 1\,M_\odot$ & \ExoticGhostMassSun{}\,$M_\odot$ & HIL status & SNP & \ExoticHilStatus{} \\
-Entropy-debt power & $\approx 906$~GW & \ExoticEntropyDebtPower{}~W & Hardware clock & $\le 72$~GHz & \ExoticFmaxHz{}~Hz \\
-High-energy transient & $142.08$~MW & \ExoticHighEnergyTransient{}~W & Routing bandwidth & $\le 40$~Gb/s & \ExoticRoutingBandwidthBps{}~bit/s \\
-Cooling power & $14.2$~$\mu$W & \ExoticCoolingPower{}~W & Hardware status & SNP & \ExoticHardwareStatus{} \\
-\hline
-\end{tabular}
-\end{table*}
 
 \noindent
 \begin{minipage}[t]{0.48\columnwidth}
@@ -825,18 +800,12 @@ The velocity-dependent density-multiplier compensation is
 %
 Here $N_{\rm total}=e^{33}\simeq\ExoticNTotal$ is the natural holographic bit ceiling and $c$ is the speed of light.
 
-\begin{quote}\small
-\textbf{512-bit bit-congestion wake constants used in the kinematic correction.}
-\begin{tabular}{@{}p{0.18\linewidth}p{0.60\linewidth}@{}}
-\hline\hline
-Constant & 512-bit value \\
-\hline
-$\alpha_{\rm wake}^{(1)}$ & $\displaystyle \expandafter\seqsplit\expandafter{\ExoticWakeOne{}}$ \\
-$\alpha_{\rm wake}^{(2)}$ & $\displaystyle \expandafter\seqsplit\expandafter{\ExoticWakeTwo{}}$ \\
-$\alpha_{\rm wake}^{(3)}$ & $\displaystyle \expandafter\seqsplit\expandafter{\ExoticWakeThree{}}$ \\
-\hline\hline
-\end{tabular}
-\end{quote}
+The 512-bit bit-congestion wake constants used in the kinematic correction are
+\begin{itemize}\small
+\item $\alpha_{\rm wake}^{(1)} = \expandafter\seqsplit\expandafter{\ExoticWakeOne{}}$
+\item $\alpha_{\rm wake}^{(2)} = \expandafter\seqsplit\expandafter{\ExoticWakeTwo{}}$
+\item $\alpha_{\rm wake}^{(3)} = \expandafter\seqsplit\expandafter{\ExoticWakeThree{}}$
+\end{itemize}
 
 For a representative slow transit with $v_{\rm eff}=10^3\,$m/s and $\Delta N=10^5$, the compensated multiplier is $\mu_{\rm comp}=\ExoticMuCompensated$, and the evaluated Lagrangian is $L_{\rm int}=\ExoticDynamicLagrangian$.
 The implementation raises an anomaly whenever $|\mu_{\rm comp}-\mu_0|>10^{-12}$, preserving eigenvector rigidity during high-velocity transits.
@@ -1020,6 +989,29 @@ State translocation is the controlled cycle of de-rendering, boundary relabeling
 Here $\hat D^{\rm derender}$ projects onto the 23/33 dark branch, $\hat O^{\rm excitation}(\theta)=e^{-i\theta Q}$ applies the U(1) phase-locked excitation, and $\hat T^{\partial}$ is the Heegaard-Floer boundary relabeling isometry.  Because the Stinespring map is an isometry and the boundary relabeling is a norm-preserving permutation, the reconstruction preserves the L2 norm to within the $10^{-122}$ holographic noise floor.
 
 Both translocation and non-local communication are gated by causal authorization: the target coordinate $x_{\rm tar}$ must lie in the causal future of the source, $x_{\rm tar}\in J^+(x_{\rm src})$.  The `ModularStateTranslocator` raises `AnomalyClosureError` when this condition is violated.  A successful future-directed translocation reports \ExoticTranslocCausalPass{}; Scenario~F verifies that a spacelike target is correctly rejected.
+
+\begin{table*}[t!]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{1.5pt}
+\caption{Live operational benchmarks.  Left: algebraic, thermodynamic, and mass-congestion sectors.  Right: HIL, closure-chain, and hardware sectors.}
+\label{tab:benchmarks}
+\begin{tabular}{p{1.9cm}p{2.3cm}p{2.6cm}|p{1.9cm}p{2.3cm}p{2.6cm}}
+\hline
+Quantity & Target & Measured & Quantity & Target & Measured \\
+\hline
+Stinespring isometry & $\Delta$ norm $< 10^{-122}$ & \ExoticStinespringIsometric{} & Framing defect (canonical) & $0.0$ & \ExoticCanonicalFramingDefect{} \\
+Stinespring partition & $33,10,23$ & \ExoticNLocal{}, \ExoticNActive{}, \ExoticNDark{} & Framing defect (active) & $< 10^{-12}$ & \ExoticFramingDefect{} \\
+Stinespring capacities & $10/33$, $23/33$ & \ExoticEtaA{}, \ExoticEtaD{} & Completed levels & $6$, $13$ & \ExoticILStar{}, \ExoticIQStar{} \\
+Mass-congestion coefficient & $1.326\times10^{-51}$ & $\ExoticAlphaSeed{} \, M_\odot$/bit & Entropy arrow & $>0$ & \ExoticEntropyArrow{} W/K \\
+Newton-lock $\gamma_{\rm stasis}$ & $>1$ at $10^{-15}$ & \ExoticStasisGamma{} & Closure chain holds & \texttt{true} & \ExoticClosureChainHolds{} \\
+Ghost-seed mass & $\approx 1\,M_\odot$ & \ExoticGhostMassSun{}\,$M_\odot$ & HIL status & SNP & \ExoticHilStatus{} \\
+Entropy-debt power & $\approx 906$~GW & \ExoticEntropyDebtPower{}~W & Hardware clock & $\le 72$~GHz & \ExoticFmaxHz{}~Hz \\
+High-energy transient & $142.08$~MW & \ExoticHighEnergyTransient{}~W & Routing bandwidth & $\le 40$~Gb/s & \ExoticRoutingBandwidthBps{}~bit/s \\
+Cooling power & $14.2$~$\mu$W & \ExoticCoolingPower{}~W & Hardware status & SNP & \ExoticHardwareStatus{} \\
+\hline
+\end{tabular}
+\end{table*}
 
 \section{Conclusion}
 
