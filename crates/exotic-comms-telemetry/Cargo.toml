@@ -1,0 +1,10 @@
+[package]
+name = "exotic-comms-telemetry"
+version = "2.0.0"
+edition = "2021"
+
+[lib]
+name = "exotic_comms_telemetry"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }

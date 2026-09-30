@@ -1,0 +1,9 @@
+[package]
+name = "exotic-hil-microkernel"
+version = "2.0.0"
+edition = "2021"
+
+[lib]
+name = "exotic_hil_microkernel"
+
+[dependencies]
