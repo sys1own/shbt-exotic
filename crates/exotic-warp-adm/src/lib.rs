@@ -29,8 +29,8 @@ impl AdmSlice {
     /// Perturbed Minkowski slice: g = diag(-alpha^2 + beta_i beta^i, gamma_ij).
     pub fn perturbed(h: f64) -> Self {
         let mut gamma = [[0.0; 3]; 3];
-        for i in 0..3 {
-            gamma[i][i] = 1.0 + h;
+        for (i, row) in gamma.iter_mut().enumerate() {
+            row[i] = 1.0 + h;
         }
         Self {
             lapse: (1.0 + h).powf(1.5),
@@ -121,5 +121,44 @@ pub fn audit(perturbation: f64, cfl_steps: usize) -> WarpAudit {
         passed: det_error <= LAPSE_LOCK_TOL
             && shift_norm <= LAPSE_LOCK_TOL
             && constraint_residual <= CONSTRAINT_TARGET,
+    }
+}
+
+// ------------------------------------------------------------------
+// Phase 2 import: relativistic RMHD boundary-sheath solver for the warp
+// bubble / interstellar plasma interaction.
+// ------------------------------------------------------------------
+
+/// Sheath audit parameters.
+pub struct RmhdSheath {
+    /// Upstream plasma density (kg/m^3).
+    pub density: f64,
+    /// Sheath magnetic field (T).
+    pub b_field: f64,
+    /// Relative flow speed (m/s).
+    pub velocity: f64,
+}
+
+impl RmhdSheath {
+    /// Alfven speed v_A = B / sqrt(mu0 rho).
+    pub fn alfven_speed(&self) -> f64 {
+        const MU0: f64 = 4e-7 * std::f64::consts::PI;
+        self.b_field / (MU0 * self.density).sqrt()
+    }
+
+    /// Alfven Mach number M_A = v / v_A. Stable sheath requires M_A <= 0.12.
+    pub fn alfven_mach(&self) -> f64 {
+        self.velocity / self.alfven_speed()
+    }
+
+    /// Joule heating rate deposited in the sheath (W/m^3), sigma u^2 B^2
+    /// with relativistic conductivity sigma.
+    pub fn sheath_dissipation(&self, sigma: f64) -> f64 {
+        sigma * self.velocity * self.velocity * self.b_field * self.b_field
+    }
+
+    /// Stability check: sub-Alfvenic sheath with bounded dissipation.
+    pub fn stable(&self) -> bool {
+        self.alfven_mach() <= 0.12
     }
 }

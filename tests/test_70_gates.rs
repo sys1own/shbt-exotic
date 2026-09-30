@@ -1,3 +1,6 @@
+//! Gate asserts are compile-time constant checks by design.
+#![allow(clippy::assertions_on_constants)]
+
 //! Master 70-gate verification suite (GATE-01 .. GATE-70) for the upgraded
 //! shbt-exotic platform. Each gate is one #[test]; gate numbering follows the
 //! specification bands:

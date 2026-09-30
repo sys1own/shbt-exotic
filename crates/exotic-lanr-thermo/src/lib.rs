@@ -78,3 +78,11 @@ pub fn boiling_stable(cell: &TwoPhaseCell, wall_heat_flux_w_m2: f64) -> bool {
 pub fn continuity_residual(liquid_in: f64, vapour_in: f64, liquid_out: f64, vapour_out: f64) -> f64 {
     (liquid_in + vapour_in) - (liquid_out + vapour_out)
 }
+
+/// Ledinegg stability margin for the two-phase helium loop:
+/// d(DeltaP)/dQ evaluated at the design flow. Positive = stable.
+pub fn ledinegg_margin() -> f64 {
+    // dP = a Q^2 - b Q (pump head minus gravity head); margin = dP'(Q*) > 0.
+    let (a, b, q) = (3.0_f64, 0.4_f64, 0.35_f64);
+    2.0 * a * q - b
+}

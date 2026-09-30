@@ -1,0 +1,16 @@
+[package]
+name = "exotic-extended-audit"
+version = "2.0.0"
+edition = "2021"
+description = "EXT-01..50 extended verification checks for shbt-exotic (shbt-power lineage)"
+license = "MIT"
+
+[dependencies]
+exotic-translocation = { path = "../exotic-translocation" }
+exotic-stasis-thermo = { path = "../exotic-stasis-thermo" }
+exotic-lanr-thermo = { path = "../exotic-lanr-thermo" }
+exotic-ghost-gravity = { path = "../exotic-ghost-gravity" }
+exotic-warp-adm = { path = "../exotic-warp-adm" }
+exotic-comms-telemetry = { path = "../exotic-comms-telemetry" }
+exotic-eda-cad = { path = "../exotic-eda-cad" }
+exotic-hil-microkernel = { path = "../exotic-hil-microkernel" }

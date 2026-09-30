@@ -85,8 +85,8 @@ impl ADMMetricAuditor {
         domain_radius_m: f64,
         grid_points: usize,
     ) -> Self {
-        let n = grid_points.min(MAX_WARP_GRID_POINTS).max(5);
-        let n = if n % 2 == 0 { n + 1 } else { n };
+        let n = grid_points.clamp(5, MAX_WARP_GRID_POINTS);
+        let n = if n.is_multiple_of(2) { n + 1 } else { n };
         Self {
             bubble_radius_m,
             wall_steepness_per_m,

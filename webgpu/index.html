@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>shbt-exotic WebGPU spacetime visualizer</title>
+<style>
+  body { margin: 0; background: #0b0e14; color: #c9d1d9; font-family: monospace; }
+  #hud { position: fixed; top: 8px; left: 10px; z-index: 2; white-space: pre; }
+  canvas { display: block; width: 100vw; height: 100vh; }
+</style>
+</head>
+<body>
+<div id="hud">shbt-exotic WebGPU visualizer — initializing…</div>
+<canvas id="gfx"></canvas>
+<script type="module">
+// Zero-dependency WebGPU visualizer (shbt-recon sglt-webgpu-vis lineage).
+// Renders the Alcubierre-ADM contraction/expansion zones, ghost-seed
+// gravity wells and causal lightcones onto a metric grid.
+
+const N = 512;                     // metric grid resolution (client-side)
+const hud = document.getElementById("hud");
+
+const fieldShader = `
+struct MetricField {
+    g00: f32, g01: f32, g02: f32, g03: f32,
+    shift_x: f32, shift_y: f32, shift_z: f32, ds2: f32,
+};
+@group(0) @binding(0) var<storage, read> inputFields: array<MetricField>;
+@group(0) @binding(1) var<storage, read_write> outRgba: array<vec4<f32>>;
+
+@compute @workgroup_size(16, 16)
+fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let width = ${N}u;
+    let index = gid.y * width + gid.x;
+    if (index >= arrayLength(&inputFields)) { return; }
+    let field = inputFields[index];
+    let shift_mag = sqrt(field.shift_x*field.shift_x +
+                         field.shift_y*field.shift_y +
+                         field.shift_z*field.shift_z);
+    var color = vec4<f32>(0.0, 0.0, 0.0, 1.0);
+    if (field.ds2 > 0.0) {
+        color = vec4<f32>(1.0, 0.0, 0.0, 1.0);          // causal violation
+    } else {
+        let g = min(shift_mag * 0.9, 1.0);
+        color = vec4<f32>(0.15*g, 0.45*g + 0.1, 1.0 - 0.6*g, 1.0);
+    }
+    outRgba[index] = color;
+}
+`;
+
+function generateField(t) {
+    // Alcubierre slice + ghost-seed well + lightcone mask, N x N grid.
+    const data = new Float32Array(N * N * 8);
+    for (let y = 0; y < N; y++) {
+        for (let x = 0; x < N; x++) {
+            const i = (y * N + x) * 8;
+            const px = (x / N - 0.5) * 8.0;
+            const py = (y / N - 0.5) * 8.0;
+            const r = Math.hypot(px, py) + 1e-6;
+            // Alcubierre shaping around the moving bubble center.
+            const bx = 1.5 * Math.sin(t * 0.7);
+            const dr = Math.hypot(px - bx, py) + 1e-6;
+            const f = (Math.tanh(4.0*(dr+1.5)) - Math.tanh(4.0*(dr-1.5))) /
+                      (2.0 * Math.tanh(6.0));
+            const gx = (px - bx) / dr * f;
+            // Ghost-seed well: Gaussian at (-2, 1).
+            const gw = Math.exp(-((px+2)**2 + (py-1)**2) / 0.8);
+            const ds2 = -1.0 + gx*gx + (r < 0.6 ? 1.2 : 0.0); // lightcone wall
+            data[i+0] = -Math.exp(-f) - gw;       // g00 (lapse^2)
+            data[i+1] = 0; data[i+2] = 0; data[i+3] = 0;
+            data[i+4] = gx;                        // shift_x
+            data[i+5] = 0.2 * gw;                  // shift_y
+            data[i+6] = 0;
+            data[i+7] = ds2;
+        }
+    }
+    return data;
+}
+
+async function main() {
+    if (!navigator.gpu) {
+        hud.textContent = "WebGPU not available in this browser (fallback: CPU render)";
+        cpuFallback();
+        return;
+    }
+    const adapter = await navigator.gpu.requestAdapter();
+    const device = await adapter.requestDevice();
+    const canvas = document.getElementById("gfx");
+    const dctx = canvas.getContext("2d");
+
+    const module = device.createShaderModule({ code: fieldShader });
+    const pipe = device.createComputePipeline({
+        layout: "auto",
+        compute: { module, entryPoint: "main" },
+    });
+    const bytes = N * N * 8 * 4;
+    const inputBuf = device.createBuffer({
+        size: bytes, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+    });
+    const outBuf = device.createBuffer({
+        size: N * N * 16, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC,
+    });
+    const readBuf = device.createBuffer({
+        size: N * N * 16, usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
+    });
+    const bind = device.createBindGroup({
+        layout: pipe.getBindGroupLayout(0),
+        entries: [
+            { binding: 0, resource: { buffer: inputBuf } },
+            { binding: 1, resource: { buffer: outBuf } },
+        ],
+    });
+    // Canvas blit path: compute -> buffer -> read back -> ImageBitmap canvas.
+    const c2 = document.createElement("canvas");
+    c2.width = N; c2.height = N;
+    const ctx2 = c2.getContext("2d");
+    canvas.width = innerWidth; canvas.height = innerHeight;
+
+    async function frame(t) {
+        device.queue.writeBuffer(inputBuf, 0, generateField(t / 1000));
+        const enc = device.createCommandEncoder();
+        const pass = enc.beginComputePass();
+        pass.setPipeline(pipe); pass.setBindGroup(0, bind);
+        pass.dispatchWorkgroups(Math.ceil(N / 16), Math.ceil(N / 16));
+        pass.end();
+        enc.copyBufferToBuffer(outBuf, 0, readBuf, 0, N * N * 16);
+        device.queue.submit([enc.finish()]);
+        await readBuf.mapAsync(GPUMapMode.READ);
+        const px = new Float32Array(readBuf.getMappedRange().slice(0));
+        readBuf.unmap();
+        const img = ctx2.createImageData(N, N);
+        for (let i = 0; i < N * N; i++) {
+            img.data[i*4+0] = Math.min(255, px[i*4+0] * 255);
+            img.data[i*4+1] = Math.min(255, px[i*4+1] * 255);
+            img.data[i*4+2] = Math.min(255, px[i*4+2] * 255);
+            img.data[i*4+3] = 255;
+        }
+        ctx2.putImageData(img, 0, 0);
+        ctx.canvas.getContext ? 0 : 0;
+        dctx.drawImage(c2, 0, 0, canvas.width, canvas.height);
+        hud.textContent =
+`shbt-exotic WebGPU visualizer
+ grid ${N}x${N} | Alcubierre-ADM zones, ghost wells, lightcones
+ t = ${(t/1000).toFixed(1)} s`;
+        requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+}
+
+function cpuFallback() {
+    const canvas = document.getElementById("gfx");
+    const ctx = canvas.getContext("2d");
+    canvas.width = innerWidth; canvas.height = innerHeight;
+    const off = document.createElement("canvas");
+    off.width = N; off.height = N;
+    const octx = off.getContext("2d");
+    function frame(t) {
+        const f = generateField(t / 1000);
+        const img = octx.createImageData(N, N);
+        for (let i = 0; i < N * N; i++) {
+            const ds2 = f[i*8+7], sm = Math.hypot(f[i*8+4], f[i*8+5], f[i*8+6]);
+            if (ds2 > 0) { img.data.set([255, 0, 0, 255], i*4); }
+            else {
+                const g = Math.min(sm * 0.9, 1);
+                img.data.set([38*g|0, (115*g+25)|0, 255-153*g|0, 255], i*4);
+            }
+        }
+        octx.putImageData(img, 0, 0);
+        ctx.drawImage(off, 0, 0, canvas.width, canvas.height);
+        hud.textContent = `shbt-exotic visualizer (CPU fallback)  t=${(t/1000).toFixed(1)}s`;
+        requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+}
+
+main();
+</script>
+</body>
+</html>

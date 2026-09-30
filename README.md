@@ -1,6 +1,6 @@
 # Static Holographic Boundary Theory (SHBT) — Unified Spacetime Engineering Platform
 
-### `shbt-exotic` — Six-Protocol Exotic Technologies Simulator, Bare-Metal C11 Microkernel, and 70-Gate Verification Suite
+### `shbt-exotic` — Six-Protocol Exotic Technologies Simulator, Bare-Metal C11 Microkernel, 70-Gate + 50-EXT Verification Suite, and Z3 Formal Proofs
 
 ![Gates](https://img.shields.io/badge/gates-70%2F70%20PASS-brightgreen)
 ![Edition](https://img.shields.io/badge/rust-2021-orange)
@@ -120,15 +120,20 @@ sys1own/shbt-exotic
 │   ├── exotic-comms-telemetry/   # TMSV, MWPM TQEC, SPSC rings, 128B frames
 │   ├── exotic-hil-microkernel/   # MMIO mirror, SECDED(72,64), Givens, crowbar
 │   ├── exotic-uq-montecarlo/     # hyper-dual AD, GUM S1/S2 Monte Carlo
-│   └── exotic-eda-cad/           # GDSII, ISO 10303-21 STEP, Touchstone S2P
+│   ├── exotic-eda-cad/           # GDSII, ISO 10303-21 STEP, Touchstone S2P
+│   └── exotic-extended-audit/    # EXT-01..50 extended checks (shbt-power)
 ├── kernel/
 │   ├── include/shbt_exotic_hardware.h   # SHBT-MMIO-EXOTIC register map
 │   ├── src/shbt_exotic_kernel.c         # freestanding C11 kernel
 │   ├── linker.ld                        # .stinespring_frame arena (2112 B)
 │   └── Makefile                         # → build/shbt_exotic_reference.so
 ├── src/                          # PyO3 bindings + legacy sub-engines
-├── python/shbt_exotic/           # orchestration package (cli/, latex, plots)
+├── python/shbt_exotic/           # orchestration package (cli/, latex, plots,
+│                                 #   faults.py, exporters.py, optimize.py)
+├── formal/                       # Z3 release-gate proofs (4x unsat)
+├── webgpu/                       # zero-dep WGSL spacetime visualizer
 ├── tests/test_70_gates.rs        # master 70-gate verification suite
+├── tests/test_extended_checks.rs # EXT-01..50 extended checks
 ├── verification_matrix.json      # generated gate audit report
 ├── eda_outputs/                  # generated GDSII/STEP/S2P artifacts
 ├── main.tex                      # executable paper source
@@ -202,6 +207,17 @@ Unified orchestrator (`python -m shbt_exotic.cli`):
 | `verify` | Runs the 70-gate suite, writes `verification_matrix.json`, regenerates `exotic_results.tex` |
 | `export-eda` | Synthesizes the 8x8 GDSII mask, ISO 10303-21 STEP model and S2P interposer into `eda_outputs/` |
 | `paper` | Runs `latexmk -pdf -jobname=exotic main.tex` to produce `exotic.pdf` |
+| `inject-faults` | POSIX SHM fault injection into `.stinespring_frame` — SECDED Hamming(72,64) + MWPM decode under faults (e.g. `inject-faults --rate 10.0 --duration 5.0`) |
+| `export-fits` | CCZ4 foliation + warp lensing tensors as a FITS v4.0 cube with WCS headers |
+| `export-hdf5` | Per-engine state trajectories ($N_{local} \in [10^{23},10^{28}]$) into an HDF5 datacube |
+| `optimize` | Pure-NumPy NSGA-III Pareto frontier (warp $v_s$ / LANR margin / stasis retention) |
+
+```bash
+python -m shbt_exotic.cli inject-faults --rate 10.0 --target .stinespring_frame --duration 5.0
+python -m shbt_exotic.cli export-fits --out exotic_ccz4.fits
+python -m shbt_exotic.cli export-hdf5 --out exotic_trajectories.h5
+python3 -m pytest formal/     # 4/4 Z3 proofs discharge unsat
+```
 
 Legacy flags (`--audit`, `--braid-openqasm`, `--export-gds`,
 `--export-step`) remain supported.
@@ -228,8 +244,25 @@ The master suite `tests/test_70_gates.rs` audits, in order:
 | `GATE-51..60` | LANR ledger \(999.054\ \mathrm{kW}\), Landauer debt \(906.00\ \mathrm{kW}\), \(+93.054\ \mathrm{kW}\) margin, two-phase boiling stability |
 | `GATE-61..70` | TMSV metrology, TQEC decode \(\le 45\ \mathrm{ns}\), SPSC FIFO, hyper-dual UQ 3-sigma bounds, EDA S2P impedance \(50.12 \pm 0.80\ \Omega\) |
 
-Current status: **70/70 gates pass** (`verification_matrix.json`), plus the
-105 Rust unit tests and the 68-test Python suite.
+Current status: **120/120 checks pass** — 70/70 `GATE` plus 50/50 `EXT`
+(`verification_matrix.json`), plus the Rust unit tests and Python suite.
+
+The extended suite `tests/test_extended_checks.rs` (`exotic-extended-audit`,
+shbt-power lineage) audits, in order:
+
+| Checks | Domain |
+|:---|:---|
+| `EXT-01..10` | Ford-Roman quantum inequalities, Casimir-Polder stability, Hawking flux suppression, quantum interest, trace/mode mixing, squeezing floor, horizon backreaction |
+| `EXT-11..20` | Kojima entropy zero-leakage, Torelli $\mathrm{Sp}(2g,\mathbb{Z})$ invariance, capacity conservation, 2PN authorization, observer memory packets $C_{op}\le C_{local}$, GST healing |
+| `EXT-21..30` | Coffin-Manson $N_f\ge10^5$, Kapitza stability, Ledinegg $d(\Delta P)/dQ>0$, Chaboche saturation, McNabb-Foster boundedness, LANR +93.054 kW surplus |
+| `EXT-31..40` | $\kappa(G_K)<10^4$, RMHD Alfvén Mach $\le0.12$, bit-stepping jitter $<1.2$ ns at 50.518 kHz, traction rigidity $|{\mu}_{comp}-\mu_0|\le10^{-12}$, PCSS/SiC |
+| `EXT-41..50` | SPSC $\ge504$ Gbps, TQEC $\le45$ ns, $S_{11}\le-28$ dB, SECDED correct/DUE, 128 B MMIO @ `0x70000000`, 2112 B arena split, CRC-32C, Givens norm |
+
+`formal/formal_verification.py` (shbt-qc lineage) discharges four Z3 release-gate
+proofs, all `unsat`: causal authorization contract, Stinespring isometry
+$\|V^\dagger V\psi-\psi\|\le10^{-15}$, ADM lapse definiteness
+($\beta^i=0 \Rightarrow \det\gamma>0,\ \alpha>0$), and entropy
+monotonicity $dS_{\mathrm{total}}/dt_{\mathrm{lc}}\ge0$.
 
 | Quantity | Value |
 |:---|---:|
@@ -259,7 +292,19 @@ Current status: **70/70 gates pass** (`verification_matrix.json`), plus the
 | [`sys1own/shbt-ghost`](https://github.com/sys1own/shbt-ghost) | Fast interlocks & metric control | CCZ4 stabilization, multi-seed superposition, PCSS crowbars, SiC recovery shunts |
 | [`sys1own/shbt-recon`](https://github.com/sys1own/shbt-recon) | Macroscopic states & telemetry | \(V_{\text{unified}}^{\text{macro}}\) tracking, MWPM TQEC decoder, dual-cacheline C-ABI, POSIX SPSC rings |
 | [`sys1own/shbt-sglt`](https://github.com/sys1own/shbt-sglt) | Relativistic optics & cryogenics | TMSV metrology, 2PN optics, wake compensation, minimum-jerk profiles |
-| [`sys1own/shbt-exotic`](https://github.com/sys1own/shbt-exotic) | This platform | Unified six-protocol spacetime-engineering suite, 10-crate workspace, C11 kernel, 70-gate audit, executable paper |
+| [`sys1own/shbt-exotic`](https://github.com/sys1own/shbt-exotic) | This platform | Unified six-protocol spacetime-engineering suite, 11-crate workspace, C11 kernel, 70+50-check audit, Z3 proofs, executable paper |
+
+### Phase-2 two-way logic transfer
+
+| From | Into `shbt-exotic` | Exported back |
+|:---|:---|:---|
+| `shbt-precision` | `CausalPoint` observer history crystallization + $C_{op}\le C_{local}$ entropy budget | memory-packet error contract |
+| `shbt-cf` | 5-layer Chaboche RPI hardening solver; pure-NumPy NSGA-III optimizer | cryo-stack fatigue envelope data |
+| `shbt-ghost` | McNabb-Foster multi-trap diffusion; 50.518 kHz reactionless traction drive | rigidity/jitter audit results |
+| `shbt-power` | EXT-01..50 extended verification architecture | 120-check verification matrix format |
+| `shbt-qc` | `formal/` Z3 release-gate proof harness | exotic-platform invariant set |
+| `shbt-sglt` | `inject-faults` POSIX SHM engine, SECDED+MWPM under faults | stinespring-arena fault model |
+| `shbt-recon` | WebGPU WGSL compute shaders (ADM field visualizer) | exotic metric field generator |
 
 ---
 

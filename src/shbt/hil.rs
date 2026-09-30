@@ -111,9 +111,9 @@ impl ThermalHILMonitor {
 
     /// Thermal audit status.
     pub fn audit_impl(&self) -> &'static str {
-        if self.volume_cm3_impl() < MIN_DISSIPATION_VOLUME_CM3 {
-            "STATUS_EMERGENCY_SHUTDOWN"
-        } else if self.final_temperature_k_impl() > self.t_c {
+        if self.volume_cm3_impl() < MIN_DISSIPATION_VOLUME_CM3
+            || self.final_temperature_k_impl() > self.t_c
+        {
             "STATUS_EMERGENCY_SHUTDOWN"
         } else {
             "STATUS_NOMINAL_PASS"

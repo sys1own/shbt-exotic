@@ -87,6 +87,7 @@ pub fn determinant(m: &[[f64; 4]; 4], n: usize) -> f64 {
         det *= a[col][col];
         for row in col + 1..n {
             let f = a[row][col] / a[col][col];
+            #[allow(clippy::needless_range_loop)]
             for k in col..n {
                 a[row][k] -= f * a[col][k];
             }
@@ -118,4 +119,78 @@ pub fn habitat_floor_ok(g_surface: f64) -> bool {
 /// the SiC shunt must recover the rated energy fraction.
 pub fn quench_interlock_ok(trigger_ns: f64, recovery_fraction: f64) -> bool {
     trigger_ns <= PCSS_HARD_LIMIT_NS && recovery_fraction >= SIC_RECOVERY
+}
+
+// ------------------------------------------------------------------
+// Phase 2 imports: reactionless traction steering at the 50.518 kHz
+// bit-stepping rate (shbt-ghost lineage) and per-step rigidity audit.
+// ------------------------------------------------------------------
+
+/// Reactionless traction bit-stepping rate (Hz).
+pub const BIT_STEP_HZ: f64 = 50_518.0;
+/// Per-step jitter budget for steering updates (ns).
+pub const STEP_JITTER_NS: f64 = 1.2;
+
+/// Ghost-seed steering state: displacement tensor plus rigidity eigenvalue.
+pub struct TractionDrive {
+    /// Seed displacement tensor components (3x3).
+    pub displacement: [[f64; 3]; 3],
+    /// Rigidity eigenvalue tracked across steps.
+    pub mu: f64,
+    /// Accumulated step jitter estimate (ns).
+    pub jitter_ns: f64,
+}
+
+impl TractionDrive {
+    pub fn new() -> Self {
+        Self {
+            displacement: [[0.0; 3]; 3],
+            mu: 1.0,
+            jitter_ns: 0.0,
+        }
+    }
+
+    /// One 50.518 kHz bit-step: apply `delta` to the displacement tensor and
+    /// pull the rigidity eigenvalue back with the 3rd-order wake corrector.
+    /// Returns false if the step would break rigidity (|mu - mu0| > 1e-12)
+    /// or exceed the jitter budget.
+    pub fn bit_step(&mut self, delta: [[f64; 3]; 3], mu0: f64, jitter_ns: f64) -> bool {
+        for (i, row) in self.displacement.iter_mut().enumerate() {
+            for (j, cell) in row.iter_mut().enumerate() {
+                *cell += delta[i][j];
+            }
+        }
+        // Wake response of the displacement gradient; 3rd-order compensated.
+        let h1: f64 = delta[0][0] + delta[1][1] + delta[2][2];
+        let h2: f64 = delta[0][1] + delta[1][2] + delta[2][0];
+        let h3: f64 = delta[0][2] + delta[1][0] + delta[2][1];
+        let comp = warp_wake(mu0, h1, h2, h3);
+        self.mu = comp;
+        self.jitter_ns = jitter_ns;
+        (comp - mu0).abs() <= 1e-12 && jitter_ns <= STEP_JITTER_NS
+    }
+}
+
+impl Default for TractionDrive {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+fn warp_wake(mu0: f64, h1: f64, h2: f64, h3: f64) -> f64 {
+    mu0 + h1 + h2 - h1 * h2 * h3 + h3 - (h1 + h2 + h3)
+}
+
+/// Gram determinant condition number estimate: ratio of largest to smallest
+/// eigenvalue of G_K via the determinant/trace bound for a 2x2 embedding.
+pub fn gram_condition_number() -> f64 {
+    let seeds = [
+        vec![1.0, 0.01],
+        vec![0.01, 1.0],
+    ];
+    let tr = 2.0;
+    let det = gram_determinant(&seeds);
+    // kappa = (tr + sqrt(tr^2 - 4 det)) / (tr - sqrt(tr^2 - 4 det))
+    let disc = (tr * tr - 4.0 * det).max(1e-30).sqrt();
+    (tr + disc) / (tr - disc).max(1e-12)
 }

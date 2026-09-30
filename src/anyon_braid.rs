@@ -225,7 +225,7 @@ impl FibonacciBraidCompiler {
     fn target_unitary(&self) -> Vec<Vec<(f64, f64)>> {
         self.target
             .iter()
-            .map(|row| row.iter().copied().collect())
+            .map(|row| row.to_vec())
             .collect()
     }
 
