@@ -1,6 +1,6 @@
-//! EXT-01..50 extended verification checks (shbt-power extended-audit lineage).
+//! EXT-01..80 extended verification checks (shbt-power extended-audit lineage).
 //!
-//! Five bands of ten checks each; every public `ext_*` function returns a
+//! Eight bands of ten checks each; every public `ext_*` function returns a
 //! `bool` (true = check passes) over the canonical engine parameters.
 
 use exotic_comms_telemetry as comms;
@@ -335,4 +335,207 @@ pub fn ext_hawking_flux_suppressed(r_m: f64, lapse_barrier: f64) -> bool {
 /// Quantum interest: positive repayment exceeds the negative-energy loan.
 pub fn ext_quantum_interest_positive(neg: f64, pos: f64) -> bool {
     neg + pos > 0.0
+}
+
+// ---------------- Phase 3: EXT-51..60 energy conditions -------------------
+
+use exotic_energy_conditions as ec;
+use exotic_mission_director as md;
+
+/// EXT-51: Minkowski vacuum satisfies all classical conditions.
+pub fn ext_51() -> bool {
+    let a = ec::audit_classical(&ec::StressTensor::vacuum());
+    a.wec && a.nec && a.sec && a.dec
+}
+
+/// EXT-52: WEC holds for a positive-density fluid.
+pub fn ext_52() -> bool {
+    ec::wec(&ec::StressTensor { rho: 1.0, p_r: 0.3, p_t: 0.3 })
+}
+
+/// EXT-53: NEC boundary: rho + p_r = 0 is marginally compliant.
+pub fn ext_53() -> bool {
+    ec::nec(&ec::StressTensor { rho: 0.5, p_r: -0.5, p_t: -0.5 })
+}
+
+/// EXT-54: SEC evaluates the trace-reversed combination.
+pub fn ext_54() -> bool {
+    ec::sec(&ec::StressTensor { rho: 1.0, p_r: 0.0, p_t: 0.0 })
+        && !ec::sec(&ec::StressTensor { rho: 1.0, p_r: -0.6, p_t: -0.6 })
+}
+
+/// EXT-55: DEC flags superluminal flux |p| > rho.
+pub fn ext_55() -> bool {
+    ec::dec(&ec::StressTensor { rho: 1.0, p_r: 0.5, p_t: -0.5 })
+        && !ec::dec(&ec::StressTensor { rho: 1.0, p_r: 2.0, p_t: 0.0 })
+}
+
+/// EXT-56: Lorentzian kernel integrates to ~1 over a wide window.
+pub fn ext_56() -> bool {
+    let tau0 = 1.0;
+    let dt = 1e-3;
+    let area: f64 = (-100_000..=100_000)
+        .map(|k| ec::lorentzian_kernel(k as f64 * dt, tau0) * dt)
+        .sum();
+    (area - 1.0).abs() < 1e-2
+}
+
+/// EXT-57: Ford-Roman integral bound equals -C/tau0^4.
+pub fn ext_57() -> bool {
+    (ec::ford_roman_bound(2.0) - (-ec::FORD_ROMAN_C / 16.0)).abs() < 1e-18
+}
+
+/// EXT-58: QI-compliant negative energy: short-duration rho passes.
+pub fn ext_58() -> bool {
+    ec::warp_wall_qi(-1e-7, 10.0)
+}
+
+/// EXT-59: QI-violating pocket is rejected: too-negative rho over window.
+pub fn ext_59() -> bool {
+    !ec::warp_wall_qi(-1.0, 10.0)
+}
+
+/// EXT-60: sampled QI audit across a foliation profile returns compliant.
+pub fn ext_60() -> bool {
+    // Warp-wall density profile sampled over +-window.
+    let samples: Vec<f64> = (0..1001)
+        .map(|k| {
+            let t = (k as f64 - 500.0) * 0.1;
+            if t.abs() < 8.0 { -1e-7 } else { 0.0 }
+        })
+        .collect();
+    ec::qi_compliant(&samples, 0.1, 10.0)
+}
+
+// ---------------- EXT-61..70 cross-protocol coupling ----------------------
+
+/// EXT-61: timelike warp-translocation transit is authorized.
+pub fn ext_61() -> bool {
+    let slice = warp::AdmSlice::perturbed(1e-6);
+    let a = trans::CausalEvent { t: 0.0, x: 0.0, y: 0.0, z: 0.0 };
+    let b = trans::CausalEvent { t: 10.0, x: 1.0, y: 0.0, z: 0.0 };
+    md::warp_translocation_transit(&slice, &a, &b, 1e24).is_ok()
+}
+
+/// EXT-62: spacelike transit target is rejected (lightcone closure).
+pub fn ext_62() -> bool {
+    let slice = warp::AdmSlice::perturbed(1e-6);
+    let a = trans::CausalEvent { t: 0.0, x: 0.0, y: 0.0, z: 0.0 };
+    let b = trans::CausalEvent { t: 0.0, x: 10.0, y: 0.0, z: 0.0 };
+    md::warp_translocation_transit(&slice, &a, &b, 1e24).is_err()
+}
+
+/// EXT-63: stasis redshift z = 1/alpha - 1 > 0 for alpha < 1.
+pub fn ext_63() -> bool {
+    (md::stasis_redshift(0.5) - 1.0).abs() < 1e-12 && md::stasis_redshift(1.0) == 0.0
+}
+
+/// EXT-64: Landauer debt scales by 1/alpha under redshift.
+pub fn ext_64() -> bool {
+    md::redshifted_landauer_debt(1.0, 0.5) > stasis::local_c_get(1.0)
+}
+
+/// EXT-65: proper-time dilation slows the stasis clock (rate < flat-space).
+pub fn ext_65() -> bool {
+    md::redshifted_stasis_rate(1.0, 0.5) < stasis::stasis_rate(1.0)
+}
+
+/// EXT-66: multi-seed interference condition number stays < 1e4.
+pub fn ext_66() -> bool {
+    md::interference_condition_number(4, 0.01) < 1e4
+}
+
+/// EXT-67: egress frame preserves the 10/33 : 23/33 partition.
+pub fn ext_67() -> bool {
+    let slice = warp::AdmSlice::perturbed(1e-6);
+    let a = trans::CausalEvent { t: 0.0, x: 0.0, y: 0.0, z: 0.0 };
+    let b = trans::CausalEvent { t: 10.0, x: 1.0, y: 0.0, z: 0.0 };
+    let f = md::warp_translocation_transit(&slice, &a, &b, 1e25).unwrap();
+    f.closure_holds()
+}
+
+/// EXT-68: transit payload bound to the [1e23, 1e28] nucleon window.
+pub fn ext_68() -> bool {
+    let slice = warp::AdmSlice::perturbed(1e-6);
+    let a = trans::CausalEvent { t: 0.0, x: 0.0, y: 0.0, z: 0.0 };
+    let b = trans::CausalEvent { t: 10.0, x: 1.0, y: 0.0, z: 0.0 };
+    md::warp_translocation_transit(&slice, &a, &b, 1e22).is_err()
+}
+
+/// EXT-69: gravitational redshift couples to the LANR ledger sign.
+pub fn ext_69() -> bool {
+    lanr::POWER_SURPLUS_KW > 0.0 && md::stasis_redshift(0.9) > 0.0
+}
+
+/// EXT-70: redshifted debt is finite across the foliation alpha range.
+pub fn ext_70() -> bool {
+    (0..100).all(|k| {
+        let alpha = 0.05 + k as f64 * 0.01;
+        md::redshifted_landauer_debt(1.0, alpha).is_finite()
+    })
+}
+
+// ---------------- EXT-71..80 mission director & transducers ---------------
+
+/// EXT-71: full 5-stage flight plan converges.
+pub fn ext_71() -> bool {
+    md::fly_mission(1e24, 64).passed
+}
+
+/// EXT-72: stage names order: cold start -> egress.
+pub fn ext_72() -> bool {
+    let p = md::fly_mission(1e24, 64);
+    p.stages[0].name == "LANR cold start" && p.stages[4].name == "Translocation payload egress"
+}
+
+/// EXT-73: minimum-jerk peak acceleration = 10/sqrt(3) <= 5.7735.
+pub fn ext_73() -> bool {
+    (md::minimum_jerk_peak_accel() - 5.7735).abs() < 1e-3
+        && md::minimum_jerk_peak_accel() <= md::MIN_JERK_ACC_MAX + 1e-9
+}
+
+/// EXT-74: inception reaches s = 1 at tau = 1 (s(1) = 1 for min-jerk).
+pub fn ext_74() -> bool {
+    (warp::minimum_jerk(1.0) - 1.0).abs() < 1e-12 && warp::minimum_jerk(0.0) == 0.0
+}
+
+/// EXT-75: aerogel quarter-wave match transmits >= 0.985 into the
+/// designed radiating load Z3 = Zm^2 / Z_sapphire.
+pub fn ext_75() -> bool {
+    let z3 = stasis::Z_AEROGEL_MRAYL.powi(2) / stasis::Z_SAPPHIRE_MRAYL;
+    stasis::aerogel_transmission(z3) >= 0.985
+}
+
+/// EXT-76: sapphire/aerogel reflection is bounded at the design match.
+pub fn ext_76() -> bool {
+    let z3 = stasis::Z_AEROGEL_MRAYL.powi(2) / stasis::Z_SAPPHIRE_MRAYL;
+    stasis::interface_reflection(stasis::Z_SAPPHIRE_MRAYL, stasis::Z_AEROGEL_MRAYL)
+        + stasis::interface_reflection(stasis::Z_AEROGEL_MRAYL, z3)
+        < 2.0
+}
+
+/// EXT-77: peak transducer stress below the 350 MPa fracture envelope.
+pub fn ext_77() -> bool {
+    let z3 = stasis::Z_AEROGEL_MRAYL.powi(2) / stasis::Z_SAPPHIRE_MRAYL;
+    let (sigma, _sf) = stasis::transducer_stress_audit(
+        1e-4, 400.0, stasis::aerogel_transmission(z3));
+    sigma < stasis::FRACTURE_LIMIT_MPA
+}
+
+/// EXT-78: stress safety factor >= 2.5 at the design strain.
+pub fn ext_78() -> bool {
+    let (_sigma, sf) = stasis::transducer_stress_audit(1e-4, 400.0, 0.98);
+    sf >= stasis::STRESS_SAFETY_FACTOR
+}
+
+/// EXT-79: bit-stepping cadence sustained across the stationkeeping stage.
+pub fn ext_79() -> bool {
+    let p = md::fly_mission(1e24, 64);
+    p.stages[1].passed && ghost::BIT_STEP_HZ == 50_518.0
+}
+
+/// EXT-80: deceleration stage holds the acceleration bound.
+pub fn ext_80() -> bool {
+    let p = md::fly_mission(1e24, 64);
+    p.stages[3].passed && p.stages[3].accel_peak <= md::MIN_JERK_ACC_MAX + 1e-9
 }

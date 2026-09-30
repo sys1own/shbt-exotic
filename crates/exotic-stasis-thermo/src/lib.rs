@@ -176,3 +176,47 @@ pub fn mcnabb_foster_traps(
 pub fn fatigue_compliant(eps_p: f64, eps_f: f64) -> bool {
     coffin_manson_cycles(eps_p.max(1e-12), eps_f) >= 1e5
 }
+
+// ------------------------------------------------------------------
+// Phase 3 imports: hardware acoustic transducer FEA.
+// Acoustic impedance matching (shbt-qc) plus 3D tamping elastodynamics
+// (shbt-recon sglt-transducer-fea lineage).
+// ------------------------------------------------------------------
+
+/// Sapphire substrate acoustic impedance (MRayl).
+pub const Z_SAPPHIRE_MRAYL: f64 = 44.178;
+/// Silica aerogel quarter-wave matching-layer thickness (nm).
+pub const AEROGEL_QW_NM: f64 = 6.395;
+/// Aerogel matching-layer acoustic impedance (MRayl).
+pub const Z_AEROGEL_MRAYL: f64 = 1.1512;
+/// Brittle fracture envelope for the sapphire/InP stack (MPa).
+pub const FRACTURE_LIMIT_MPA: f64 = 350.0;
+/// Required peak-stress safety factor.
+pub const STRESS_SAFETY_FACTOR: f64 = 2.5;
+
+/// Power transmission coefficient through the aerogel quarter-wave layer:
+/// T = 4 Z1 Z3 Zm^2 / (Z1 Z3 + Zm^2)^2 evaluated for the sapphire/aerogel/
+/// vacuum stack (Z1 = sapphire, Z3 = the radiating medium).
+pub fn aerogel_transmission(z_load_mrayl: f64) -> f64 {
+    let z1 = Z_SAPPHIRE_MRAYL;
+    let z3 = z_load_mrayl;
+    let zm = Z_AEROGEL_MRAYL;
+    let num = 4.0 * z1 * z3 * zm * zm;
+    let den = (z1 * z3 + zm * zm).powi(2);
+    num / den
+}
+
+/// Reflection coefficient magnitude at the sapphire/aerogel interface.
+pub fn interface_reflection(z_a: f64, z_b: f64) -> f64 {
+    ((z_b - z_a) / (z_b + z_a)).abs()
+}
+
+/// 3D tamping elastodynamics audit (shbt-recon lineage): peak von-Mises
+/// stress in the transducer stack during a stasis field collapse, driven
+/// by thermal strain `d_eps` and the acoustic mismatch factor
+/// (1 - T). Returns (sigma_max_mpa, safety_factor).
+pub fn transducer_stress_audit(d_eps: f64, e_gpa: f64, t_match: f64) -> (f64, f64) {
+    let sigma = e_gpa * 1e3 * d_eps * (1.0 - t_match).max(0.0); // MPa
+    let sf = if sigma > 0.0 { FRACTURE_LIMIT_MPA / sigma } else { f64::INFINITY };
+    (sigma, sf)
+}

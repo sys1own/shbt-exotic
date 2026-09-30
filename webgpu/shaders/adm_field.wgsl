@@ -31,6 +31,9 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     if (field.ds2 > 0.0) {
         // Causal violation warning
         color = vec4<f32>(1.0, 0.0, 0.0, 1.0);
+    } else if (field.g00 > -0.15) {
+        // NEC / Ford-Roman QI violation boundary
+        color = vec4<f32>(1.0, 0.55, 0.0, 1.0);
     } else {
         // Nominal metric visualization mapped by shift magnitude
         color = vec4<f32>(0.0, shift_mag * 0.5, 1.0 - shift_mag * 0.2, 1.0);

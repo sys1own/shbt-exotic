@@ -33,3 +33,5 @@ exotic-uq-montecarlo = { path = "crates/exotic-uq-montecarlo" }
 exotic-eda-cad = { path = "crates/exotic-eda-cad" }
 
 exotic-extended-audit = { path = "crates/exotic-extended-audit" }
+exotic-energy-conditions = { path = "crates/exotic-energy-conditions" }
+exotic-mission-director = { path = "crates/exotic-mission-director" }

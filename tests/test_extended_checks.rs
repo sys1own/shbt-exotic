@@ -1,4 +1,4 @@
-//! EXT-01..EXT-50 extended verification matrix (shbt-power lineage).
+//! EXT-01..EXT-80 extended verification matrix (shbt-power lineage).
 
 use exotic_extended_audit::*;
 
@@ -29,4 +29,14 @@ ext_tests! {
     ext_check_43 => ext_43, ext_check_44 => ext_44, ext_check_45 => ext_45,
     ext_check_46 => ext_46, ext_check_47 => ext_47, ext_check_48 => ext_48,
     ext_check_49 => ext_49, ext_check_50 => ext_50,
+    ext_check_51 => ext_51, ext_check_52 => ext_52, ext_check_53 => ext_53,
+    ext_check_54 => ext_54, ext_check_55 => ext_55, ext_check_56 => ext_56,
+    ext_check_57 => ext_57, ext_check_58 => ext_58, ext_check_59 => ext_59,
+    ext_check_60 => ext_60, ext_check_61 => ext_61, ext_check_62 => ext_62,
+    ext_check_63 => ext_63, ext_check_64 => ext_64, ext_check_65 => ext_65,
+    ext_check_66 => ext_66, ext_check_67 => ext_67, ext_check_68 => ext_68,
+    ext_check_69 => ext_69, ext_check_70 => ext_70, ext_check_71 => ext_71,
+    ext_check_72 => ext_72, ext_check_73 => ext_73, ext_check_74 => ext_74,
+    ext_check_75 => ext_75, ext_check_76 => ext_76, ext_check_77 => ext_77,
+    ext_check_78 => ext_78, ext_check_79 => ext_79, ext_check_80 => ext_80,
 }

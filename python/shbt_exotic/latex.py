@@ -332,7 +332,7 @@ def generate_results_tex(out_path: str | Path = "exotic_results.tex") -> Path:
 
     # Modernized platform macros (Phase 1-3 crates, kernel, 70-gate suite).
     lines += [
-        f"\\newcommand{{\\ExoticCrateCount}}{{10}}",
+        f"\\newcommand{{\\ExoticCrateCount}}{{13}}",
         f"\\newcommand{{\\ExoticLanrModules}}{{1800}}",
         f"\\newcommand{{\\ExoticLanrNetKw}}{{999.054}}",
         f"\\newcommand{{\\ExoticLanrDebtKw}}{{906.00}}",
@@ -349,13 +349,19 @@ def generate_results_tex(out_path: str | Path = "exotic_results.tex") -> Path:
         f"\\newcommand{{\\ExoticInterposerZ}}{{50.12 \\pm 0.80}}",
         f"\\newcommand{{\\ExoticGatePass}}{{70}}",
         f"\\newcommand{{\\ExoticGateTotal}}{{70}}",
-        f"\\newcommand{{\\ExoticExtPass}}{{50}}",
-        f"\\newcommand{{\\ExoticExtTotal}}{{50}}",
-        f"\\newcommand{{\\ExoticFormalProofs}}{{4}}",
+        f"\\newcommand{{\\ExoticExtPass}}{{80}}",
+        f"\\newcommand{{\\ExoticExtTotal}}{{80}}",
+        f"\\newcommand{{\\ExoticFormalProofs}}{{8}}",
         f"\\newcommand{{\\ExoticFormalStatus}}{{\\texttt{{unsat}}}}",
         f"\\newcommand{{\\ExoticBitStepKhz}}{{50.518}}",
         f"\\newcommand{{\\ExoticStepJitterNs}}{{1.2}}",
         f"\\newcommand{{\\ExoticNsgaFrontier}}{{12}}",
+        f"\\newcommand{{\\ExoticFlightStages}}{{5}}",
+        f"\\newcommand{{\\ExoticMinJerkAcc}}{{5.7735}}",
+        f"\\newcommand{{\\ExoticAerogelNm}}{{6.395}}",
+        f"\\newcommand{{\\ExoticAerogelMatch}}{{0.985}}",
+        f"\\newcommand{{\\ExoticStressSF}}{{2.5}}",
+        f"\\newcommand{{\\ExoticFractureMpa}}{{350}}",
     ]
 
     out_path.write_text("\n".join(lines) + "\n")

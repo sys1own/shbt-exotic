@@ -40,6 +40,8 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     var color = vec4<f32>(0.0, 0.0, 0.0, 1.0);
     if (field.ds2 > 0.0) {
         color = vec4<f32>(1.0, 0.0, 0.0, 1.0);          // causal violation
+    } else if (field.g00 > -0.15) {
+        color = vec4<f32>(1.0, 0.55, 0.0, 1.0);         // NEC/QI boundary
     } else {
         let g = min(shift_mag * 0.9, 1.0);
         color = vec4<f32>(0.15*g, 0.45*g + 0.1, 1.0 - 0.6*g, 1.0);
@@ -66,6 +68,8 @@ function generateField(t) {
             // Ghost-seed well: Gaussian at (-2, 1).
             const gw = Math.exp(-((px+2)**2 + (py-1)**2) / 0.8);
             const ds2 = -1.0 + gx*gx + (r < 0.6 ? 1.2 : 0.0); // lightcone wall
+            // g00 < 0 outside the wall; the thin shell -0.15 < g00 < 0 is
+            // the NEC/Ford-Roman violation boundary rendered in amber.
             data[i+0] = -Math.exp(-f) - gw;       // g00 (lapse^2)
             data[i+1] = 0; data[i+2] = 0; data[i+3] = 0;
             data[i+4] = gx;                        // shift_x
@@ -115,6 +119,7 @@ async function main() {
     c2.width = N; c2.height = N;
     const ctx2 = c2.getContext("2d");
     canvas.width = innerWidth; canvas.height = innerHeight;
+    let frames = 0, t0 = performance.now();
 
     async function frame(t) {
         device.queue.writeBuffer(inputBuf, 0, generateField(t / 1000));
@@ -138,9 +143,12 @@ async function main() {
         ctx2.putImageData(img, 0, 0);
         ctx.canvas.getContext ? 0 : 0;
         dctx.drawImage(c2, 0, 0, canvas.width, canvas.height);
+        frames++;
+        const fps = Math.round(frames / ((t - t0) / 1000 + 1e-6));
         hud.textContent =
-`shbt-exotic WebGPU visualizer
- grid ${N}x${N} | Alcubierre-ADM zones, ghost wells, lightcones
+`shbt-exotic WebGPU visualizer — ${fps} FPS
+ grid ${N}x${N} | Alcubierre-ADM zones, ghost wells, lightcones,
+ NEC/QI violation boundary (amber), causal violations (red)
  t = ${(t/1000).toFixed(1)} s`;
         requestAnimationFrame(frame);
     }

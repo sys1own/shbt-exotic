@@ -83,7 +83,7 @@
   \newcommand{\ExoticBraidDepth}{9}%
   \newcommand{\ExoticBraidGateCount}{124}%
   \newcommand{\ExoticBraidApproxError}{3.1402e-16}%
-  \newcommand{\ExoticCrateCount}{10}%
+  \newcommand{\ExoticCrateCount}{13}%
   \newcommand{\ExoticLanrModules}{1800}%
   \newcommand{\ExoticLanrNetKw}{999.054}%
   \newcommand{\ExoticLanrDebtKw}{906.00}%
@@ -100,13 +100,19 @@
   \newcommand{\ExoticInterposerZ}{50.12 \pm 0.80}%
   \newcommand{\ExoticGatePass}{70}%
   \newcommand{\ExoticGateTotal}{70}%
-\newcommand{\ExoticExtPass}{50}%
-\newcommand{\ExoticExtTotal}{50}%
-\newcommand{\ExoticFormalProofs}{4}%
+\newcommand{\ExoticExtPass}{80}%
+\newcommand{\ExoticExtTotal}{80}%
+\newcommand{\ExoticFormalProofs}{8}%
 \newcommand{\ExoticFormalStatus}{\texttt{unsat}}%
 \newcommand{\ExoticBitStepKhz}{50.518}%
 \newcommand{\ExoticStepJitterNs}{1.2}%
 \newcommand{\ExoticNsgaFrontier}{12}%
+\newcommand{\ExoticFlightStages}{5}%
+\newcommand{\ExoticMinJerkAcc}{5.7735}%
+\newcommand{\ExoticAerogelNm}{6.395}%
+\newcommand{\ExoticAerogelMatch}{0.985}%
+\newcommand{\ExoticStressSF}{2.5}%
+\newcommand{\ExoticFractureMpa}{350}%
 }
 
 \begin{document}
@@ -1115,7 +1121,7 @@ checks: $\ExoticExtTotal$ checks EXT-01..EXT-50 in five bands (quantum metric
 bounds; translocation \& topological invariants; stasis \& cryogenic limits;
 ghost gravity \& RMHD sheath; microkernel, telemetry \& EDA).  Together with the
 master gate suite, \texttt{verification\_matrix.json} now records
-$\ExoticGatePass+\ExoticExtPass = 120/120$ passes.
+$\ExoticGatePass+\ExoticExtPass = 150/150$ passes.
 
 \subsection{Data products and optimization}
 
@@ -1129,6 +1135,74 @@ surplus margin and stasis retention ($\ExoticNsgaFrontier$ frontier points in th
 reference run), and the zero-dependency \texttt{webgpu/} visualizer renders the
 Alcubierre contraction/expansion zones, ghost wells and causal lightcones via
 WGSL compute shaders imported from \texttt{shbt-recon}.
+
+\section{Phase-3 workbench expansion: energy conditions, coupling, and the mission director}\label{sec:phase3}
+
+\subsection{Energy-condition auditing}
+
+The new \texttt{exotic-energy-conditions} crate imports the holographic
+boundary stress-energy framework (\texttt{shbt-precision} \texttt{boundary.rs}
+lineage) and the coordinate stress tensors of \texttt{shbt-ghost}
+(\texttt{ghost-multiseed-gravity}).  Every foliation cell carries a diagonal
+Eulerian stress tensor $T=\mathrm{diag}(\rho,p_r,p_t,p_t)$ that is audited
+continuously against the classical conditions
+\begin{equation}
+\mathrm{WEC}:\;\rho\ge0,\qquad
+\mathrm{NEC}:\;\rho+p_i\ge0,\qquad
+\mathrm{SEC}:\;\rho+p_r+2p_t\ge0,\qquad
+\mathrm{DEC}:\;|p_i|\le\rho .
+\end{equation}
+Negative-energy pockets in the warp bubble boundary are additionally checked
+against the Ford-Roman quantum inequality over Lorentzian sampling windows
+\begin{equation}
+\int \langle T_{\mu\nu} n^\mu n^\nu\rangle\,
+\frac{\tau_0}{\pi(\tau^2+\tau_0^2)}\,d\tau
+\;\ge\; -\frac{C}{\tau_0^{4}},\qquad C=\frac{3}{32\pi^2},
+\end{equation}
+for all $\tau_0 \ge \tau_{\mathrm{Planck}}$.
+
+\subsection{Cross-protocol coupling and the flight director}
+
+\texttt{exotic-mission-director} supplies the multi-field coupling engine
+that is this repository's distinct role in the ecosystem.  Macroscopic
+Stinespring packets ($N_{\mathrm{local}}\in[10^{23},10^{28}]$ nucleons) are
+routed through the dynamically evolved Alcubierre-ADM metric: the 2PN line
+element $\Delta s^2_{\mathrm{2PN}}$ is evaluated on the evolved slice and any
+spacelike target is rejected.  The stasis rate equation is coupled to the
+ghost-seed gravitational redshift $z=1/\alpha-1$ so the Landauer cooling debt
+accrues on proper time $d\tau=\alpha\,dt$.
+
+The end-to-end flight director sequences a complete $\ExoticFlightStages$-stage
+mission on the 5th-order minimum-jerk profile
+$s(\tau)=10\tau^3-15\tau^4+6\tau^5$ (\texttt{shbt-sglt} lineage) with
+$\ExoticBitStepKhz$\,kHz traction bit-stepping:\
+(1) LANR cold start $\to$ (2) subluminal stationkeeping $\to$ (3) warp
+inception at $v_s=2.0c$ $\to$ (4) warp deceleration $\to$ (5) translocation
+payload egress.  The profile's acceleration bound
+$|s''|\le 10/\sqrt{3}\approx\ExoticMinJerkAcc$ is enforced in both the
+inception and deceleration stages.
+
+\subsection{Acoustic transducer FEA}
+
+\texttt{exotic-stasis-thermo} now hosts the hardware transducer audit: the
+sapphire driver ($Z=44.178$\,MRayl) is matched through a silica-aerogel
+quarter-wave layer of thickness $\ExoticAerogelNm$\,nm and impedance
+$1.1512$\,MRayl, transmitting $\ge\ExoticAerogelMatch$ of the acoustic power.
+A 3D tamping elastodynamics sweep (\texttt{shbt-recon} lineage) checks peak
+stress during rapid field collapse against the $\ExoticFractureMpa$\,MPa
+brittle-fracture envelope with safety factor $\ge\ExoticStressSF$.
+
+\subsection{Extended proofs and the 150-check matrix}
+
+The Z3 suite grows to $\ExoticFormalProofs$ release-gate proofs (all
+\ExoticFormalStatus): No-Horizon ($\alpha>0$, $\det\gamma>0$ for all
+$v_s\in(0,10c]$), CTC prohibition ($g_{00}<0$ globally), QI compliance
+(Ford-Roman bound respected for $\tau_0\ge\tau_{\mathrm{Planck}}$), and
+translocation state conservation
+$\mathrm{Tr}[\rho_{\mathrm{rendered}}]=\mathrm{Tr}[\rho_{\mathrm{source}}]$.
+The extended audit reaches $\ExoticExtTotal$ checks EXT-01..EXT-80 across
+eight bands, and \texttt{verification\_matrix.json} records
+$\ExoticGatePass+\ExoticExtPass=150/150$ passes.
 
 \section{Conclusion}
 

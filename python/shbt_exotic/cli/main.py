@@ -297,7 +297,7 @@ def run_verify(args: argparse.Namespace) -> int:
     ext_out = ext_proc.stdout + ext_proc.stderr
     ext_failed = set(re.findall(r"ext_check_(\d+) .*FAILED", ext_out))
     matrix = {
-        "suite": "GATE-70 + EXT-50",
+        "suite": "GATE-70 + EXT-80",
         "total": len(gate_names) + len(ext_names),
         "total_gates": len(gate_names),
         "total_ext": len(ext_names),
@@ -408,6 +408,27 @@ def run_optimize(args: argparse.Namespace) -> int:
     return 0
 
 
+def run_flight_sim(args: argparse.Namespace) -> int:
+    """Run the 5-stage exotic mission profile and emit a trajectory log."""
+    from shbt_exotic.mission import main_flight_sim
+
+    return main_flight_sim(args.out)
+
+
+def run_audit_qi(args: argparse.Namespace) -> int:
+    """Ford-Roman quantum-inequality stress audit across the foliation."""
+    from shbt_exotic.mission import main_audit_qi
+
+    return main_audit_qi(args)
+
+
+def run_visualize(args: argparse.Namespace) -> int:
+    """Launch the local WebGPU/WGSL spacetime visualizer."""
+    from shbt_exotic.mission import main_visualize
+
+    return main_visualize()
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         prog="shbt-exotic",
@@ -416,7 +437,14 @@ def main() -> int:
     sub = parser.add_subparsers(dest="command")
     sub.add_parser("build-kernel", help="compile the C11 microkernel")
     sub.add_parser("sim", help="run the six-protocol co-simulation audit")
-    sub.add_parser("verify", help="run the 70-gate verification suite")
+    sub.add_parser("verify", help="run the 150-check verification suite")
+    p_flight = sub.add_parser("flight-sim", help="run the 5-stage mission profile")
+    p_flight.add_argument("--out", default=None, help="trajectory log path (JSON)")
+    p_qi = sub.add_parser("audit-qi", help="Ford-Roman quantum-inequality audit")
+    p_qi.add_argument("--rho", type=float, default=-1e-7)
+    p_qi.add_argument("--duration", type=float, default=10.0)
+    p_qi.add_argument("--tau0", type=float, default=10.0)
+    sub.add_parser("visualize", help="launch the WebGPU spacetime visualizer")
     p_eda = sub.add_parser("export-eda", help="emit GDSII/STEP/S2P artifacts")
     p_eda.add_argument("--out-dir", default="eda_outputs")
     sub.add_parser("paper", help="compile exotic.pdf with latexmk")
@@ -495,6 +523,12 @@ def main() -> int:
         return run_build_kernel(args)
     if args.command == "sim":
         return run_sim(args)
+    if args.command == "flight-sim":
+        return run_flight_sim(args)
+    if args.command == "audit-qi":
+        return run_audit_qi(args)
+    if args.command == "visualize":
+        return run_visualize(args)
     if args.command == "verify":
         return run_verify(args)
     if args.command == "export-eda":
