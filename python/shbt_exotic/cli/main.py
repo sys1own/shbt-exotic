@@ -429,6 +429,13 @@ def run_visualize(args: argparse.Namespace) -> int:
     return main_visualize()
 
 
+def run_hud(args: argparse.Namespace) -> int:
+    """Interactive terminal telemetry HUD (curses or --headless)."""
+    from shbt_exotic import hud
+
+    return hud.main(["--headless"] if args.headless else [])
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         prog="shbt-exotic",
@@ -462,6 +469,12 @@ def main() -> int:
     p_opt = sub.add_parser("optimize", help="NSGA-III Pareto frontier")
     p_opt.add_argument("--pop", type=int, default=60)
     p_opt.add_argument("--gen", type=int, default=40)
+    p_hud = sub.add_parser("hud", help="interactive terminal telemetry HUD")
+    p_hud.add_argument(
+        "--headless",
+        action="store_true",
+        help="render ~3 s of frames and exit (CI use)",
+    )
 
     parser.add_argument(
         "--audit",
@@ -518,7 +531,22 @@ def main() -> int:
         default=1.5e-6,
         help="STEP waveguide height in metres (default: 1.5e-6)",
     )
-    args = parser.parse_args()
+    # Allow negative numeric option values verbatim, e.g. `--rho -1e-7`.
+    argv = sys.argv[1:]
+    for i, tok in enumerate(argv):
+        if (
+            tok in ("--rho", "--duration", "--tau0", "--rate", "--n-local")
+            and i + 1 < len(argv)
+            and argv[i + 1].startswith("-")
+        ):
+            try:
+                float(argv[i + 1])
+            except ValueError:
+                continue
+            argv[i] = f"{tok}={argv[i + 1]}"
+            del argv[i + 1]
+            break
+    args = parser.parse_args(argv)
     if args.command == "build-kernel":
         return run_build_kernel(args)
     if args.command == "sim":
@@ -541,6 +569,8 @@ def main() -> int:
         return run_export_fits(args)
     if args.command == "export-hdf5":
         return run_export_hdf5(args)
+    if args.command == "hud":
+        return run_hud(args)
     if args.command == "optimize":
         return run_optimize(args)
     if args.export_gds or args.export_step:
