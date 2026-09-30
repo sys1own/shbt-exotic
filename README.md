@@ -255,7 +255,7 @@ shbt-power lineage) audits, in order:
 | `EXT-01..10` | Ford-Roman quantum inequalities, Casimir-Polder stability, Hawking flux suppression, quantum interest, trace/mode mixing, squeezing floor, horizon backreaction |
 | `EXT-11..20` | Kojima entropy zero-leakage, Torelli $\mathrm{Sp}(2g,\mathbb{Z})$ invariance, capacity conservation, 2PN authorization, observer memory packets $C_{op}\le C_{local}$, GST healing |
 | `EXT-21..30` | Coffin-Manson $N_f\ge10^5$, Kapitza stability, Ledinegg $d(\Delta P)/dQ>0$, Chaboche saturation, McNabb-Foster boundedness, LANR +93.054 kW surplus |
-| `EXT-31..40` | $\kappa(G_K)<10^4$, RMHD Alfvén Mach $\le0.12$, bit-stepping jitter $<1.2$ ns at 50.518 kHz, traction rigidity $|{\mu}_{comp}-\mu_0|\le10^{-12}$, PCSS/SiC |
+| `EXT-31..40` | $\kappa(G_K)<10^4$, RMHD Alfvén Mach $\le0.12$, bit-stepping jitter $<1.2$ ns at 50.518 kHz, traction rigidity $\lvert{\mu}_{comp}-\mu_0\rvert\le10^{-12}$, PCSS/SiC |
 | `EXT-41..50` | SPSC $\ge504$ Gbps, TQEC $\le45$ ns, $S_{11}\le-28$ dB, SECDED correct/DUE, 128 B MMIO @ `0x70000000`, 2112 B arena split, CRC-32C, Givens norm |
 
 `formal/formal_verification.py` (shbt-qc lineage) discharges four Z3 release-gate
