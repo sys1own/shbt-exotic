@@ -146,3 +146,10 @@ pub fn export_s2p(path: &str, z0: f64, freqs_ghz: &[f64]) -> io::Result<()> {
     }
     Ok(())
 }
+
+/// S11 return loss in dB for a load `zl` on the 50.12 ohm interposer match:
+/// S11 = 20 log10 |(Zl - Z0)/(Zl + Z0)|.
+pub fn s11_db(zl: f64) -> f64 {
+    let gamma = ((zl - INTERPOSER_Z0) / (zl + INTERPOSER_Z0)).abs().max(1e-12);
+    20.0 * gamma.log10()
+}

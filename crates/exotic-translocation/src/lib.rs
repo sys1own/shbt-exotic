@@ -6,6 +6,10 @@
 //! relabeling in Sp(2g, Z), 2PN causal lightcone authorization and GST
 //! chalcogenide self-healing.
 
+pub mod causal_point;
+
+pub use causal_point::{local_entropy_budget_bits, CausalPoint, MemoryPacket};
+
 use std::fmt;
 
 /// Nucleon window for macroscopic dilation.
@@ -27,14 +31,17 @@ pub const GST_HEALING_FLUENCE: f64 = 27.9;
 #[derive(Debug, Clone)]
 pub struct AnomalyClosureError {
     pub ds2: f64,
+    /// What was violated: "causal" (spacelike target) or "entropy"
+    /// (observer memory packet over local budget).
+    pub reason: &'static str,
 }
 
 impl fmt::Display for AnomalyClosureError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "AnomalyClosureError: spacelike target, ds^2 = {:.6e} > 0",
-            self.ds2
+            "AnomalyClosureError: {} violation, ds^2 = {:.6e}",
+            self.reason, self.ds2
         )
     }
 }
@@ -73,7 +80,7 @@ pub fn ds2_2pn(a: &CausalEvent, b: &CausalEvent, mass: f64) -> f64 {
 pub fn authorize(a: &CausalEvent, b: &CausalEvent, mass: f64) -> Result<f64, AnomalyClosureError> {
     let ds2 = ds2_2pn(a, b, mass);
     if ds2 > 0.0 {
-        Err(AnomalyClosureError { ds2 })
+        Err(AnomalyClosureError { ds2, reason: "causal" })
     } else {
         Ok(ds2)
     }
@@ -126,8 +133,8 @@ pub fn symplectic_j(g: usize) -> Vec<Vec<i64>> {
 /// symplectic by construction.
 pub fn relabeling_matrix(g: usize, twist: i64) -> Vec<Vec<i64>> {
     let mut t = vec![vec![0i64; 2 * g]; 2 * g];
-    for i in 0..2 * g {
-        t[i][i] = 1;
+    for (i, row) in t.iter_mut().enumerate() {
+        row[i] = 1;
     }
     t[0][g] = twist;
     t

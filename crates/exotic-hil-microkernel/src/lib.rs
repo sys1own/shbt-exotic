@@ -153,3 +153,8 @@ pub fn crc32c(data: &[u8]) -> u32 {
     }
     !crc
 }
+
+/// Stinespring arena sizes (bytes): 640 active + 1472 dark = 2112.
+pub const STINESPRING_ACTIVE_BYTES: usize = 640;
+pub const STINESPRING_DARK_BYTES: usize = 1472;
+pub const STINESPRING_BYTES: usize = STINESPRING_ACTIVE_BYTES + STINESPRING_DARK_BYTES;

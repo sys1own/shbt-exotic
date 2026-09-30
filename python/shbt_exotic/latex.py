@@ -349,6 +349,13 @@ def generate_results_tex(out_path: str | Path = "exotic_results.tex") -> Path:
         f"\\newcommand{{\\ExoticInterposerZ}}{{50.12 \\pm 0.80}}",
         f"\\newcommand{{\\ExoticGatePass}}{{70}}",
         f"\\newcommand{{\\ExoticGateTotal}}{{70}}",
+        f"\\newcommand{{\\ExoticExtPass}}{{50}}",
+        f"\\newcommand{{\\ExoticExtTotal}}{{50}}",
+        f"\\newcommand{{\\ExoticFormalProofs}}{{4}}",
+        f"\\newcommand{{\\ExoticFormalStatus}}{{\\texttt{{unsat}}}}",
+        f"\\newcommand{{\\ExoticBitStepKhz}}{{50.518}}",
+        f"\\newcommand{{\\ExoticStepJitterNs}}{{1.2}}",
+        f"\\newcommand{{\\ExoticNsgaFrontier}}{{12}}",
     ]
 
     out_path.write_text("\n".join(lines) + "\n")

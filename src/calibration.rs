@@ -76,11 +76,7 @@ impl CalibrationEngine {
         self.first_step = false;
 
         let mut output = self.kp * error + self.ki * self.integral + self.kd * derivative;
-        if output > OUTPUT_CLAMP_V {
-            output = OUTPUT_CLAMP_V;
-        } else if output < -OUTPUT_CLAMP_V {
-            output = -OUTPUT_CLAMP_V;
-        }
+        output = output.clamp(-OUTPUT_CLAMP_V, OUTPUT_CLAMP_V);
         output
     }
 

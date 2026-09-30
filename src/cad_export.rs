@@ -82,7 +82,7 @@ fn write_i32_be(w: &mut impl Write, v: i32) -> std::io::Result<()> {
 
 fn write_padded_string(w: &mut impl Write, s: &str) -> std::io::Result<()> {
     let mut buf = s.as_bytes().to_vec();
-    if buf.len() % 2 == 0 {
+    if buf.len().is_multiple_of(2) {
         buf.push(0);
     } else {
         buf.push(0);
@@ -112,7 +112,7 @@ fn write_i16_record(w: &mut impl Write, record_type: u8, value: i16) -> std::io:
 
 fn write_string_record(w: &mut impl Write, record_type: u8, s: &str) -> std::io::Result<()> {
     let bytes = s.as_bytes();
-    let payload = if bytes.len() % 2 == 0 {
+    let payload = if bytes.len().is_multiple_of(2) {
         bytes.len() + 2 // trailing null + padding
     } else {
         bytes.len() + 1 // trailing null only

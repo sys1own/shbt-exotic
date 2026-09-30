@@ -272,7 +272,7 @@ mod tests {
 
     #[test]
     fn telemetry_cycle_latency_below_1_5ns() {
-        assert!(PID_TELEMETRY_CYCLE_NS < 1.5);
+        const { assert!(PID_TELEMETRY_CYCLE_NS < 1.5) };
     }
 
     #[test]

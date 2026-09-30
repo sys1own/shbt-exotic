@@ -7,3 +7,4 @@ edition = "2021"
 name = "exotic_stasis_thermo"
 
 [dependencies]
+exotic-translocation = { path = "../exotic-translocation" }

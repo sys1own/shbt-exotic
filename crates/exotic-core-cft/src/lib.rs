@@ -68,8 +68,8 @@ pub fn partition_fractions() -> ((u32, u32), (u32, u32)) {
 /// de-rendered frame (`B * B^T = I_33`).
 pub fn branching_matrix() -> [[f64; BRANCHING_ORDER]; BRANCHING_ORDER] {
     let mut b = [[0.0f64; BRANCHING_ORDER]; BRANCHING_ORDER];
-    for i in 0..BRANCHING_ORDER {
-        b[i][i] = 1.0;
+    for (i, row) in b.iter_mut().enumerate() {
+        row[i] = 1.0;
     }
     b
 }

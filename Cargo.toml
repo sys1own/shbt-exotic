@@ -31,3 +31,5 @@ exotic-comms-telemetry = { path = "crates/exotic-comms-telemetry" }
 exotic-hil-microkernel = { path = "crates/exotic-hil-microkernel" }
 exotic-uq-montecarlo = { path = "crates/exotic-uq-montecarlo" }
 exotic-eda-cad = { path = "crates/exotic-eda-cad" }
+
+exotic-extended-audit = { path = "crates/exotic-extended-audit" }

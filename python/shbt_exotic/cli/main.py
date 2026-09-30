@@ -281,21 +281,43 @@ def run_verify(args: argparse.Namespace) -> int:
     )
     out = proc.stdout + proc.stderr
     failed = set(re.findall(r"gate_(\d+)_\w+ .*FAILED", out))
+    ext_proc = subprocess.run(
+        ["cargo", "test", "--test", "test_extended_checks", "--", "--list"],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+    )
+    ext_names = sorted(re.findall(r"ext_check_(\d+)", ext_proc.stdout))
+    ext_proc = subprocess.run(
+        ["cargo", "test", "--test", "test_extended_checks"],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+    )
+    ext_out = ext_proc.stdout + ext_proc.stderr
+    ext_failed = set(re.findall(r"ext_check_(\d+) .*FAILED", ext_out))
     matrix = {
-        "suite": "GATE-70",
+        "suite": "GATE-70 + EXT-50",
+        "total": len(gate_names) + len(ext_names),
         "total_gates": len(gate_names),
-        "passed": len(gate_names) - len(failed),
-        "failed": len(failed),
+        "total_ext": len(ext_names),
+        "passed": len(gate_names) + len(ext_names) - len(failed) - len(ext_failed),
+        "failed": len(failed) + len(ext_failed),
         "gates": {
             f"GATE-{int(g):02d}": "PASS" if g not in failed else "FAIL"
             for g in gate_names
+        },
+        "ext": {
+            f"EXT-{int(e):02d}": "PASS" if e not in ext_failed else "FAIL"
+            for e in ext_names
         },
     }
     (repo_root / "verification_matrix.json").write_text(
         json.dumps(matrix, indent=2) + "\n"
     )
     print(
-        f"verification: {matrix['passed']}/{matrix['total_gates']} gates passed"
+        f"verification: {matrix['passed']}/{matrix['total']} checks passed "
+        f"({matrix['total_gates']} GATE + {matrix['total_ext']} EXT)"
     )
     # Regenerate the paper's results macros from live simulator output.
     from shbt_exotic.latex import generate_results_tex
@@ -305,7 +327,7 @@ def run_verify(args: argparse.Namespace) -> int:
         print("exotic_results.tex regenerated")
     except Exception as exc:  # native extension may be unavailable
         print(f"warning: exotic_results.tex not regenerated: {exc}")
-    return 0 if not failed and proc.returncode == 0 else 1
+    return 0 if not failed and not ext_failed and proc.returncode == 0 and ext_proc.returncode == 0 else 1
 
 
 def run_export_eda(args: argparse.Namespace) -> int:
@@ -345,6 +367,47 @@ def run_paper(args: argparse.Namespace) -> int:
     )
 
 
+def run_inject_faults(args: argparse.Namespace) -> int:
+    """Inject Poisson faults into the .stinespring_frame arena and audit
+    SECDED correction plus TQEC MWPM decode margin."""
+    import json
+
+    from shbt_exotic.faults import inject_faults
+
+    res = inject_faults(rate=args.rate, duration=args.duration, target=args.target)
+    print(json.dumps(res, indent=2))
+    return 0 if res["tqec_within_budget"] else 1
+
+
+def run_export_fits(args: argparse.Namespace) -> int:
+    """Write the CCZ4 foliation FITS v4.0 cube with WCS headers."""
+    from shbt_exotic.exporters import export_fits
+
+    print(f"FITS: {export_fits(Path(args.out))}")
+    return 0
+
+
+def run_export_hdf5(args: argparse.Namespace) -> int:
+    """Write the state-trajectory HDF5 datacube."""
+    from shbt_exotic.exporters import export_hdf5
+
+    print(f"HDF5: {export_hdf5(Path(args.out), n_local=args.n_local)}")
+    return 0
+
+
+def run_optimize(args: argparse.Namespace) -> int:
+    """Compute the NSGA-III Pareto frontier."""
+    import json
+
+    from shbt_exotic.optimize import nsga3
+
+    res = nsga3(pop_size=args.pop, generations=args.gen)
+    res.pop("pareto", None)
+    res.pop("objectives", None)
+    print(json.dumps(res, indent=2))
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         prog="shbt-exotic",
@@ -357,6 +420,20 @@ def main() -> int:
     p_eda = sub.add_parser("export-eda", help="emit GDSII/STEP/S2P artifacts")
     p_eda.add_argument("--out-dir", default="eda_outputs")
     sub.add_parser("paper", help="compile exotic.pdf with latexmk")
+    p_fault = sub.add_parser(
+        "inject-faults", help="POSIX fault injection into .stinespring_frame"
+    )
+    p_fault.add_argument("--rate", type=float, default=10.0)
+    p_fault.add_argument("--duration", type=float, default=5.0)
+    p_fault.add_argument("--target", default=".stinespring_frame")
+    p_fits = sub.add_parser("export-fits", help="FITS v4.0 + WCS science cube")
+    p_fits.add_argument("--out", default="exotic_ccz4.fits")
+    p_h5 = sub.add_parser("export-hdf5", help="state-trajectory HDF5 datacube")
+    p_h5.add_argument("--out", default="exotic_trajectories.h5")
+    p_h5.add_argument("--n-local", type=float, default=1e24)
+    p_opt = sub.add_parser("optimize", help="NSGA-III Pareto frontier")
+    p_opt.add_argument("--pop", type=int, default=60)
+    p_opt.add_argument("--gen", type=int, default=40)
 
     parser.add_argument(
         "--audit",
@@ -424,6 +501,14 @@ def main() -> int:
         return run_export_eda(args)
     if args.command == "paper":
         return run_paper(args)
+    if args.command == "inject-faults":
+        return run_inject_faults(args)
+    if args.command == "export-fits":
+        return run_export_fits(args)
+    if args.command == "export-hdf5":
+        return run_export_hdf5(args)
+    if args.command == "optimize":
+        return run_optimize(args)
     if args.export_gds or args.export_step:
         return run_cad_export(args)
     if args.braid_openqasm or args.braid_info:

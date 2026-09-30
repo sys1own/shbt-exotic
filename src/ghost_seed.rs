@@ -75,7 +75,7 @@ impl GhostSeedSynthesizer {
 
     /// Check that the anyon filling factor is in the allowed non-Abelian list.
     pub fn is_filling_factor_allowed_impl(&self, nu: (i64, i64)) -> bool {
-        self.allowed_filling_factors.iter().any(|&f| f == nu)
+        self.allowed_filling_factors.contains(&nu)
     }
 }
 

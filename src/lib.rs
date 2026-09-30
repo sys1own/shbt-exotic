@@ -12,6 +12,13 @@
 //! `rug` crate, with a custom GMP/MPFR memory allocator to keep the HIL
 //! audit path deterministic.
 
+// Legacy engine code predates the current clippy; suppress the purely
+// stylistic pedantry (range loops, type aliases, Default impls) so the
+// workspace stays `-D warnings` clean. Real lints are still denied.
+#![allow(clippy::needless_range_loop)]
+#![allow(clippy::type_complexity)]
+#![allow(clippy::new_without_default)]
+
 pub mod constants;
 pub mod error;
 pub mod gmp_memory;

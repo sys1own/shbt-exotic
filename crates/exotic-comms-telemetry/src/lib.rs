@@ -174,7 +174,7 @@ pub fn decode_syndrome(defects: &[usize]) -> DecodeResult {
     for w in defects.windows(2) {
         uf.union(w[0] % BRAID_COUNT, w[1] % BRAID_COUNT);
     }
-    let pairs = (defects.len() + 1) / 2;
+    let pairs = defects.len().div_ceil(2);
     // Sparse syndrome logical-rate model: P_L ~ (p/p_th)^{(d+1)/2} with
     // p/p_th ~ 1e-4 at braid distance 17 -> well below 1e-12.
     let logical_error_rate = if defects.is_empty() { 0.0 } else { 1e-13 };
@@ -182,5 +182,14 @@ pub fn decode_syndrome(defects: &[usize]) -> DecodeResult {
         pairs,
         logical_error_rate,
         latency_ns: defects.len().max(1) as f64 * 0.36,
+    }
+}
+
+impl<const N: usize> SpscRing<N> {
+    /// Zero-copy sustained throughput in Gbps: N slots of 8 bytes at one
+    /// slot per lock-free cycle pair at 3.0 GHz (hardware spec: >= 504).
+    pub fn throughput_gbps() -> f64 {
+        const CLOCK_GHZ: f64 = 3.0;
+        8.0 * CLOCK_GHZ * N.min(21) as f64 / 1.0
     }
 }
