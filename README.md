@@ -55,7 +55,7 @@ stack with 3D Chaboche backstress and Coffin-Manson cycle counting.
 
 Topological mass coupling
 $\alpha_{\text{seed}} = 1.3258316\times10^{-51}\ M_\odot/\text{bit}$
-synthesizes ~$1\ M_\odot$ wells; the metric is the multi-seed
+synthesizes $\sim 1\ M_\odot$ wells; the metric is the multi-seed
 superposition
 
 $$
