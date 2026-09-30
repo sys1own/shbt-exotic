@@ -154,11 +154,14 @@ sys1own/shbt-exotic
 │   └── Makefile                         # → build/shbt_exotic_reference.so
 ├── src/                          # PyO3 bindings + legacy sub-engines
 ├── python/shbt_exotic/           # orchestration package (cli/, latex, plots,
-│                                 #   faults.py, exporters.py, optimize.py)
+│                                 #   faults.py, exporters.py, optimize.py,
+│                                 #   mission.py, hud.py)
 ├── formal/                       # Z3 release-gate proofs (8x unsat)
 ├── webgpu/                       # zero-dep WGSL spacetime visualizer
 ├── tests/test_70_gates.rs        # master 70-gate verification suite
 ├── tests/test_extended_checks.rs # EXT-01..80 extended checks
+├── tests/reference_test.c        # hosted C11 kernel test (make -C kernel test-c)
+├── tests/test_all_cli.py         # end-to-end regression over every subcommand
 ├── verification_matrix.json      # generated gate audit report
 ├── eda_outputs/                  # generated GDSII/STEP/S2P artifacts
 ├── main.tex                      # executable paper source
@@ -239,6 +242,7 @@ Unified orchestrator (`python -m shbt_exotic.cli`):
 | `flight-sim` | 5-stage exotic mission profile (LANR cold start → stationkeeping → warp inception $v_s=2.0c$ → deceleration → translocation egress) with trajectory log |
 | `audit-qi` | Ford-Roman quantum-inequality stress audit across metric foliations |
 | `visualize` | Launches the local WebGPU/WGSL interactive spacetime visualizer |
+| `hud` | Curses telemetry HUD: protocol state, MMIO 0x70000000 registers, LANR vs debt margin, CCZ4 residuals, $\Delta s^2$, PCSS latency (`--headless` renders ~3 s and exits 0) |
 
 ```bash
 python -m shbt_exotic.cli inject-faults --rate 10.0 --target .stinespring_frame --duration 5.0
@@ -247,6 +251,7 @@ python -m shbt_exotic.cli export-hdf5 --out exotic_trajectories.h5
 python -m shbt_exotic.cli flight-sim --out flight_log.json
 python -m shbt_exotic.cli audit-qi --rho -1e-7 --duration 10.0 --tau0 10.0
 python -m shbt_exotic.cli visualize
+python -m shbt_exotic.cli hud --headless   # 3 s telemetry frames, exits 0
 python3 -m pytest formal/     # 8/8 Z3 proofs discharge unsat
 ```
 
@@ -255,8 +260,9 @@ Legacy flags (`--audit`, `--braid-openqasm`, `--export-gds`,
 
 ```bash
 cargo test --workspace        # 70-gate harness + unit tests (all pass)
-.venv/bin/pytest tests/ -q    # Python integration suite
+.venv/bin/pytest tests/ -q    # Python integration suite (incl. test_all_cli.py)
 make -C kernel                # bare-metal microkernel build
+make -C kernel test-c         # hosted C reference test (tests/reference_test.c)
 ```
 
 ---
@@ -347,6 +353,8 @@ $\mathrm{Tr}[\rho_{\text{rendered}}]=\mathrm{Tr}[\rho_{\text{source}}]$.
 | `shbt-precision` (P3) | holographic boundary stress-energy tensor framework | `exotic-energy-conditions` QI sampler |
 | `shbt-ghost` (P3) | coordinate stress tensors; 50.518 kHz bit-stepping | `exotic-mission-director` stationkeeping |
 | `shbt-sglt` (P3) | 5th-order minimum-jerk mission kinematics | `exotic-mission-director` flight profile |
+| `shbt-qc` (P4) | hosted `reference_test.c` kernel test pattern | `tests/reference_test.c` + `make test-c` |
+| `shbt-sglt` (P4) | curses `dashboard_hud` telemetry architecture | `python/shbt_exotic/hud.py`, `hud` CLI |
 
 ---
 

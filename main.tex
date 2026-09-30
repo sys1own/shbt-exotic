@@ -1047,7 +1047,7 @@ Both translocation and non-local communication are gated by causal authorization
 
 \section{Modernized multi-crate architecture and the 70-gate audit}\label{sec:modern}
 
-The platform has been reorganized into a ten-crate Cargo workspace backed by a freestanding C11 microkernel, importing battle-tested sub-engines from the seven sibling SHBT repositories:
+The platform has been reorganized into a $\ExoticCrateCount$-crate Cargo workspace backed by a freestanding C11 microkernel, importing battle-tested sub-engines from the seven sibling SHBT repositories:
 
 \begin{itemize}
   \item \texttt{exotic-core-cft}: 512-bit MPFR canonical branch $(26,8,312)$ character evaluators and the $33\times33$ Stinespring branching matrix $B$.
@@ -1060,11 +1060,13 @@ The platform has been reorganized into a ten-crate Cargo workspace backed by a f
   \item \texttt{exotic-hil-microkernel}: the \texttt{SHBT-MMIO-EXOTIC} register block at \texttt{0x70000000}, SECDED Hamming(72,64) ECC scrubbing, AVX-512 Givens remapping and PCSS crowbar control.
   \item \texttt{exotic-uq-montecarlo}: hyper-dual second-order automatic differentiation and GUM S1/S2 Monte Carlo propagation.
   \item \texttt{exotic-eda-cad}: 8$\times$8 InP PIC GDSII masks, ISO 10303-21 STEP waveguides and 12-layer Rogers RO4350B Touchstone S2P interposers ($Z_0=\ExoticInterposerZ\,\Omega$).
+  \item \texttt{exotic-energy-conditions}: boundary stress-energy auditing of WEC/NEC/SEC/DEC and Ford-Roman quantum-inequality sampling.
+  \item \texttt{exotic-mission-director}: cross-protocol field coupling (warp-translocation transit, stasis-redshift) and the 5-stage flight sequencer.
 \end{itemize}
 
 The bare-metal microkernel (\texttt{kernel/}) implements the 128-byte dual-cacheline \texttt{shbt\_exotic\_mmio\_t} register file, the 2{,}112-byte \texttt{.stinespring\_frame} SRAM arena (640\,B active residual $\eta_A=10/33$, 1{,}472\,B dark ledger $\eta_D=23/33$ holding \ExoticBraidDescriptors{} Fibonacci braid descriptors), SECDED ECC scrubbing, and the PCSS crowbar path with a $\le\ExoticPcssTriggerNs$\,ns trigger budget and $\ExoticSicRecovery\%$ SiC inductive recovery.
 
-The unified CLI (\texttt{python -m shbt\_exotic.cli}) exposes \texttt{build-kernel}, \texttt{sim}, \texttt{verify}, \texttt{export-eda}, and \texttt{paper} subcommands.  The master verification harness (\texttt{tests/test\_70\_gates.rs}) executes $\ExoticGateTotal$ gates spanning boundary-CFT closure, microkernel C-ABI and ECC, PCSS quench timing, CCZ4 constraint damping to the $10^{-122}$ floor, 2PN causal authorization, the LANR power ledger, TMSV metrology, TQEC decode latency, GST self-healing ($>\ExoticGstHealing\%$), hyper-dual UQ bounds and the EDA impedance band: $\ExoticGatePass/\ExoticGateTotal$ gates pass, recorded in \texttt{verification\_matrix.json}.
+The unified CLI (\texttt{python -m shbt\_exotic.cli}) exposes \texttt{build-kernel}, \texttt{sim}, \texttt{verify}, \texttt{flight-sim}, \texttt{audit-qi}, \texttt{visualize}, \texttt{inject-faults}, \texttt{export-fits}, \texttt{export-hdf5}, \texttt{export-eda}, \texttt{optimize}, \texttt{hud}, and \texttt{paper} subcommands.  The master verification harness (\texttt{tests/test\_70\_gates.rs}) executes $\ExoticGateTotal$ gates spanning boundary-CFT closure, microkernel C-ABI and ECC, PCSS quench timing, CCZ4 constraint damping to the $10^{-122}$ floor, 2PN causal authorization, the LANR power ledger, TMSV metrology, TQEC decode latency, GST self-healing ($>\ExoticGstHealing\%$), hyper-dual UQ bounds and the EDA impedance band: $\ExoticGatePass/\ExoticGateTotal$ gates pass, recorded in \texttt{verification\_matrix.json}.
 
 
 \section{Phase-2 solver upgrades, formal proofs, and the extended audit}\label{sec:phase2}
@@ -1204,6 +1206,116 @@ The extended audit reaches $\ExoticExtTotal$ checks EXT-01..EXT-80 across
 eight bands, and \texttt{verification\_matrix.json} records
 $\ExoticGatePass+\ExoticExtPass=150/150$ passes.
 
+\section{Phase-4 finalization: numerical solvers, hosted kernel testing, and end-to-end regression}\label{sec:phase4}
+
+\subsection{Hyperbolic 3+1 CCZ4 formulation}
+
+The warp-metric sector evolves a CCZ4 (conformal Z4) foliation of the
+Alcubierre-ADM metric.  Slicing follows the Bona-Mass\'o family
+\begin{equation}
+\partial_0 \alpha = -\alpha^2 f(\alpha)\,K,\qquad
+f(\alpha)=\frac{2}{\alpha},
+\end{equation}
+(i.e. harmonic $1{+}\log$ slicing at leading order), and the shift obeys the
+Gamma-driver condition
+\begin{equation}
+\partial_0 \beta^i = B^i,\qquad
+\partial_0 B^i = \tfrac{3}{4}\,\partial_0 \tilde\Gamma^i - \eta\,B^i .
+\end{equation}
+Gundlach constraint-damping terms $\kappa_1\Theta$ and $\kappa_2 Z_i$ (with
+$\kappa_1>0$, $\kappa_2>-1$) push constraint violations to the
+$10^{-122}$ floor.  Explicit time integration is CFL-limited by
+\begin{equation}
+\Delta t \;\le\; C_{\mathrm{CFL}}\,\frac{\Delta x}{\sqrt{3}\,\alpha},
+\qquad C_{\mathrm{CFL}} = 0.25,
+\end{equation}
+where the $\sqrt{3}$ factor accounts for the worst-case characteristic speed
+on the diagonalized 3+1 system.
+
+\subsection{Multi-seed superposition and the Gram determinant}
+
+Ghost-seed gravity superposes $N_s$ metric perturbations onto the Minkowski
+background,
+\begin{equation}
+g_{\mu\nu} = \eta_{\mu\nu} + \sum_{i=1}^{N_s} h_{\mu\nu}^{(i)} + I_{\mu\nu},
+\end{equation}
+where $I_{\mu\nu}$ is the interference tensor cancelling pairwise seed
+overlaps to 3rd order.  Each $50.518$\,kHz bit-step recomputes the Gram
+matrix $G_K$ of the seed displacement basis; stability requires both
+$\det(G_K)>0$ and the condition-number bound $\kappa(G_K)<10^{4}$, while the
+3rd-order wake compensation keeps $|\mu_{\mathrm{comp}}-\mu_0|\le 10^{-12}$
+with per-step jitter below $1.2$\,ns.
+
+\subsection{Ford-Roman quantum-inequality sampling}
+
+Negative-energy pockets are convolved with the Lorentzian sampling window
+\begin{equation}
+w(\tau;\tau_0)=\frac{\tau_0}{\pi(\tau^2+\tau_0^2)},\qquad
+\int w\,d\tau = 1,
+\end{equation}
+and the trapezoidal quadrature $\sum_k \rho_k\,w(\tau_k;\tau_0)\,\Delta\tau$
+is compared against the Ford-Roman bound $-C/\tau_0^{4}$,
+$C=3/(32\pi^2)\approx 9.499\times10^{-3}$.  The audit also evaluates the
+compact-window equivalent $\rho\,t_{\mathrm{dur}}^{4}\ge -C$, and the suite
+verifies convergence of the quadrature to the analytic kernel area to better
+than one part in $10^{3}$ over a $\pm100\,\tau_0$ window.
+
+\subsection{The 5-stage flight-simulation sequence}
+
+The mission director sequences the complete exotic flight profile:
+(1)~\emph{LANR cold start} ($\ExoticLanrNetKw$\,kW net against the
+$\ExoticLanrDebtKw$\,kW Landauer debt, $+\ExoticLanrSurplusKw$\,kW margin);
+(2)~\emph{subluminal stationkeeping} at $\ExoticBitStepKhz$\,kHz traction
+bit-stepping with sub-$1.2$\,ns jitter; (3)~\emph{warp inception} ramping to
+$v_s=2.0\,c$ on the 5th-order minimum-jerk profile
+$s(\tau)=10\tau^3-15\tau^4+6\tau^5$ with $|s''|\le 10/\sqrt{3}$;
+(4)~\emph{warp deceleration} on the mirrored profile; and
+(5)~\emph{translocation payload egress}, where the packet is re-authorized
+against the evolved slice via $\Delta s^2_{\mathrm{2PN}}\le 0$ before the
+Stinespring frame is released.
+
+\subsection{Dual-tier hardware-in-the-loop architecture}
+
+The workbench couples a high-fidelity offline tier --- the Rust crates
+integrating CCZ4, Stinespring, Chaboche, and McNabb-Foster physics --- to a
+hard real-time tier: the freestanding C11 microkernel running a 100\,Hz
+zero-heap service loop over the 128-byte \texttt{SHBT-MMIO-EXOTIC} register
+file at \texttt{0x70000000} and the 2{,}112-byte \texttt{.stinespring\_frame}
+SRAM arena (640\,B active / 1{,}472\,B dark).  The hosted reference harness
+\texttt{tests/reference\_test.c} compiles the kernel translation unit
+directly and validates the register-block alignment contract
+($\texttt{sizeof(shbt\_exotic\_mmio\_t)}=128$), SECDED Hamming(72,64)
+correction and double-error detection, AVX-512/scalar Givens norm
+preservation, and the sub-$2.50$\,ns PCSS crowbar latch via
+\texttt{make -C kernel test-c}.
+
+\subsection{Scientific product schemas}
+
+\texttt{export-fits} writes the CCZ4 foliation as a FITS v4.0 primary cube
+with a full WCS axis block (\texttt{CTYPE1--3 = X,Y,Z},
+\texttt{CDELT}/\texttt{CRPIX}/\texttt{CRVAL}) for direct ingest by astronomy
+toolchains.  \texttt{export-hdf5} writes per-engine state trajectories as an
+HDF5 datacube group per protocol
+($N_{\mathrm{local}}\in[10^{23},10^{28}]$ nucleons).  \texttt{export-eda}
+emits the 8$\times$8 InP PIC GDSII mask stream, the ISO 10303-21 STEP
+waveguide B-Rep, and the Touchstone S2P file for the 12-layer Rogers
+RO4350B interposer with $Z_0 = \ExoticInterposerZ\,\Omega$ and
+$S_{11}\le -28$\,dB.
+
+\subsection{Terminal HUD and end-to-end regression}
+
+\texttt{python -m shbt\_exotic.cli hud} opens a curses telemetry dashboard
+mirroring the MMIO block, the LANR-vs-debt energy ledger, CCZ4 damping
+residuals, the running $\Delta s^2_{\mathrm{2PN}}$, and PCSS quench latency;
+\texttt{--headless} renders three seconds of frames and exits cleanly for
+CI.  \texttt{tests/test\_all\_cli.py} is the exhaustive end-to-end
+regression: it shells out to every CLI subcommand --- \texttt{build-kernel},
+\texttt{make test-c}, \texttt{cargo test --workspace}, \texttt{verify}
+(150/150), \texttt{pytest formal/} (8/8 \ExoticFormalStatus), \texttt{sim},
+\texttt{inject-faults}, \texttt{flight-sim}, \texttt{audit-qi},
+\texttt{optimize}, \texttt{hud}, all three exporters, and \texttt{paper} ---
+asserting each artifact and pass criterion.
+
 \section{Conclusion}
 
 The \texttt{shbt-exotic} simulator now provides a unified platform for six SHBT technologies: non-local communication, temporal stasis, artificial ghost seeds, entropic refrigeration, holographic warp drive, and modular state translocation.  All six are grounded in the $(26,8,312)$ isometric Stinespring framework.  The extensions reported here---ADM warp-metric auditing, modular translocation with causal authorization, dynamic interference and velocity-dependent wake compensation, Lindblad noise-floor auditing for anyon braids, and harmonic FEA auditing of the sapphire waveguide---show that the design closes at the hardware level: the PID telemetry loop completes in $\ExoticTelemetryCycleNs\,$ns, the Solovay-Kitaev logical error floor is $10^{-\ExoticSKLogicalErrorLogTen}$, and the structural resonance audit returns \ExoticHarmonicStatus{}.
@@ -1213,6 +1325,6 @@ The integrated engineering stress suite of Sec.~\ref{sec:stress-suite} confirms 
 \section*{Code Availability}
 
 {\raggedright
-The simulator, manuscript driver, and dynamic result macros are available at \url{https://github.com/sys1own/shbt-exotic}.  Related SHBT engines are at \url{https://github.com/sys1own/shbt-precision}, \url{https://github.com/sys1own/shbt-warp}, and \url{https://github.com/sys1own/shbt-recon}.\par}
+The simulator, manuscript driver, and dynamic result macros are available at \url{https://github.com/sys1own/shbt-exotic}.  The canonical eight-repository SHBT ecosystem comprises \url{https://github.com/sys1own/shbt-precision}, \url{https://github.com/sys1own/shbt-qc}, \url{https://github.com/sys1own/shbt-cf}, \url{https://github.com/sys1own/shbt-power}, \url{https://github.com/sys1own/shbt-ghost}, \url{https://github.com/sys1own/shbt-recon}, \url{https://github.com/sys1own/shbt-sglt}, and this workbench, \url{https://github.com/sys1own/shbt-exotic}.\par}
 
 \end{document}
