@@ -1,0 +1,10 @@
+[package]
+name = "exotic-core-cft"
+version = "2.0.0"
+edition = "2021"
+
+[lib]
+name = "exotic_core_cft"
+
+[dependencies]
+rug = "1.24"

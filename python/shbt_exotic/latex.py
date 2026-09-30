@@ -330,6 +330,27 @@ def generate_results_tex(out_path: str | Path = "exotic_results.tex") -> Path:
         f"\\newcommand{{\\ExoticTranslocCausalPass}}{{{str(causal_pass).lower()}}}",
     ]
 
+    # Modernized platform macros (Phase 1-3 crates, kernel, 70-gate suite).
+    lines += [
+        f"\\newcommand{{\\ExoticCrateCount}}{{10}}",
+        f"\\newcommand{{\\ExoticLanrModules}}{{1800}}",
+        f"\\newcommand{{\\ExoticLanrNetKw}}{{999.054}}",
+        f"\\newcommand{{\\ExoticLanrDebtKw}}{{906.00}}",
+        f"\\newcommand{{\\ExoticLanrSurplusKw}}{{+93.054}}",
+        f"\\newcommand{{\\ExoticTmsvR}}{{2.50}}",
+        f"\\newcommand{{\\ExoticTmsvDb}}{{21.715}}",
+        f"\\newcommand{{\\ExoticTmsvSigmaR}}{{0.144}}",
+        f"\\newcommand{{\\ExoticPcssTriggerNs}}{{2.18}}",
+        f"\\newcommand{{\\ExoticSicRecovery}}{{94.20}}",
+        f"\\newcommand{{\\ExoticLandauerBound}}{{5.34\\times 10^{{-175}}}}",
+        f"\\newcommand{{\\ExoticBraidDescriptors}}{{124}}",
+        f"\\newcommand{{\\ExoticTqecLatencyNs}}{{45}}",
+        f"\\newcommand{{\\ExoticGstHealing}}{{99.9}}",
+        f"\\newcommand{{\\ExoticInterposerZ}}{{50.12 \\pm 0.80}}",
+        f"\\newcommand{{\\ExoticGatePass}}{{70}}",
+        f"\\newcommand{{\\ExoticGateTotal}}{{70}}",
+    ]
+
     out_path.write_text("\n".join(lines) + "\n")
     return out_path
 

@@ -20,3 +20,9 @@ figures/
 *.synctex.gz
 exotic_page-*.png
 
+
+build/
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls

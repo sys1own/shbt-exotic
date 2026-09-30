@@ -1,0 +1,9 @@
+[package]
+name = "exotic-eda-cad"
+version = "2.0.0"
+edition = "2021"
+
+[lib]
+name = "exotic_eda_cad"
+
+[dependencies]

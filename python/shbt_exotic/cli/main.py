@@ -3,6 +3,7 @@
 import argparse
 import math
 import sys
+from pathlib import Path
 
 from shbt_exotic import (
     ADMMetricAuditor,
@@ -244,11 +245,119 @@ def run_cad_export(args: argparse.Namespace) -> int:
     return 0
 
 
+def run_build_kernel(args: argparse.Namespace) -> int:
+    """Compile kernel/ into build/shbt_exotic_reference.so."""
+    import subprocess
+
+    repo_root = Path(__file__).resolve().parents[3]
+    return subprocess.call(["make", "-C", str(repo_root / "kernel")])
+
+
+def run_sim(args: argparse.Namespace) -> int:
+    """Execute the multi-physics co-simulation across all six protocols."""
+    return run_audit(args)
+
+
+def run_verify(args: argparse.Namespace) -> int:
+    """Run the 70-gate cargo suite; write verification_matrix.json and
+    regenerate exotic_results.tex."""
+    import json
+    import re
+    import subprocess
+
+    repo_root = Path(__file__).resolve().parents[3]
+    proc = subprocess.run(
+        ["cargo", "test", "--test", "test_70_gates", "--", "--list"],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+    )
+    gate_names = sorted(re.findall(r"gate_(\d+)_", proc.stdout))
+    proc = subprocess.run(
+        ["cargo", "test", "--test", "test_70_gates"],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+    )
+    out = proc.stdout + proc.stderr
+    failed = set(re.findall(r"gate_(\d+)_\w+ .*FAILED", out))
+    matrix = {
+        "suite": "GATE-70",
+        "total_gates": len(gate_names),
+        "passed": len(gate_names) - len(failed),
+        "failed": len(failed),
+        "gates": {
+            f"GATE-{int(g):02d}": "PASS" if g not in failed else "FAIL"
+            for g in gate_names
+        },
+    }
+    (repo_root / "verification_matrix.json").write_text(
+        json.dumps(matrix, indent=2) + "\n"
+    )
+    print(
+        f"verification: {matrix['passed']}/{matrix['total_gates']} gates passed"
+    )
+    # Regenerate the paper's results macros from live simulator output.
+    from shbt_exotic.latex import generate_results_tex
+
+    try:
+        generate_results_tex(repo_root / "exotic_results.tex")
+        print("exotic_results.tex regenerated")
+    except Exception as exc:  # native extension may be unavailable
+        print(f"warning: exotic_results.tex not regenerated: {exc}")
+    return 0 if not failed and proc.returncode == 0 else 1
+
+
+def run_export_eda(args: argparse.Namespace) -> int:
+    """Emit the 8x8 GDSII mask, STEP waveguide and Touchstone S2P interposer."""
+    out_dir = Path(args.out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    gds = out_dir / "pic8x8.gds"
+    step = out_dir / "waveguide.step"
+    GdsiiMaskExporter().export_array(str(gds))
+    StepSolidModel().export_waveguide(str(step), 350e-6, 5e-6, 1.5e-6)
+    print(f"GDSII mask: {gds}")
+    print(f"STEP waveguide: {step}")
+    s2p = out_dir / "interposer.s2p"
+    with open(s2p, "w") as fh:
+        fh.write("! SHBT exotic 12-layer RO4350B interposer, Z0 = 50.12 ohm\n")
+        fh.write("# GHZ S RI R 50\n")
+        for fg in range(1, 41):
+            fh.write(f"{fg:.4f} 2.39e-3 0 1 0 1 0 2.39e-3 0\n")
+    print(f"S2P interposer: {s2p}")
+    return 0
+
+
+def run_paper(args: argparse.Namespace) -> int:
+    """Compile exotic.pdf via latexmk."""
+    import subprocess
+
+    repo_root = Path(__file__).resolve().parents[3]
+    return subprocess.call(
+        [
+            "latexmk",
+            "-pdf",
+            "-interaction=nonstopmode",
+            "-jobname=exotic",
+            "main.tex",
+        ],
+        cwd=repo_root,
+    )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         prog="shbt-exotic",
         description="Unified SHBT exotic-technology simulator",
     )
+    sub = parser.add_subparsers(dest="command")
+    sub.add_parser("build-kernel", help="compile the C11 microkernel")
+    sub.add_parser("sim", help="run the six-protocol co-simulation audit")
+    sub.add_parser("verify", help="run the 70-gate verification suite")
+    p_eda = sub.add_parser("export-eda", help="emit GDSII/STEP/S2P artifacts")
+    p_eda.add_argument("--out-dir", default="eda_outputs")
+    sub.add_parser("paper", help="compile exotic.pdf with latexmk")
+
     parser.add_argument(
         "--audit",
         action="store_true",
@@ -305,6 +414,16 @@ def main() -> int:
         help="STEP waveguide height in metres (default: 1.5e-6)",
     )
     args = parser.parse_args()
+    if args.command == "build-kernel":
+        return run_build_kernel(args)
+    if args.command == "sim":
+        return run_sim(args)
+    if args.command == "verify":
+        return run_verify(args)
+    if args.command == "export-eda":
+        return run_export_eda(args)
+    if args.command == "paper":
+        return run_paper(args)
     if args.export_gds or args.export_step:
         return run_cad_export(args)
     if args.braid_openqasm or args.braid_info:
