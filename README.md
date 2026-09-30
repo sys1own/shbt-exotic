@@ -55,7 +55,7 @@ stack with 3D Chaboche backstress and Coffin-Manson cycle counting.
 
 Topological mass coupling
 $\alpha_{\text{seed}} = 1.3258316\times10^{-51}\ M_\odot/\text{bit}$
-synthesizes ~$1\,M_\odot$ wells; the metric is the multi-seed
+synthesizes ~$1\ M_\odot$ wells; the metric is the multi-seed
 superposition
 
 $$
@@ -64,7 +64,7 @@ $$
 
 checked for Gram-determinant positivity and a $1\,g$ habitat floor
 ($9.80665\ \mathrm{m/s^2}$) with zero Coriolis distortion. Seed-quench
-collapse is interlocked by sub-$2.50\ \mathrm{ns}$ PCSS crowbar triggers
+collapse is interlocked by sub-2.50 ns PCSS crowbar triggers
 with $94.20\%$ SiC inductive recovery.
 
 ### 1.4 Entropic Refrigeration — `exotic-lanr-thermo`, `exotic-stasis-thermo`
