@@ -2,7 +2,7 @@
 name = "exotic-extended-audit"
 version = "2.0.0"
 edition = "2021"
-description = "EXT-01..50 extended verification checks for shbt-exotic (shbt-power lineage)"
+description = "EXT-01..80 extended verification checks for shbt-exotic (shbt-power lineage)"
 license = "MIT"
 
 [dependencies]
@@ -14,3 +14,5 @@ exotic-warp-adm = { path = "../exotic-warp-adm" }
 exotic-comms-telemetry = { path = "../exotic-comms-telemetry" }
 exotic-eda-cad = { path = "../exotic-eda-cad" }
 exotic-hil-microkernel = { path = "../exotic-hil-microkernel" }
+exotic-energy-conditions = { path = "../exotic-energy-conditions" }
+exotic-mission-director = { path = "../exotic-mission-director" }

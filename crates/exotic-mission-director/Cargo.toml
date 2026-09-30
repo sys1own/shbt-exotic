@@ -1,0 +1,14 @@
+[package]
+name = "exotic-mission-director"
+version = "2.0.0"
+edition = "2021"
+
+[lib]
+name = "exotic_mission_director"
+
+[dependencies]
+exotic-warp-adm = { path = "../exotic-warp-adm" }
+exotic-translocation = { path = "../exotic-translocation" }
+exotic-ghost-gravity = { path = "../exotic-ghost-gravity" }
+exotic-stasis-thermo = { path = "../exotic-stasis-thermo" }
+exotic-lanr-thermo = { path = "../exotic-lanr-thermo" }

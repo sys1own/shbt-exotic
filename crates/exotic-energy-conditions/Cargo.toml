@@ -1,0 +1,10 @@
+[package]
+name = "exotic-energy-conditions"
+version = "2.0.0"
+edition = "2021"
+
+[lib]
+name = "exotic_energy_conditions"
+
+[dependencies]
+exotic-warp-adm = { path = "../exotic-warp-adm" }
