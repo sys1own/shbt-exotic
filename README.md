@@ -328,36 +328,40 @@ Tr[ρ<sub>rendered</sub>]=Tr[ρ<sub>source</sub>].
 
 The SHBT program is a federated ecosystem of nine specialized repositories. `shbt-exotic` coordinates simultaneous multi-protocol coupling across all six phenomena, while `shbt-warp` provides dedicated 3+1D ADM foliation and flight-twin simulation for warp metrics.
 
-```
-                              [shbt-precision]
-                       Computational Math & Cosmology
-                       (512-bit MPFR / WZW Characters)
-                                     │
-    ┌────────────────────────────────┼───────────────────────────────┐
-    ▼                                ▼                               ▼
- [shbt-power]                     [shbt-cf]                       [shbt-qc]
-Commercial Fusion Grid          1,800-Module LANR Array         Bare-Metal Microkernel &
-(8,750 MW p-¹¹B Twin)           & Thermal-Hydraulics            Photonic Quantum Bus
-    │                                │                               │
-    └────────────────────────┬───────┴───────────────────────────────┘
-                             ▼
- ┌────────────────────────────────────────────────────────────────┐
- │                  SPECIALIZED VEHICLE TWINS                     │
- │  • shbt-ghost : Reactionless Propulsion & Local Gravity Wells  │
- │  • shbt-recon : Macroscopic State Translocation Gateway        │
- │  • shbt-sglt  : Synthetic Gravitational Lensing Telescope      │
- │  • shbt-warp  : Holographic Warp Metric & 3+1D Flight Twin     │
- └────────────────────────┬───────────────────────────────────────┘
-                          │
-                          ▼
- ┌──────────────────────────────────────────────────────────────────────────┐
- │                               shbt-exotic                                │
- │        MULTI-PROTOCOL SPACETIME ENGINEERING CO-SIMULATION BENCH          │
- │  • Cross-Protocol Field Coupling (Warp + Stasis + Translocation + Wells) │
- │  • Global Energy Condition & Ford-Roman Quantum Inequality Auditing      │
- │  • Dynamic 5-Stage Multi-Technology Flight Director                      │
- └──────────────────────────────────────────────────────────────────────────┘
-```
+                                  ╭──────────────────────────────────────────╮
+                                  │             [shbt-precision]             │
+                                  │      Computational Math & Cosmology      │
+                                  │     (512-bit MPFR / WZW Characters)      │
+                                  ╰────────────────────┬─────────────────────╯
+                                                       │
+                     ┌─────────────────────────────────┼─────────────────────────────────┐
+                     ▼                                 ▼                                 ▼
+       ╭───────────────────────────╮     ╭───────────────────────────╮     ╭───────────────────────────╮
+       │       [shbt-power]        │     │         [shbt-cf]         │     │         [shbt-qc]         │
+       │  Commercial Fusion Grid   │     │  1,800-Module LANR Array  │     │ Bare-Metal Microkernel &  │
+       │   (8,750 MW p-11B Twin)   │     │    & Thermal-Hydraulics   │     │   Photonic Quantum Bus    │
+       ╰─────────────┬─────────────╯     ╰─────────────┬─────────────╯     ╰─────────────┬─────────────╯
+                     │                                 │                                 │
+                     └────────────────────────┬────────┴─────────────────────────────────┘
+                                              ▼
+       ╭───────────────────────────────────────────────────────────────────────────────────────────╮
+       │                                SPECIALIZED VEHICLE TWINS                                  │
+       │                                                                                           │
+       │  • shbt-ghost : Reactionless Propulsion & Local Gravity Wells (3+1 CCZ4 / PCSS Crowbars)  │
+       │  • shbt-recon : Macroscopic State Translocation Gateway (Stinespring V_macro / 504 Gbps)  │
+       │  • shbt-sglt  : Synthetic Gravitational Lensing Telescope (SE-L2 Swarm / TMSV Metrology)  │
+       │  • shbt-warp  : Holographic Warp Metric & 3+1D Flight Twin (ADM α=1.0 / 500 TJ Graser)    │
+       ╰──────────────────────────────────────────┬────────────────────────────────────────────────╯
+                                                  │
+                                                  ▼
+       ╭───────────────────────────────────────────────────────────────────────────────────────────╮
+       │                                       shbt-exotic                                         │
+       │                MULTI-PROTOCOL SPACETIME ENGINEERING CO-SIMULATION BENCH                   │
+       │                                                                                           │
+       │  • Cross-Protocol Field Coupling (Warp + Stasis + Translocation + Wells + Comms)          │
+       │  • Global Energy Condition & Ford-Roman Quantum Inequality (QI) Dark-Ledger Auditing      │
+       │  • Dynamic 5-Stage Multi-Technology Flight Director & Relativistic PDE Mesh Solvers       │
+       ╰───────────────────────────────────────────────────────────────────────────────────────────╯
 
 | Repository | Domain Role & Platform Scope | Shared Invariants & Interface Contracts |
 | :--- | :--- | :--- |
