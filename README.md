@@ -32,7 +32,7 @@ closure chain — probability, holographic entropy, and the framing defect
 
 Boundary states are de-rendered through the 33×33 Stinespring
 branching matrix B and relabeled by a Heegaard-Floer symplectic
-boundary map T<sup>∂</sup><sub>ij</sub> ∈ Sp(2g, mathbbZ).
+boundary map T<sup>∂</sup><sub>ij</sub> ∈ Sp(2g, ℤ).
 Communication is carried by TMSV-squeezed metrology
 
 $$
@@ -57,8 +57,8 @@ stack with 3D Chaboche backstress and Coffin-Manson cycle counting.
 ### 1.3 Artificial Ghost-Seed Gravity Wells — `exotic-ghost-gravity`
 
 Topological mass coupling
-α<sub>seed</sub> = 1.3258316×10<sup>-51</sup> M_odot/ bit
-synthesizes ~ 1 M_odot wells; the metric is the multi-seed
+α<sub>seed</sub> = 1.3258316×10<sup>-51</sup> M<sub>⊙</sub>/bit
+synthesizes ~1 M<sub>⊙</sub> wells; the metric is the multi-seed
 superposition
 
 $$
@@ -83,18 +83,18 @@ $$
 
 The cooling loop runs 3D Eulerian-Eulerian two-phase helium flow boiling
 with Kapitza boundary resistance
-α<sub>K</sub> = 142.0 mathrmW m<sup>-2</sup> K<sup>-4</sup>.
+α<sub>K</sub> = 142.0 W m<sup>-2</sup> K<sup>-4</sup>.
 
 ### 1.5 Holographic Warp Drive — `exotic-warp-adm`
 
 3+1 ADM/CCZ4 foliation with Gundlach constraint damping
 (κ<sub>1</sub> > 0, κ<sub>2</sub> > -1, C<sub>CFL</sub> = 0.25),
 shift-nulling β<sup>i</sup> → 0, and lapse invariance
-lvertdet(g)+1rvert ≤ 10<sup>-12</sup>. Congestion-wake drag is cancelled
+|det(g) + 1| ≤ 10<sup>-12</sup>. Congestion-wake drag is cancelled
 by 3rd-order kinematic wake compensation on the 5th-order minimum-jerk
 profile s(τ) = 10τ<sup>3</sup> - 15τ<sup>4</sup> + 6τ<sup>5</sup>, preserving
 eigenvector rigidity
-lvertμ<sub>comp</sub> - μ_0rvert ≤ 10<sup>-12</sup>.
+|μ<sub>comp</sub> − μ<sub>0</sub>| ≤ 10<sup>-12</sup>.
 
 ### 1.6 Modular State Translocation — `exotic-translocation`
 
@@ -112,9 +112,8 @@ Every foliation cell is audited against the classical energy conditions
 (WEC ρ≥0, NEC ρ+p<sub>i</sub>≥0, SEC ρ+p<sub>r</sub>+2p<sub>t</sub>≥0,
 DEC |p<sub>i</sub>|≤ρ), and negative-energy pockets in the warp bubble
 boundary are checked against the Ford-Roman quantum inequality
-$\int\langle T_{\mu\nu}n^\mu n^\nu\rangle\,
-\tau_0/(\pi(\tau^2+\tau_0^2))\,d\tau \ge -C/\tau_0^4$ with
-C = 3/(32π<sup>2</sup>).
+
+$$\int\langle T_{\mu\nu} n^\mu n^\nu\rangle\, \frac{\tau_0}{\pi(\tau^2 + \tau_0^2)}\, d\tau \;\ge\; -\frac{C}{\tau_0^4},\qquad C = \frac{3}{32\pi^2}$$
 
 The mission director routes Stinespring packets through the evolved
 Alcubierre-ADM metric, couples stasis clocks to the ghost-seed redshift
@@ -188,8 +187,8 @@ cache line 1 carries the extended exotic vector registers.
 | `0x2C` | `REG_DS2_INTERVAL_HI` | Signed 2PN interval Δ s<sup>2</sup>, high dword |
 | `0x30` | `REG_QUENCH_TIME_NS` | Hardware latch timer (target ≤ 2.18 ns) |
 | `0x34` | `REG_ANOMALY_FLAGS` | Spacelike anomaly, underpower, rigidity fault |
-| `0x38` | `REG_WARP_LAPSE_METRIC` | Warp lapse metric lvertdet(g)+1rvert |
-| `0x40` | `REG_HEEGAARD_RELABEL` | Active Sp(2g,mathbbZ) relabel index |
+| `0x38` | `REG_WARP_LAPSE_METRIC` | Warp lapse metric |det(g) + 1| |
+| `0x40` | `REG_HEEGAARD_RELABEL` | Active Sp(2g, ℤ) relabel index |
 | `0x48` | `REG_STASIS_DILUTION` | Stasis clock dilution factor |
 | `0x50`–`0x77` | `REG_EXOTIC_VEC0..4` | Extended exotic vector registers |
 | `0x7C` | `REG_CRC32_CASTAGNOLI` | Frame CRC-32C checksum |
@@ -277,7 +276,7 @@ The master suite `tests/test_70_gates.rs` audits, in order:
 | `GATE-11..20` | Microkernel C-ABI, MMIO register offsets, SECDED Hamming(72,64) ECC, AVX-512 Givens remapping, CRC-32C |
 | `GATE-21..30` | PCSS quench τ ≤ 2.18 ns, 94.20% SiC recovery, thermal headroom Δ T ≥ 11.79 K, Chaboche/Coffin-Manson, Kapitza resistance |
 | `GATE-31..40` | CCZ4 Hamiltonian/momentum damping (<10<sup>-122</sup>), ADM shift-nulling, lapse lock, minimum-jerk profile, Gram positivity |
-| `GATE-41..50` | 2PN causal authorization (Δ s<sup>2</sup> ≤ 0), spacelike rejection, Sp(2g,mathbbZ) relabeling, GST self-healing >99.9% |
+| `GATE-41..50` | 2PN causal authorization (Δ s<sup>2</sup> ≤ 0), spacelike rejection, Sp(2g, ℤ) relabeling, GST self-healing >99.9% |
 | `GATE-51..60` | LANR ledger 999.054 kW, Landauer debt 906.00 kW, +93.054 kW margin, two-phase boiling stability |
 | `GATE-61..70` | TMSV metrology, TQEC decode ≤ 45 ns, SPSC FIFO, hyper-dual UQ 3-sigma bounds, EDA S2P impedance 50.12 ± 0.80 Ω |
 
@@ -290,9 +289,9 @@ shbt-power lineage) audits, in order:
 | Checks | Domain |
 |:---|:---|
 | `EXT-01..10` | Ford-Roman quantum inequalities, Casimir-Polder stability, Hawking flux suppression, quantum interest, trace/mode mixing, squeezing floor, horizon backreaction |
-| `EXT-11..20` | Kojima entropy zero-leakage, Torelli Sp(2g,mathbbZ) invariance, capacity conservation, 2PN authorization, observer memory packets C<sub>op</sub>≤ C<sub>local</sub>, GST healing |
+| `EXT-11..20` | Kojima entropy zero-leakage, Torelli Sp(2g, ℤ) invariance, capacity conservation, 2PN authorization, observer memory packets C<sub>op</sub>≤ C<sub>local</sub>, GST healing |
 | `EXT-21..30` | Coffin-Manson N<sub>f</sub>≥10<sup>5</sup>, Kapitza stability, Ledinegg d(Δ P)/dQ>0, Chaboche saturation, McNabb-Foster boundedness, LANR +93.054 kW surplus |
-| `EXT-31..40` | κ(G<sub>K</sub>)<10<sup>4</sup>, RMHD Alfvén Mach ≤0.12, bit-stepping jitter <1.2 ns at 50.518 kHz, traction rigidity lvertμ<sub>comp</sub>-μ_0rvert≤10<sup>-12</sup>, PCSS/SiC |
+| `EXT-31..40` | κ(G<sub>K</sub>)<10<sup>4</sup>, RMHD Alfvén Mach ≤0.12, bit-stepping jitter <1.2 ns at 50.518 kHz, traction rigidity |μ<sub>comp</sub> − μ<sub>0</sub>| ≤ 10<sup>-12</sup>, PCSS/SiC |
 | `EXT-41..50` | SPSC ≥504 Gbps, TQEC ≤45 ns, S<sub>11</sub>≤-28 dB, SECDED correct/DUE, 128 B MMIO @ `0x70000000`, 2112 B arena split, CRC-32C, Givens norm |
 | `EXT-51..60` | Energy conditions: WEC, NEC, SEC, DEC compliance boundaries, Lorentzian kernel normalization, Ford-Roman QI integral convergence |
 | `EXT-61..70` | Cross-protocol coupling: warp-translocation lightcone closure, stasis proper-time dilation (dτ=α dt), redshift z=1/α-1, multi-seed interference condition numbers |
@@ -300,8 +299,8 @@ shbt-power lineage) audits, in order:
 
 `formal/formal_verification.py` (shbt-qc lineage) discharges eight Z3 release-gate
 proofs, all `unsat`: causal authorization contract, Stinespring isometry
-\|V<sup>†</sup> Vψ-ψ\|≤10<sup>-15</sup>, ADM lapse definiteness
-(β<sup>i</sup>=0 Rightarrow detγ>0, α>0), entropy
+‖V<sup>†</sup> Vψ − ψ‖ ≤ 10<sup>-15</sup>, ADM lapse definiteness
+(β<sup>i</sup> = 0 ⇒ det γ > 0, α > 0), entropy
 monotonicity dS<sub>total</sub>/dt<sub>lc</sub>≥0, no-horizon
 (α>0, detγ>0 for v<sub>s</sub>∈(0,10c]), CTC prohibition
 (g<sub>00</sub><0 globally), Ford-Roman QI compliance
@@ -319,41 +318,58 @@ Tr[ρ<sub>rendered</sub>]=Tr[ρ<sub>source</sub>].
 | Displacement sensitivity | σ<sub>r</sub> ≤ 0.144 pm/√(Hz) |
 | TQEC decode latency | ≤ 45 ns, P<sub>L</sub> ≤ 10<sup>-12</sup> |
 | Interposer impedance | 50.12 ± 0.80 Ω |
-| Lapse invariance | lvertdet(g)+1rvert ≤ 10<sup>-12</sup> |
-| Rigidity | lvertμ<sub>comp</sub>-μ_0rvert ≤ 10<sup>-12</sup> |
+| Lapse invariance | |det(g) + 1| ≤ 10<sup>-12</sup> |
+| Rigidity | |μ<sub>comp</sub> − μ<sub>0</sub>| ≤ 10<sup>-12</sup> |
 | Constraint damping floor | < 10<sup>-122</sup> |
 
 ---
 
 ## 7. SHBT Ecosystem Repository Architecture & Crosswalk
 
-The SHBT program is a federated ecosystem of nine specialized repositories:
+The SHBT program is a federated ecosystem of nine specialized repositories. `shbt-exotic` coordinates simultaneous multi-protocol coupling across all six phenomena, while `shbt-warp` provides dedicated 3+1D ADM foliation and flight-twin simulation for warp metrics.
 
 ```
-                       Nine-Repository SHBT Ecosystem
-                                  |
-        +-------------------------+-------------------------+
-        |                         |                         |
-   Foundations            Physics & Energy          Specialized Vehicle Twins
-        |                    Authorities                     |
- [shbt-precision]          [shbt-cf]                 [shbt-ghost]
- [shbt-qc]                 [shbt-power]              [shbt-recon]
-        |                  [shbt-exotic]             [shbt-sglt]
-        |                                            [shbt-warp]
+                              [shbt-precision]
+                       Computational Math & Cosmology
+                       (512-bit MPFR / WZW Characters)
+                                     │
+    ┌────────────────────────────────┼───────────────────────────────┐
+    ▼                                ▼                               ▼
+ [shbt-power]                     [shbt-cf]                       [shbt-qc]
+ Commercial Fusion Grid         1,800-Module LANR Array         Bare-Metal Microkernel &
+ (8,750 MW p-¹¹B Twin)          & Thermal-Hydraulics            Photonic Quantum Bus
+    │                                │                               │
+    └────────────────────────┬───────┴───────────────────────────────┘
+                             ▼
+ ┌────────────────────────────────────────────────────────────────┐
+ │                  SPECIALIZED VEHICLE TWINS                     │
+ │  • shbt-ghost : Reactionless Propulsion & Local Gravity Wells  │
+ │  • shbt-recon : Macroscopic State Translocation Gateway        │
+ │  • shbt-sglt  : Synthetic Gravitational Lensing Telescope      │
+ │  • shbt-warp  : Holographic Warp Metric & 3+1D Flight Twin     │
+ └────────────────────────┬───────────────────────────────────────┘
+                         │
+                         ▼
+ ┌──────────────────────────────────────────────────────────────────────────┐
+ │                               shbt-exotic                                │
+ │        MULTI-PROTOCOL SPACETIME ENGINEERING CO-SIMULATION BENCH          │
+ │  • Cross-Protocol Field Coupling (Warp + Stasis + Translocation + Wells) │
+ │  • Global Energy Condition & Ford-Roman Quantum Inequality Auditing      │
+ │  • Dynamic 5-Stage Multi-Technology Flight Director                      │
+ └──────────────────────────────────────────────────────────────────────────┘
 ```
 
-
-| Repository | Domain Role | Integration into `shbt-exotic` |
-|:---|:---|:---|
-| [`sys1own/shbt-precision`](https://github.com/sys1own/shbt-precision) | Arbitrary-precision numerics core | 512-bit MPFR framework, canonical WZW branch (26,8,312), zero-allocation loop arithmetic |
-| [`sys1own/shbt-qc`](https://github.com/sys1own/shbt-qc) | Bare-metal runtime & HIL microkernel | Freestanding C11 `shbt-os` execution model, SECDED Hamming(72,64) ECC, AVX-512 interlocks, MMIO heritage at `0x70000000` |
-| [`sys1own/shbt-cf`](https://github.com/sys1own/shbt-cf) | Cold-fusion reactor & HIL workbench | LANR starter-grid specification, dual-stage TEG, 3D two-phase helium thermal-hydraulics |
-| [`sys1own/shbt-power`](https://github.com/sys1own/shbt-power) | Fusion plant digital twin | Closed-loop ledger methodology and the 70-gate verification standard |
-| [`sys1own/shbt-ghost`](https://github.com/sys1own/shbt-ghost) | Fast interlocks & metric control | CCZ4 stabilization, multi-seed superposition, PCSS crowbars, SiC recovery shunts |
-| [`sys1own/shbt-recon`](https://github.com/sys1own/shbt-recon) | Macroscopic states & telemetry | V<sub>unified</sub><sup>macro</sup> tracking, MWPM TQEC decoder, dual-cacheline C-ABI, POSIX SPSC rings |
-| [`sys1own/shbt-sglt`](https://github.com/sys1own/shbt-sglt) | Relativistic optics & cryogenics | TMSV metrology, 2PN optics, wake compensation, minimum-jerk profiles |
-| [`sys1own/shbt-warp`](https://github.com/sys1own/shbt-warp) | Holographic warp drive & spacetime engine | Dedicated high-resolution 3+1D numerical foliation and flight twin for the Alcubierre warp metric; runs continuous Ford–Roman quantum inequality auditing across 256³ spatial grids. `shbt-exotic` establishes multi-protocol field coupling across all six phenomena simultaneously |
-| [`sys1own/shbt-exotic`](https://github.com/sys1own/shbt-exotic) | Spacetime Engineering Co-Simulation Workbench (this platform) | 13-crate workspace, multi-protocol field coupling, energy-condition auditing, 5-stage mission director, C11 kernel, 70+80-check audit, 8 Z3 proofs, executable paper |
+| Repository | Domain Role & Platform Scope | Shared Invariants & Interface Contracts |
+| :--- | :--- | :--- |
+| [`shbt-precision`](https://github.com/sys1own/shbt-precision) | Computational Math & Cosmological Foundation Core | 512-bit MPFR numerics, canonical WZW (26, 8, 312), Δ<sub>fr</sub> ≡ 0, Landauer debt P<sub>debt</sub> = 906.00 kW. |
+| [`shbt-power`](https://github.com/sys1own/shbt-power) | Commercial p-¹¹B Aneutronic Fusion Power Plant Twin | 8,750 MW fusion / 7,832.903 MW net export, 70-gate audit, closed-loop thermal ledger, 128-byte SHBT-MMIO-POWER. |
+| [`shbt-cf`](https://github.com/sys1own/shbt-cf) | LANR Cold Fusion Reactor Workbench & Thermal-Hydraulics | 1,800-module LANR starter grid (999.054 kW net DC), dual-stage CoSb<sub>3</sub>/ZrNiSn TEG, Kapitza resistance ΔT<sub>K</sub> = 3.546 K. |
+| [`shbt-qc`](https://github.com/sys1own/shbt-qc) | Photonic Quantum Computer Twin & C11 Microkernel | Bare-metal C11 shbt-os microkernel, base 56-byte SHBT-MMIO-1 at 0x70000000, SECDED Hamming(72,64) ECC, AVX-512 interlocks. |
+| [`shbt-ghost`](https://github.com/sys1own/shbt-ghost) | Ghost Seed Reactionless Propulsion & Metric Stabilization | Sub-2.5 ns PCSS crowbars, 94.20% SiC inductive recovery, 3+1 CCZ4/ADM stabilization (β<sup>i</sup> → 0, \|det(g)+1\| ≤ 10<sup>-12</sup>). |
+| [`shbt-recon`](https://github.com/sys1own/shbt-recon) | Macroscopic State Translocation & Gateway Twin | Macroscopic Stinespring dilation (V<sub>unified</sub><sup>macro</sup>), dark ledger η<sub>D</sub> = 23/33, 128-byte C-ABI DMA streaming, 78-gate audit. |
+| [`shbt-sglt`](https://github.com/sys1own/shbt-sglt) | Synthetic Gravitational Lensing Telescope (SE-L2) Stack | 2PN relativistic beam optics, TMSV heterodyne metrology (r = 2.50, 21.715 dB), 5th-order minimum-jerk flight profiles. |
+| [`shbt-exotic`](https://github.com/sys1own/shbt-exotic) | Multi-Protocol Spacetime Engineering Co-Simulation | Cross-protocol metric coupling (all 6 phenomena), Ford-Roman QI dark-ledger auditing, Heegaard-Floer boundary relabeling. |
+| [`shbt-warp`](https://github.com/sys1own/shbt-warp) | Holographic Warp Drive Digital Twin & 3+1D ADM Engine | Alcubierre metric foliation (α = 1.0, γ<sub>ij</sub> = δ<sub>ij</sub>), 500 TJ ¹⁷⁸ᵐ²Hf graser battery (109 TW burst), 128-gate audit, 8 Z3 proofs. |
 
 ### Phase-2/3 two-way logic transfer
 
